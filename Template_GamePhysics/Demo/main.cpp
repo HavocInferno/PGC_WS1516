@@ -38,7 +38,11 @@ using std::cout;
 #include "util/FFmpeg.h"
 
 #define TEMPLATE_DEMO
-//#define MASS_SPRING_SYSTEM
+#define MASS_SPRING_SYSTEM
+
+// Mass Spring includes
+#include "spring.h"
+#include "point.h"
 
 // DXUT camera
 // NOTE: CModelViewerCamera does not only manage the standard view transformation/camera position 
@@ -93,6 +97,23 @@ bool  g_bDrawSpheres = true;
 #endif
 //#ifdef MASS_SPRING_SYSTEM
 //#endif
+
+// Mass Spring variables
+Spring* g_spring1;
+Point* g_point1;
+Point* g_point2;
+
+void InitMassSprings()
+{
+	g_point1->setPosition(XMFLOAT3(0,0,0));
+	g_point1->setVelocity(XMFLOAT3(-1,0,0));
+
+	g_point2->setPosition(XMFLOAT3(0,2,0));
+	g_point2->setVelocity(XMFLOAT3(1,0,0));
+
+	g_spring1->setPoint(1, g_point1);
+	g_spring1->setPoint(2, g_point2);
+}
 
 // Video recorder
 FFmpeg* g_pFFmpegVideoRecorder = nullptr;
@@ -292,9 +313,25 @@ void DrawTriangle(ID3D11DeviceContext* pd3dImmediateContext)
 }
 #endif
 
-//#ifdef MASS_SPRING_SYSTEM
-//void DrawMassSpringSystem(ID3D11DeviceContext* pd3dImmediateContext)
-//#endif
+#ifdef MASS_SPRING_SYSTEM
+void DrawMassSpringSystem(ID3D11DeviceContext* pd3dImmediateContext)
+{
+	// Setup position/color effect
+    g_pEffectPositionColor->SetWorld(g_camera.GetWorldMatrix());
+    
+    g_pEffectPositionColor->Apply(pd3dImmediateContext);
+    pd3dImmediateContext->IASetInputLayout(g_pInputLayoutPositionColor);
+
+    // Draw
+    g_pPrimitiveBatchPositionColor->Begin();
+    
+    // draw spring
+    g_pPrimitiveBatchPositionColor->DrawLine(
+		VertexPositionColor(XMVectorSet(g_spring1->gs_point1->gp_position.x, g_spring1->gs_point1->gp_position.y, g_spring1->gs_point1->gp_position.z, 1), Colors::DeepPink),
+		VertexPositionColor(XMVectorSet(g_spring1->gs_point2->gp_position.x, g_spring1->gs_point2->gp_position.y, g_spring1->gs_point2->gp_position.z, 1), Colors::Cyan)
+    );
+}
+#endif
 // ============================================================
 // DXUT Callbacks
 // ============================================================
@@ -341,6 +378,9 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     // Init AntTweakBar GUI
 	TwInit(TW_DIRECT3D11, pd3dDevice);
     InitTweakBar(pd3dDevice);
+
+	// Init Mass Spring System
+	//InitMassSprings();
 
     // Create DirectXTK geometric primitives for later usage
     g_pSphere = GeometricPrimitive::CreateGeoSphere(pd3dImmediateContext, 2.0f, 2, false);
@@ -669,8 +709,9 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		g_bIsSpaceReleased = true;
 	
 #endif
-//#ifdef MASS_SPRING_SYSTEM
-//#endif
+#ifdef MASS_SPRING_SYSTEM
+	//TODO: Calculate Euler/Midpoint here?
+#endif
 }
 
 //--------------------------------------------------------------------------------------
@@ -715,8 +756,10 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 	}
 #endif
     
-//#ifdef MASS_SPRING_SYSTEM
-//#endif
+#ifdef MASS_SPRING_SYSTEM
+	// Draw mass spring system
+	//DrawMassSpringSystem(pd3dImmediateContext);
+#endif
 
     // Draw GUI
     TwDraw();

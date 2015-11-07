@@ -209,10 +209,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="point.cpp" />
+    <ClCompile Include="spring.cpp" />
     <ClCompile Include="util\FFmpeg.cpp" />
     <ClCompile Include="util\util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="point.h" />
+    <ClInclude Include="spring.h" />
     <ClInclude Include="util\FFmpeg.h" />
     <ClInclude Include="util\util.h" />
   </ItemGroup>

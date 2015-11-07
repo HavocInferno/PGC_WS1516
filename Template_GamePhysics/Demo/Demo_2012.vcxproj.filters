@@ -8,6 +8,8 @@
     <ClCompile Include="util\FFmpeg.cpp">
       <Filter>util</Filter>
     </ClCompile>
+    <ClCompile Include="point.cpp" />
+    <ClCompile Include="spring.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="util">
@@ -21,6 +23,8 @@
     <ClInclude Include="util\FFmpeg.h">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="spring.h" />
+    <ClInclude Include="point.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="effect.fx" />
