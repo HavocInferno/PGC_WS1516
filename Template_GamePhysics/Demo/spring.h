@@ -15,6 +15,11 @@ public:
 	float gs_initialLength;
 	float gs_currentLength;
 
+	Spring();
+	Spring::Spring(Point* point1, Point* point2);
+	void initialize();
+
+
 	void setPoint(int pointIndex, Point* point);
 
 	void setStiffness(float newstiff);

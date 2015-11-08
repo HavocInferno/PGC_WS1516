@@ -14,6 +14,10 @@ public:
 	float gp_damping;
 	bool gp_isStatic;
 
+	void initialize();
+	Point();
+	Point(XMFLOAT3 position);
+
 	void setPosition(XMFLOAT3 newpos);
 	void setVelocity(XMFLOAT3 newvel);
 	void setForce(XMFLOAT3 newf);

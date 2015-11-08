@@ -6,9 +6,32 @@ using namespace DirectX;
 XMFLOAT3 gp_position;
 XMFLOAT3 gp_velocity;
 XMFLOAT3 gp_force;
-float gp_mass = 10.0f;
+float gp_mass;
 float gp_damping;
-bool gp_isStatic = false;
+bool gp_isStatic;
+
+Point::Point()
+{
+	initialize();
+}
+
+Point::Point(XMFLOAT3 position)
+{
+	initialize();
+	gp_position = position;
+
+
+}
+
+void Point::initialize()
+{
+	gp_position =	XMFLOAT3(0,0,0);
+	gp_velocity =	XMFLOAT3(0,0,0);
+	gp_force	=	XMFLOAT3(0,0,0);
+	gp_mass		=	10.0f;
+	gp_damping	=	0.0f;
+	gp_isStatic =	false;
+}
 
 void Point::setPosition(XMFLOAT3 newpos) {
 	gp_position = newpos;

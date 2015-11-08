@@ -43,6 +43,7 @@ using std::cout;
 // Mass Spring includes
 #include "spring.h"
 #include "point.h"
+#include <list>
 
 // DXUT camera
 // NOTE: CModelViewerCamera does not only manage the standard view transformation/camera position 
@@ -99,21 +100,47 @@ bool  g_bDrawSpheres = true;
 bool g_bDrawMassSpringSystem = true;
 #endif
 
-// Mass Spring variables
-Spring* g_spring1;
-Point* g_point1;
-Point* g_point2;
-
+// Mass Spring variable
+std::list<Spring> springs;
+std::list<Point*> points;
 void InitMassSprings()
 {
-	g_point1->setPosition(XMFLOAT3(0,0,0));
+	Spring g_spring1, g_spring2;
+	Point* g_point1,* g_point2,* g_point3;
+
+	g_point1 = new Point(XMFLOAT3(0.2f,0,0));
 	g_point1->setVelocity(XMFLOAT3(-1,0,0));
 
-	g_point2->setPosition(XMFLOAT3(0,2,0));
+	g_point2 = new Point(XMFLOAT3(0,0.2f,0));
 	g_point2->setVelocity(XMFLOAT3(1,0,0));
 
-	g_spring1->setPoint(1, g_point1);
-	g_spring1->setPoint(2, g_point2);
+	g_point3 = new Point(XMFLOAT3(0.1f,0.3f,0));
+	g_point3->setVelocity(XMFLOAT3(1,0,0));
+
+	g_spring1.setPoint(1, g_point1);
+	g_spring1.setPoint(2, g_point3);
+
+	g_spring2.setPoint(1, g_point3);
+	g_spring2.setPoint(2, g_point2);
+
+	points.push_back(g_point1);
+	points.push_back(g_point2);
+	points.push_back(g_point3);
+	springs.push_back(g_spring1);
+	springs.push_back(g_spring2);
+
+}
+
+void DestroyMassSprings()
+{
+	for(auto point = points.begin(); point != points.end();)
+	{
+		auto it = point;
+		point++;
+		Point* pointPointer =  ((Point*)*it);
+		points.erase(it);
+		free(pointPointer);
+	}
 }
 
 // Video recorder
@@ -315,27 +342,58 @@ void DrawTriangle(ID3D11DeviceContext* pd3dImmediateContext)
 #endif
 
 #ifdef MASS_SPRING_SYSTEM
-void DrawMassSpringSystem(ID3D11DeviceContext* pd3dImmediateContext)
+
+void DrawPoint(ID3D11DeviceContext* pd3dImmediateContext, Point* point)
 {
-	// Setup position/color effect
-	std::cout<<" g_pEffectPositionColor->SetWorld\n";
-    g_pEffectPositionColor->SetWorld(g_camera.GetWorldMatrix());
-    std::cout<<" g_pEffectPositionColor->Apply(\n";
+	//set color
+	g_pEffectPositionNormal->SetDiffuseColor(Colors::Blue);
+	g_pEffectPositionNormal->SetEmissiveColor(Colors::Black);
+	g_pEffectPositionNormal->SetSpecularColor(0.4f * Colors::White);
+    g_pEffectPositionNormal->SetSpecularPower(100);
+
+	//set position
+	XMMATRIX scale    = XMMatrixScaling(g_fSphereSize, g_fSphereSize, g_fSphereSize);
+	XMMATRIX trans    = XMMatrixTranslation(point->gp_position.x,point->gp_position.y,point->gp_position.z);
+    g_pEffectPositionNormal->SetWorld(scale * trans * g_camera.GetWorldMatrix());
+
+	//draw everything
+    g_pSphere->Draw(g_pEffectPositionNormal, g_pInputLayoutPositionNormal);
+}
+
+void DrawSpring(ID3D11DeviceContext* pd3dImmediateContext, Spring* spring)
+{
+	g_pEffectPositionColor->SetWorld(g_camera.GetWorldMatrix());
+    
     g_pEffectPositionColor->Apply(pd3dImmediateContext);
-	std::cout<<"pd3dImmediateContext\n";
     pd3dImmediateContext->IASetInputLayout(g_pInputLayoutPositionColor);
 
     // Draw
-	std::cout<<"Draaw\n";
     g_pPrimitiveBatchPositionColor->Begin();
     
-    // draw spring
-	std::cout<<"Begin\n";
-    g_pPrimitiveBatchPositionColor->DrawLine(
-		VertexPositionColor(XMVectorSet(g_spring1->gs_point1->gp_position.x, g_spring1->gs_point1->gp_position.y, g_spring1->gs_point1->gp_position.z, 1), Colors::DeepPink),
-		VertexPositionColor(XMVectorSet(g_spring1->gs_point2->gp_position.x, g_spring1->gs_point2->gp_position.y, g_spring1->gs_point2->gp_position.z, 1), Colors::Cyan)
+	g_pPrimitiveBatchPositionColor->DrawLine(
+		VertexPositionColor(XMVectorSet(spring->gs_point1->gp_position.x,spring->gs_point1->gp_position.y,spring->gs_point1->gp_position.z, 1), Colors::Aqua),
+		VertexPositionColor(XMVectorSet(spring->gs_point2->gp_position.x,spring->gs_point2->gp_position.y,spring->gs_point2->gp_position.z, 1), Colors::Aquamarine)
     );
+    
+	g_pPrimitiveBatchPositionColor->End();
 }
+
+void DrawMassSpringSystem(ID3D11DeviceContext* pd3dImmediateContext)
+{
+	for(auto point = points.begin(); point != points.end();point++)
+	{
+		DrawPoint(pd3dImmediateContext, ((Point*)*point));
+	}	
+	int i =0;
+	for(auto spring = springs.begin(); spring != springs.end();spring++)
+	{
+		DrawSpring(pd3dImmediateContext, &((Spring)*spring));
+		i++;
+	}
+
+}
+
+
 #endif
 // ============================================================
 // DXUT Callbacks
@@ -385,7 +443,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     InitTweakBar(pd3dDevice);
 
 	// Init Mass Spring System
-	//InitMassSprings();
+	InitMassSprings();
 
     // Create DirectXTK geometric primitives for later usage
     g_pSphere = GeometricPrimitive::CreateGeoSphere(pd3dImmediateContext, 2.0f, 2, false);
@@ -483,6 +541,7 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     SAFE_DELETE (g_pPrimitiveBatchPositionNormalColor);
     SAFE_RELEASE(g_pInputLayoutPositionNormalColor);
     SAFE_DELETE (g_pEffectPositionNormalColor);
+	DestroyMassSprings();
 }
 
 //--------------------------------------------------------------------------------------
@@ -660,6 +719,10 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			cout << "Test2!\n";
 			g_bDrawTriangle = true;
 			break;
+		case 3:
+			cout <<"Mass Spring System";
+			g_bDrawMassSpringSystem = true;
+			break;
 		default:
 			cout << "Empty Test!\n";
 			break;
@@ -769,7 +832,6 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     
 #ifdef MASS_SPRING_SYSTEM
 	// Draw mass spring system
-	//DrawMassSpringSystem(pd3dImmediateContext);
 #endif
 
     // Draw GUI
