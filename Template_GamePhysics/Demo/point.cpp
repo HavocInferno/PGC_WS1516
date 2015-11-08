@@ -8,6 +8,7 @@ XMFLOAT3 gp_velocity;
 XMFLOAT3 gp_force;
 float gp_mass = 10.0f;
 float gp_damping;
+bool gp_isStatic = false;
 
 void Point::setPosition(XMFLOAT3 newpos) {
 	gp_position = newpos;
@@ -24,4 +25,7 @@ void Point::setMass(float newmass) {
 };
 void Point::setDamping(float newdamp) {
 	gp_damping = newdamp;
+};
+void Point::setStatic(bool isStatic) {
+	gp_isStatic = isStatic;
 };

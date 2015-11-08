@@ -95,8 +95,9 @@ bool  g_bDrawTeapot    = true;
 bool  g_bDrawTriangle  = true;
 bool  g_bDrawSpheres = true;
 #endif
-//#ifdef MASS_SPRING_SYSTEM
-//#endif
+#ifdef MASS_SPRING_SYSTEM
+bool g_bDrawMassSpringSystem = true;
+#endif
 
 // Mass Spring variables
 Spring* g_spring1;
@@ -124,7 +125,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
     g_pTweakBar = TwNewBar("TweakBar");
 	TwDefine(" TweakBar color='0 128 128' alpha=128 ");
 
-	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "BasicTest,Setup1,Setup2,Setup3");
+	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "BasicTest,Setup1,Setup2,MassSpringSystem");
 	TwAddVarRW(g_pTweakBar, "Test Scene", TW_TYPE_TESTCASE, &g_iTestCase, "");
 	// HINT: For buttons you can directly pass the callback function as a lambda expression.
 	TwAddButton(g_pTweakBar, "Reset Scene", [](void *){g_iPreTestCase = -1; }, nullptr, "");
@@ -317,15 +318,19 @@ void DrawTriangle(ID3D11DeviceContext* pd3dImmediateContext)
 void DrawMassSpringSystem(ID3D11DeviceContext* pd3dImmediateContext)
 {
 	// Setup position/color effect
+	std::cout<<" g_pEffectPositionColor->SetWorld\n";
     g_pEffectPositionColor->SetWorld(g_camera.GetWorldMatrix());
-    
+    std::cout<<" g_pEffectPositionColor->Apply(\n";
     g_pEffectPositionColor->Apply(pd3dImmediateContext);
+	std::cout<<"pd3dImmediateContext\n";
     pd3dImmediateContext->IASetInputLayout(g_pInputLayoutPositionColor);
 
     // Draw
+	std::cout<<"Draaw\n";
     g_pPrimitiveBatchPositionColor->Begin();
     
     // draw spring
+	std::cout<<"Begin\n";
     g_pPrimitiveBatchPositionColor->DrawLine(
 		VertexPositionColor(XMVectorSet(g_spring1->gs_point1->gp_position.x, g_spring1->gs_point1->gp_position.y, g_spring1->gs_point1->gp_position.z, 1), Colors::DeepPink),
 		VertexPositionColor(XMVectorSet(g_spring1->gs_point2->gp_position.x, g_spring1->gs_point2->gp_position.y, g_spring1->gs_point2->gp_position.z, 1), Colors::Cyan)
@@ -751,6 +756,12 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		// Draw simple triangle
 		if (g_bDrawTriangle) DrawTriangle(pd3dImmediateContext);
 		break;
+#ifdef MASS_SPRING_SYSTEM
+	case 3:
+		if (g_bDrawMassSpringSystem) DrawMassSpringSystem(pd3dImmediateContext);
+		break;
+#endif
+
 	default:
 		break;
 	}

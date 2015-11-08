@@ -12,6 +12,7 @@ public:
 	XMFLOAT3 gp_force;
 	float gp_mass;
 	float gp_damping;
+	bool gp_isStatic;
 
 	void setPosition(XMFLOAT3 newpos);
 	void setVelocity(XMFLOAT3 newvel);
@@ -19,6 +20,7 @@ public:
 
 	void setMass(float newmass);
 	void setDamping(float newdamp);
+	void setStatic(bool isStatic);
 };
 
 #endif
