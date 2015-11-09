@@ -7,6 +7,7 @@ using namespace DirectX;
 
 XMFLOAT3 gp_position;
 XMFLOAT3 gp_velocity;
+XMFLOAT3 gp_acceleration;
 XMFLOAT3 gp_force;
 float gp_mass;
 float gp_damping;
@@ -30,6 +31,7 @@ void Point::initialize()
 	gp_position =	XMFLOAT3(0,0,0);
 	gp_velocity =	XMFLOAT3(0,0,0);
 	gp_force	=	XMFLOAT3(0,0,0);
+	gp_acceleration =	XMFLOAT3(0,0,0);
 	gp_mass		=	10.0f;
 	gp_damping	=	0.0f;
 	gp_isStatic =	false;
@@ -60,18 +62,27 @@ void Point::addForce(XMFLOAT3 newForce)
 };
 void Point::addGravity()
 {
-	gp_velocity = addVector(gp_velocity,XMFLOAT3(0,g,0));
+	gp_acceleration = addVector(gp_velocity,XMFLOAT3(0,g,0));
 };
 void Point::addDamping()
 {
-	gp_velocity = multiplyVecor(gp_velocity, gp_damping);
+	gp_velocity = multiplyVector(gp_velocity, gp_damping);
 	//TODO: Time.deltaTime
 };
-void Point::IntegratePosition()
+void Point::IntegratePosition(float deltaTime)
 {
-
+	setPosition(addVector(gp_position,multiplyVector(gp_velocity,deltaTime)));
 };
-void Point::IntegrateVelocity()
+void Point::IntegrateVelocity(float deltaTime)
 {
-
+	setPosition(addVector(gp_velocity,multiplyVector(gp_acceleration,deltaTime)));
 };
+void Point::computeAcceleration()
+{
+	gp_acceleration = multiplyVector(gp_force, 1/gp_mass);
+	addGravity();
+};
+void Point::resetForces()
+{
+	gp_force = XMFLOAT3(0,0,0);
+}

@@ -44,6 +44,7 @@ using std::cout;
 #include "spring.h"
 #include "point.h"
 #include <list>
+#include <Windows.h>
 
 // DXUT camera
 // NOTE: CModelViewerCamera does not only manage the standard view transformation/camera position 
@@ -83,6 +84,7 @@ XMINT2   g_viMouseDelta = XMINT2(0,0);
 XMFLOAT3 g_vfMovableObjectPos = XMFLOAT3(0,0,0);
 XMFLOAT3 g_vfRotate = XMFLOAT3(0, 0, 0);
 
+
 // TweakAntBar GUI variables
 
 int g_iTestCase = 1;
@@ -100,6 +102,9 @@ bool  g_bDrawSpheres = true;
 bool g_bDrawMassSpringSystem = true;
 XMVECTORF32 TUM_BLUE = {0, 0.396, 0.741,1};
 XMVECTORF32 TUM_BLUE_LIGHT = {.259, .522, .957,1};
+enum IntegrationMethod{IN_EULER, IN_MIDPOINT, IN_LEAPFROG} integrationMethod;
+DWORD previousTime, currentTime;
+float deltaTime =0;
 
 #endif
 
@@ -108,6 +113,7 @@ std::list<Spring> springs;
 std::list<Point*> points;
 void InitMassSprings()
 {
+
 	Spring g_spring1, g_spring2;
 	Point* g_point1,* g_point2,* g_point3;
 
@@ -725,6 +731,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			break;
 		case 3:
 			cout <<"Mass Spring System";
+			currentTime = timeGetTime();
 			g_bDrawMassSpringSystem = true;
 			break;
 		default:
@@ -773,6 +780,41 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		g_vfRotate.z += 0.005f;
 		if (g_vfRotate.z > 2 * M_PI) g_vfRotate.z -= 2 * M_PI;
 
+		break;
+	case 3:
+		previousTime = currentTime;
+		currentTime = timeGetTime();
+		deltaTime = (currentTime-previousTime)/1000.0f;
+
+		switch (integrationMethod)
+		{
+		case IN_EULER:
+			Point* a;
+			Spring* b;
+			for(auto spring = springs.begin(); spring != springs.end();spring++)
+			{
+				b= &(((Spring)*spring));
+				b->computeElasticForces();
+
+			}
+			for(auto point = points.begin(); point != points.end();point++)
+			{
+				a =  (((Point*)*point));
+				a->IntegratePosition(deltaTime);
+				a->computeAcceleration();
+				a->IntegrateVelocity(deltaTime);
+				a->resetForces();
+			}	
+			break;
+		case IN_MIDPOINT:
+			break;
+
+		case IN_LEAPFROG:
+			break;
+
+		default:
+			break;
+		}
 		break;
 	default:
 		break;

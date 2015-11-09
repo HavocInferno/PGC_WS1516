@@ -1,9 +1,13 @@
+#pragma once
 #ifndef Point_HEADER
 #define Point_HEADER
 
 #include <DirectXMath.h>
-#include "vectorOperations.h"
 using namespace DirectX;
+
+#include "vectorOperations.h"
+#include "spring.h"
+
 
 class Point
 {
@@ -11,6 +15,7 @@ public:
 	XMFLOAT3 gp_position;
 	XMFLOAT3 gp_velocity;
 	XMFLOAT3 gp_force;
+	XMFLOAT3 gp_acceleration;
 	float gp_mass;
 	float gp_damping;
 	bool gp_isStatic;
@@ -30,9 +35,11 @@ public:
 	void addGravity();
 	void addDamping();
 
-	enum IntegrationMethod{IN_EULER, IN_MIDPOINT, IN_LEAPFROG};
-	void Point::IntegrateVelocity();
-	void Point::IntegratePosition();
+	
+	void Point::IntegrateVelocity(float deltaTime);
+	void Point::IntegratePosition(float deltaTime);
+	void Point::computeAcceleration();
+	void Point::resetForces();
 };
 
 #endif
