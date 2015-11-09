@@ -1,21 +1,23 @@
 //#pragma once
 #ifndef Spring_HEADER
 #define Spring_HEADER
+#include "point.h"
 
 #include <DirectXMath.h>
 using namespace DirectX;
 
-#include "point.h"
+
 
 class Spring
 {
 public:
 
-	Point* gs_point1;
-	Point* gs_point2;
+
 	float gs_stiffness;
 	float gs_initialLength;
 	float gs_currentLength;
+	Point* gs_point1;
+	Point* gs_point2;
 
 	Spring();
 	Spring::Spring(Point* point1, Point* point2);

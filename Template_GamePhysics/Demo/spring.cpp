@@ -1,8 +1,9 @@
 #include <DirectXMath.h>
+#include "spring.h"
 using namespace DirectX;
 
 #include "point.h"
-#include "spring.h"
+
 
 Point* gs_point1;
 Point* gs_point2;

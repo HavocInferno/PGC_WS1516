@@ -6,7 +6,6 @@
 using namespace DirectX;
 
 #include "vectorOperations.h"
-#include "spring.h"
 
 
 class Point
