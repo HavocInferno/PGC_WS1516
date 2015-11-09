@@ -1,7 +1,9 @@
 #include <DirectXMath.h>
 using namespace DirectX;
-
+#include "vectorOperations.h"
 #include "point.h"
+
+#define g -9.81f
 
 XMFLOAT3 gp_position;
 XMFLOAT3 gp_velocity;
@@ -51,4 +53,25 @@ void Point::setDamping(float newdamp) {
 };
 void Point::setStatic(bool isStatic) {
 	gp_isStatic = isStatic;
+};
+void Point::addForce(XMFLOAT3 newForce)
+{
+	gp_force = addVector(newForce,gp_force);
+};
+void Point::addGravity()
+{
+	gp_velocity = addVector(gp_velocity,XMFLOAT3(0,g,0));
+};
+void Point::addDamping()
+{
+	gp_velocity = multiplyVecor(gp_velocity, gp_damping);
+	//TODO: Time.deltaTime
+};
+void Point::IntegratePosition()
+{
+
+};
+void Point::IntegrateVelocity()
+{
+
 };

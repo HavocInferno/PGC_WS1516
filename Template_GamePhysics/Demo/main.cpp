@@ -98,6 +98,9 @@ bool  g_bDrawSpheres = true;
 #endif
 #ifdef MASS_SPRING_SYSTEM
 bool g_bDrawMassSpringSystem = true;
+XMVECTORF32 TUM_BLUE = {0, 0.396, 0.741,1};
+XMVECTORF32 TUM_BLUE_LIGHT = {.259, .522, .957,1};
+
 #endif
 
 // Mass Spring variable
@@ -348,10 +351,10 @@ void DrawTriangle(ID3D11DeviceContext* pd3dImmediateContext)
 void DrawPoint(ID3D11DeviceContext* pd3dImmediateContext, Point* point)
 {
 	//set color
-	g_pEffectPositionNormal->SetDiffuseColor(Colors::Blue);
+	g_pEffectPositionNormal->SetDiffuseColor(TUM_BLUE_LIGHT);
 	g_pEffectPositionNormal->SetEmissiveColor(Colors::Black);
-	g_pEffectPositionNormal->SetSpecularColor(0.4f * Colors::White);
-    g_pEffectPositionNormal->SetSpecularPower(100);
+	g_pEffectPositionNormal->SetSpecularColor(0.5f * Colors::White);
+    g_pEffectPositionNormal->SetSpecularPower(50);
 
 	//set position
 	XMMATRIX scale    = XMMatrixScaling(g_fSphereSize, g_fSphereSize, g_fSphereSize);
@@ -373,8 +376,8 @@ void DrawSpring(ID3D11DeviceContext* pd3dImmediateContext, Spring* spring)
     g_pPrimitiveBatchPositionColor->Begin();
     
 	g_pPrimitiveBatchPositionColor->DrawLine(
-		VertexPositionColor(XMVectorSet(spring->gs_point1->gp_position.x,spring->gs_point1->gp_position.y,spring->gs_point1->gp_position.z, 1), Colors::Aqua),
-		VertexPositionColor(XMVectorSet(spring->gs_point2->gp_position.x,spring->gs_point2->gp_position.y,spring->gs_point2->gp_position.z, 1), Colors::Aquamarine)
+		VertexPositionColor(XMVectorSet(spring->gs_point1->gp_position.x,spring->gs_point1->gp_position.y,spring->gs_point1->gp_position.z, 1),TUM_BLUE),
+		VertexPositionColor(XMVectorSet(spring->gs_point2->gp_position.x,spring->gs_point2->gp_position.y,spring->gs_point2->gp_position.z, 1), Colors::White)
     );
     
 	g_pPrimitiveBatchPositionColor->End();

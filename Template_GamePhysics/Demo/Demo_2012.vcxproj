@@ -219,6 +219,7 @@
     <ClInclude Include="spring.h" />
     <ClInclude Include="util\FFmpeg.h" />
     <ClInclude Include="util\util.h" />
+    <ClInclude Include="vectorOperations.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AntTweakBar\src\AntTweakBar.vcxproj">

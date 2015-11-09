@@ -2,6 +2,7 @@
 #define Point_HEADER
 
 #include <DirectXMath.h>
+#include "vectorOperations.h"
 using namespace DirectX;
 
 class Point
@@ -25,6 +26,13 @@ public:
 	void setMass(float newmass);
 	void setDamping(float newdamp);
 	void setStatic(bool isStatic);
+	void addForce(XMFLOAT3 newForce);
+	void addGravity();
+	void addDamping();
+
+	enum IntegrationMethod{IN_EULER, IN_MIDPOINT, IN_LEAPFROG};
+	void Point::IntegrateVelocity();
+	void Point::IntegratePosition();
 };
 
 #endif

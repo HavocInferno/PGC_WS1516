@@ -25,6 +25,7 @@
     </ClInclude>
     <ClInclude Include="spring.h" />
     <ClInclude Include="point.h" />
+    <ClInclude Include="vectorOperations.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="effect.fx" />
