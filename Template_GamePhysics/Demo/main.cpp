@@ -13,7 +13,7 @@
 
 //DirectX includes
 #include <DirectXMath.h>
-using namespace DirectX;
+//using namespace DirectX;
 using std::cout;
 
 // Effect framework includes
@@ -110,34 +110,31 @@ float deltaTime =0;
 
 // Mass Spring variable
 std::list<Spring> springs;
-std::list<Point*> points;
+std::list<SpringPoint*> points;
 void InitMassSprings()
 {
 
 	Spring g_spring1, g_spring2;
-	Point* g_point1,* g_point2,* g_point3;
+	SpringPoint* g_point1,* g_point2,* g_point3;
 
-	g_point1 = new Point(XMFLOAT3(0.2f,0,0));
+	g_point1 = new SpringPoint(XMFLOAT3(0.0f,0,0));
 	g_point1->setVelocity(XMFLOAT3(-1,0,0));
 
-	g_point2 = new Point(XMFLOAT3(0,0.2f,0));
+	g_point2 = new SpringPoint(XMFLOAT3(0,0.2f,0));
 	g_point2->setVelocity(XMFLOAT3(1,0,0));
 
-	g_point3 = new Point(XMFLOAT3(0.1f,0.3f,0));
-	g_point3->setVelocity(XMFLOAT3(1,0,0));
+
 
 	g_spring1.setPoint(1, g_point1);
-	g_spring1.setPoint(2, g_point3);
+	g_spring1.setPoint(2, g_point2);
 
-	g_spring2.setPoint(1, g_point3);
-	g_spring2.setPoint(2, g_point2);
+
 
 	points.push_back(g_point1);
 	points.push_back(g_point2);
-	points.push_back(g_point3);
 	springs.push_back(g_spring1);
-	springs.push_back(g_spring2);
 
+	cout<<"penice";
 }
 
 void DestroyMassSprings()
@@ -146,7 +143,7 @@ void DestroyMassSprings()
 	{
 		auto it = point;
 		point++;
-		Point* pointPointer =  ((Point*)*it);
+		SpringPoint* pointPointer =  ((SpringPoint*)*it);
 		points.erase(it);
 		free(pointPointer);
 	}
@@ -354,7 +351,7 @@ void DrawTriangle(ID3D11DeviceContext* pd3dImmediateContext)
 
 #ifdef MASS_SPRING_SYSTEM
 
-void DrawPoint(ID3D11DeviceContext* pd3dImmediateContext, Point* point)
+void DrawPoint(ID3D11DeviceContext* pd3dImmediateContext, SpringPoint* point)
 {
 	//set color
 	g_pEffectPositionNormal->SetDiffuseColor(TUM_BLUE_LIGHT);
@@ -393,7 +390,7 @@ void DrawMassSpringSystem(ID3D11DeviceContext* pd3dImmediateContext)
 {
 	for(auto point = points.begin(); point != points.end();point++)
 	{
-		DrawPoint(pd3dImmediateContext, ((Point*)*point));
+		DrawPoint(pd3dImmediateContext, ((SpringPoint*)*point));
 	}	
 	int i =0;
 	for(auto spring = springs.begin(); spring != springs.end();spring++)
@@ -789,7 +786,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		switch (integrationMethod)
 		{
 		case IN_EULER:
-			Point* a;
+			SpringPoint* a;
 			Spring* b;
 			for(auto spring = springs.begin(); spring != springs.end();spring++)
 			{
@@ -799,7 +796,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			}
 			for(auto point = points.begin(); point != points.end();point++)
 			{
-				a =  (((Point*)*point));
+				a =  (((SpringPoint*)*point));
 				a->IntegratePosition(deltaTime);
 				a->computeAcceleration();
 				a->IntegrateVelocity(deltaTime);

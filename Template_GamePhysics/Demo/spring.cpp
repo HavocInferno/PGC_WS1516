@@ -5,8 +5,8 @@ using namespace DirectX;
 #include "point.h"
 
 
-Point* gs_point1;
-Point* gs_point2;
+SpringPoint* gs_point1;
+SpringPoint* gs_point2;
 float gs_stiffness = 40.0f;
 float gs_initialLength = 1.0f;
 float gs_currentLength = 1.0f;
@@ -16,7 +16,7 @@ Spring::Spring()
 	initialize();
 };
 
-Spring::Spring(Point* point1, Point* point2)
+Spring::Spring(SpringPoint* point1, SpringPoint* point2)
 {
 	initialize();
 	gs_point1 = point1;
@@ -32,7 +32,7 @@ void Spring::initialize()
 	gs_stiffness = 40;
 };
 
-void Spring::setPoint(int pointIndex, Point* point) {
+void Spring::setPoint(int pointIndex, SpringPoint* point) {
 	switch(pointIndex) {
 	case 1: gs_point1 = point;
 		break;

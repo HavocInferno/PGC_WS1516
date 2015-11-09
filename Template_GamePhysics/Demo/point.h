@@ -8,7 +8,7 @@ using namespace DirectX;
 #include "vectorOperations.h"
 
 
-class Point
+class SpringPoint
 {
 public:
 	XMFLOAT3 gp_position;
@@ -20,8 +20,8 @@ public:
 	bool gp_isStatic;
 
 	void initialize();
-	Point();
-	Point(XMFLOAT3 position);
+	SpringPoint();
+	SpringPoint(XMFLOAT3 position);
 
 	void setPosition(XMFLOAT3 newpos);
 	void setVelocity(XMFLOAT3 newvel);
@@ -35,10 +35,10 @@ public:
 	void addDamping();
 
 	
-	void Point::IntegrateVelocity(float deltaTime);
-	void Point::IntegratePosition(float deltaTime);
-	void Point::computeAcceleration();
-	void Point::resetForces();
+	void SpringPoint::IntegrateVelocity(float deltaTime);
+	void SpringPoint::IntegratePosition(float deltaTime);
+	void SpringPoint::computeAcceleration();
+	void SpringPoint::resetForces();
 };
 
 #endif
