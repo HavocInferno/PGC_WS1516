@@ -62,15 +62,16 @@ void SpringPoint::addForce(XMFLOAT3 newForce)
 };
 void SpringPoint::addGravity()
 {
-	gp_acceleration = addVector(gp_velocity,XMFLOAT3(0,g,0));
+	gp_force = addVector(gp_velocity,XMFLOAT3(0,g*gp_mass*0.001,0));
 };
-void SpringPoint::addDamping()
+void SpringPoint::addDamping(float deltaTime)
 {
-	gp_velocity = multiplyVector(gp_velocity, gp_damping);
+	gp_velocity = addVector(gp_velocity,multiplyVector(gp_velocity, -gp_damping*deltaTime));
 	//TODO: Time.deltaTime
 };
 void SpringPoint::IntegratePosition(float deltaTime)
 {
+	if(!gp_isStatic)
 	setPosition(addVector(gp_position,multiplyVector(gp_velocity,deltaTime)));
 };
 void SpringPoint::IntegrateVelocity(float deltaTime)
@@ -80,7 +81,6 @@ void SpringPoint::IntegrateVelocity(float deltaTime)
 void SpringPoint::computeAcceleration()
 {
 	gp_acceleration = multiplyVector(gp_force, 1/gp_mass);
-	//addGravity();
 };
 void SpringPoint::resetForces()
 {

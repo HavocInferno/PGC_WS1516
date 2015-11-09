@@ -32,7 +32,7 @@ public:
 	void setStatic(bool isStatic);
 	void addForce(XMFLOAT3 newForce);
 	void addGravity();
-	void addDamping();
+	void addDamping(float deltaTime);
 
 	
 	void SpringPoint::IntegrateVelocity(float deltaTime);

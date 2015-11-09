@@ -119,9 +119,13 @@ void InitMassSprings()
 
 	g_point1 = new SpringPoint(XMFLOAT3(0.0f,0,0));
 	g_point1->setVelocity(XMFLOAT3(-1,0,0));
+	//g_point1->setDamping(-0.1f);
+
 
 	g_point2 = new SpringPoint(XMFLOAT3(0,0.2f,0));
 	g_point2->setVelocity(XMFLOAT3(1,0,0));
+	//g_point2->gp_isStatic = true;
+	//g_point2->setDamping(-0.1f);
 
 
 
@@ -134,7 +138,6 @@ void InitMassSprings()
 	points.push_back(g_point2);
 	springs.push_back(g_spring1);
 
-	cout<<"penice";
 }
 
 void DestroyMassSprings()
@@ -782,6 +785,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		previousTime = currentTime;
 		currentTime = timeGetTime();
 		deltaTime = (currentTime-previousTime)/1000.0f;
+	//	deltaTime = 0.005;
 
 		switch (integrationMethod)
 		{
@@ -796,10 +800,13 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			}
 			for(auto point = points.begin(); point != points.end();point++)
 			{
+				
 				a =  (((SpringPoint*)*point));
+			//	a->addGravity();
 				a->IntegratePosition(deltaTime);
 				a->computeAcceleration();
 				a->IntegrateVelocity(deltaTime);
+				a->addDamping(deltaTime);
 				a->resetForces();
 			}	
 			break;
