@@ -174,13 +174,15 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 	case 2:
 		TwAddVarRW(g_pTweakBar, "Draw Triangle", TW_TYPE_BOOLCPP, &g_bDrawTriangle, "");
 		break;
+#ifdef MASS_SPRING_SYSTEM
+	case 3:
+		TwAddVarRW(g_pTweakBar, "Point Size", TW_TYPE_FLOAT, &g_fSphereSize, "min=0.01 step=0.01");
+		break;
+#endif
 	default:
 		break;
 	}
 #endif
-
-//#ifdef MASS_SPRING_SYSTEM
-//#endif
 }
 
 // Draw the edges of the bounding box [-0.5;0.5]³ rotated with the cameras model tranformation.
@@ -390,7 +392,6 @@ void DrawMassSpringSystem(ID3D11DeviceContext* pd3dImmediateContext)
 		DrawSpring(pd3dImmediateContext, &((Spring)*spring));
 		i++;
 	}
-
 }
 
 
