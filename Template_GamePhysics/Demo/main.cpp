@@ -105,6 +105,9 @@ XMVECTORF32 TUM_BLUE_LIGHT = {.259, .522, .957,1};
 enum IntegrationMethod{IN_EULER, IN_MIDPOINT, IN_LEAPFROG} integrationMethod;
 DWORD previousTime, currentTime;
 float deltaTime =0;
+bool g_fixedTimestep = false;
+float g_manualTimestep = 0.005;
+float g_gravity = -9.81;
 
 #endif
 
@@ -186,6 +189,9 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 #ifdef MASS_SPRING_SYSTEM
 	case 3:
 		TwAddVarRW(g_pTweakBar, "Point Size", TW_TYPE_FLOAT, &g_fSphereSize, "min=0.01 step=0.01");
+		TwAddVarRW(g_pTweakBar, "Use fixed timestep", TW_TYPE_BOOLCPP, &g_fixedTimestep, "");
+		TwAddVarRW(g_pTweakBar, "fixed timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
+		TwAddVarRW(g_pTweakBar, "custom gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
 		break;
 #endif
 	default:
@@ -730,9 +736,10 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			g_bDrawTriangle = true;
 			break;
 		case 3:
-			cout <<"Mass Spring System";
+			cout << "Mass Spring System\n";
 			currentTime = timeGetTime();
 			g_bDrawMassSpringSystem = true;
+			//here we might want to reset the points/springs
 			break;
 		default:
 			cout << "Empty Test!\n";
@@ -785,7 +792,9 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		previousTime = currentTime;
 		currentTime = timeGetTime();
 		deltaTime = (currentTime-previousTime)/1000.0f;
-	//	deltaTime = 0.005;
+		if(g_fixedTimestep) {
+			deltaTime = g_manualTimestep;
+		}
 
 		switch (integrationMethod)
 		{
@@ -802,7 +811,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			{
 				
 				a =  (((SpringPoint*)*point));
-			//	a->addGravity();
+			//	a->addGravity(g_gravity);
 				a->IntegratePosition(deltaTime);
 				a->computeAcceleration();
 				a->IntegrateVelocity(deltaTime);

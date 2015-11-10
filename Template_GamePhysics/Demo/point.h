@@ -31,7 +31,7 @@ public:
 	void setDamping(float newdamp);
 	void setStatic(bool isStatic);
 	void addForce(XMFLOAT3 newForce);
-	void addGravity();
+	void addGravity(float gravity);
 	void addDamping(float deltaTime);
 
 	
