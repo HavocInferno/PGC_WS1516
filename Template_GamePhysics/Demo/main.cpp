@@ -108,7 +108,8 @@ float deltaTime =0;
 bool g_fixedTimestep = false;
 float g_manualTimestep = 0.005;
 float g_gravity = -9.81;
-
+bool g_useGravity = true;
+int g_demoCase = 0, g_preDemoCase = 0;
 #endif
 
 // Mass Spring variable
@@ -116,25 +117,95 @@ std::list<Spring> springs;
 std::list<SpringPoint*> points;
 void InitMassSprings()
 {
-	Spring g_spring1, g_spring2;
-	SpringPoint* g_point1,* g_point2,* g_point3;
+	if(g_demoCase == 0) {
+		Spring g_spring1, g_spring2;
+		SpringPoint* g_point1,* g_point2,* g_point3;
 
-	g_point1 = new SpringPoint(XMFLOAT3(0.0f,0,0));
-	g_point1->setVelocity(XMFLOAT3(-1,0,0));
-	g_point1->setDamping(0.2f);
+		g_point1 = new SpringPoint(XMFLOAT3(0.0f,0,0));
+		g_point1->setVelocity(XMFLOAT3(-1,0,0));
+		g_point1->setDamping(0.2f);
 
-	g_point2 = new SpringPoint(XMFLOAT3(0,0.2f,0));
-	g_point2->setVelocity(XMFLOAT3(1,0,0));
-	g_point2->setDamping(0.2f);
-	//g_point2->gp_isStatic = true;
+		g_point2 = new SpringPoint(XMFLOAT3(0,0.2f,0));
+		g_point2->setVelocity(XMFLOAT3(1,0,0));
+		g_point2->setDamping(0.2f);
+		//g_point2->gp_isStatic = true;
 
-	g_spring1.setPoint(1, g_point1);
-	g_spring1.setPoint(2, g_point2);
+		g_spring1.setPoint(1, g_point1);
+		g_spring1.setPoint(2, g_point2);
 
 
-	points.push_back(g_point1);
-	points.push_back(g_point2);
-	springs.push_back(g_spring1);
+		points.push_back(g_point1);
+		points.push_back(g_point2);
+		springs.push_back(g_spring1);
+	} else if(g_demoCase == 1) {
+		//TWO RANDOM 5-Springs
+		Spring g_springs[10] = {};
+		SpringPoint* g_points[12] = {};
+		float x1 = 0;
+		float vx1 = -1;
+		float x2 = -2;
+		float vx2 = -1;
+		
+		for(int i = 0; i < 6; i++) {
+			g_points[i] = new SpringPoint(XMFLOAT3(x1,x1,x1));
+			g_points[i]->setVelocity(XMFLOAT3(vx1,0,0));
+			g_points[i]->setDamping(0.2f);
+			x1 += 1;
+			vx1 *= -1;
+			points.push_back(g_points[i]);
+
+			g_points[i+6] = new SpringPoint(XMFLOAT3(-x2,x2,-x2));
+			g_points[i+6]->setVelocity(XMFLOAT3(0,0,vx2));
+			g_points[i+6]->setDamping(0.1f);
+			x2 += 1;
+			vx2 *= -1;
+			points.push_back(g_points[i+6]);
+		}
+
+		for(int i = 0; i < 5; i++) {
+			g_springs[i].setPoint(1, g_points[i]);
+			g_springs[i].setPoint(2, g_points[i+1]);
+			springs.push_back(g_springs[i]);
+
+			g_springs[i+5].setPoint(1, g_points[i+6]);
+			g_springs[i+5].setPoint(2, g_points[i+6+1]);
+			springs.push_back(g_springs[i+5]);
+		}
+
+		//GRID STUFF
+		/*Spring g_springs[24] = {};
+		SpringPoint* g_points[16] = {};
+		float x1 = 0;
+		float vx1 = -1;
+		float x2 = -2;
+		float vx2 = -1;
+		
+		for(int i = 0; i < 6; i++) {
+			g_points[i] = new SpringPoint(XMFLOAT3(x1,x1,x1));
+			g_points[i]->setVelocity(XMFLOAT3(vx1,0,0));
+			g_points[i]->setDamping(0.2f);
+			x1 += 1;
+			vx1 *= -1;
+			points.push_back(g_points[i]);
+
+			g_points[i+6] = new SpringPoint(XMFLOAT3(-x2,x2,-x2));
+			g_points[i+6]->setVelocity(XMFLOAT3(0,0,vx2));
+			g_points[i+6]->setDamping(0.1f);
+			x2 += 1;
+			vx2 *= -1;
+			points.push_back(g_points[i+6]);
+		}
+
+		for(int i = 0; i < 5; i++) {
+			g_springs[i].setPoint(1, g_points[i]);
+			g_springs[i].setPoint(2, g_points[i+1]);
+			springs.push_back(g_springs[i]);
+
+			g_springs[i+5].setPoint(1, g_points[i+6]);
+			g_springs[i+5].setPoint(2, g_points[i+6+1]);
+			springs.push_back(g_springs[i+5]);
+		}*/
+	}
 }
 
 void DestroyMassSprings()
@@ -187,6 +258,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 	TwDefine(" TweakBar color='0 128 128' alpha=128 ");
 
 	TwType TW_TYPE_INTEGRATOR = TwDefineEnumFromString("Integration Method", "Euler,Midpoint,LeapFrog");
+	TwType TW_TYPE_DEMOCASE = TwDefineEnumFromString("Demo Setup", "Demo 1/2/3,Demo 4");
 	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "BasicTest,Setup1,Setup2,MassSpringSystem");
 	TwAddVarRW(g_pTweakBar, "Test Scene", TW_TYPE_TESTCASE, &g_iTestCase, "");
 	// HINT: For buttons you can directly pass the callback function as a lambda expression.
@@ -211,11 +283,13 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		break;
 #ifdef MASS_SPRING_SYSTEM
 	case 3:
-		TwAddVarRW(g_pTweakBar, "Integration Method", TW_TYPE_INTEGRATOR, &g_integrationMethod, "");
+		TwAddVarRW(g_pTweakBar, "Demo Setup", TW_TYPE_DEMOCASE, &g_demoCase, "");
+		TwAddVarRW(g_pTweakBar, "-> Integration Method", TW_TYPE_INTEGRATOR, &g_integrationMethod, "");
 		TwAddVarRW(g_pTweakBar, "Point Size", TW_TYPE_FLOAT, &g_fSphereSize, "min=0.01 step=0.01");
 		TwAddVarRW(g_pTweakBar, "Use fixed timestep", TW_TYPE_BOOLCPP, &g_fixedTimestep, "");
-		TwAddVarRW(g_pTweakBar, "fixed timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
-		TwAddVarRW(g_pTweakBar, "custom gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
+		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
+		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
 		break;
 #endif
 	default:
@@ -821,9 +895,10 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			deltaTime = g_manualTimestep;
 		}
 
-		if(g_preIntegrationMethod != g_integrationMethod) {
+		if(g_preIntegrationMethod != g_integrationMethod || g_preDemoCase != g_demoCase) {
 			ResetMassSprings(deltaTime);
 			g_preIntegrationMethod = g_integrationMethod;
+			g_preDemoCase = g_demoCase;
 		}
 
 		SpringPoint* a;
@@ -839,7 +914,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			for(auto point = points.begin(); point != points.end();point++)
 			{
 				a =  (((SpringPoint*)*point));
-			//	a->addGravity(g_gravity);
+				if(g_useGravity) { a->addGravity(g_gravity); }
 				a->addDamping(deltaTime);
 				a->IntegratePosition(deltaTime);
 				a->computeAcceleration();
@@ -856,7 +931,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			for(auto point = points.begin(); point != points.end();point++)
 			{	
 				a =  (((SpringPoint*)*point));
-			//	a->addGravity(g_gravity);
+				if(g_useGravity) { a->addGravity(g_gravity); }
 				a->gp_posTemp = a->IntegratePositionTmp(deltaTime/2.0f);
 				a->computeAcceleration();
 				a->gp_velTemp = a->IntegrateVelocityTmp(deltaTime/2.0f);
@@ -885,7 +960,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			for(auto point = points.begin(); point != points.end();point++)
 			{
 				a =  (((SpringPoint*)*point));
-			//	a->addGravity(g_gravity);
+				if(g_useGravity) { a->addGravity(g_gravity); }
 				a->computeAcceleration();
 				a->IntegrateVelocity(deltaTime);
 				a->addDamping(deltaTime);

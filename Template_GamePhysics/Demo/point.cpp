@@ -64,7 +64,7 @@ void SpringPoint::addForce(XMFLOAT3 newForce)
 };
 void SpringPoint::addGravity(float gravity)
 {
-	gp_force = addVector(gp_velocity,XMFLOAT3(0,gravity*gp_mass*0.001,0));
+	gp_force = addVector(gp_force,XMFLOAT3(0,gravity,0));
 };
 void SpringPoint::addDamping(float deltaTime)
 {
