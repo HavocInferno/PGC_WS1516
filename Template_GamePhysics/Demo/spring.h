@@ -12,7 +12,6 @@ class Spring
 {
 public:
 
-
 	float gs_stiffness;
 	float gs_initialLength;
 	float gs_currentLength;

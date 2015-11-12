@@ -831,15 +831,15 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		switch (g_integrationMethod)
 		{
 		case 0: //EULER
-			for(auto spring = springs.begin(); spring != springs.end();spring++)
+			for(auto spring = springs.begin(); spring != springs.end(); spring++)
 			{
-				b= &(((Spring)*spring));
+				b= &((Spring)*spring);
 				b->computeElasticForces();
 			}
 			for(auto point = points.begin(); point != points.end();point++)
 			{
-				a =  (((SpringPoint*)*point));
-			//	a->addGravity(g_gravity);
+				a =  ((SpringPoint*)*point);
+				a->addGravity(g_gravity);
 				a->addDamping(deltaTime);
 				a->IntegratePosition(deltaTime);
 				a->computeAcceleration();
@@ -856,7 +856,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			for(auto point = points.begin(); point != points.end();point++)
 			{	
 				a =  (((SpringPoint*)*point));
-			//	a->addGravity(g_gravity);
+				a->addGravity(g_gravity);
 				a->gp_posTemp = a->IntegratePositionTmp(deltaTime/2.0f);
 				a->computeAcceleration();
 				a->gp_velTemp = a->IntegrateVelocityTmp(deltaTime/2.0f);
@@ -885,7 +885,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			for(auto point = points.begin(); point != points.end();point++)
 			{
 				a =  (((SpringPoint*)*point));
-			//	a->addGravity(g_gravity);
+				a->addGravity(g_gravity);
 				a->computeAcceleration();
 				a->IntegrateVelocity(deltaTime);
 				a->addDamping(deltaTime);
@@ -896,18 +896,49 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		default:
 			break;
 		}
+
+		// REALLY SIMPLE COLLISION DETECTION WITH GROUND PLANE
+		for (auto point = points.begin(); point != points.end();point++)
+		{
+			float friction = 0.98; // 1.0 means NO friction
+			float bounciness = 0.75;
+			a =  (((SpringPoint*)*point));
+			if (a->gp_position.y < -1 ) /* || (a->gp_position.y < 0.5 ))*/ {
+				a->setPosition(XMFLOAT3 (a->gp_position.x, /*-1 - a->gp_position*/  -0.9999, a->gp_position.z)); 
+				a->setVelocity(XMFLOAT3 (a->gp_velocity.x*friction, -a->gp_velocity.y*bounciness, a->gp_velocity.z*friction)); 	
+			}
+		}	
+
+
 		break;
 	default:
 		break;
 	}
+	
 	if (g_bSimulateByStep)
 		g_bIsSpaceReleased = true;
+
+
 	
 #endif
 #ifdef MASS_SPRING_SYSTEM
 	//TODO: Calculate Euler/Midpoint here?
 #endif
 }
+
+// TODO : some simple bounding box collision thingy
+/*
+void changeCoordinate(float* coord) {
+	float boundary;
+	if (*coord > .5) {
+		boundary = .5;
+	} else if (*coord < -.5) {
+		boundary = -.5;
+	}
+
+	*coord = (boundary - abs(boundary - *coord)) * 0.5;
+}
+*/
 
 //--------------------------------------------------------------------------------------
 // Render the scene using the D3D11 device
