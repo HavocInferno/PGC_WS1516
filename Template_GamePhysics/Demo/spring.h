@@ -23,6 +23,7 @@ public:
 	Spring::Spring(SpringPoint* point1, SpringPoint* point2);
 	void initialize();
 	void computeElasticForces();
+	void computeElasticForcesTmp();
 
 	void setPoint(int pointIndex, SpringPoint* point);
 

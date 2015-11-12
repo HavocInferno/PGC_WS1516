@@ -6,7 +6,9 @@ using namespace DirectX;
 #define g -9.81f
 
 XMFLOAT3 gp_position;
+XMFLOAT3 gp_posTemp;
 XMFLOAT3 gp_velocity;
+XMFLOAT3 gp_velTemp;
 XMFLOAT3 gp_acceleration;
 XMFLOAT3 gp_force;
 float gp_mass;
@@ -74,9 +76,24 @@ void SpringPoint::IntegratePosition(float deltaTime)
 	if(!gp_isStatic)
 	setPosition(addVector(gp_position,multiplyVector(gp_velocity,deltaTime)));
 };
+void SpringPoint::IntegratePosition(float deltaTime, XMFLOAT3 vel)
+{
+	if(!gp_isStatic)
+	setPosition(addVector(gp_position,multiplyVector(vel,deltaTime)));
+};
+XMFLOAT3 SpringPoint::IntegratePositionTmp(float deltaTime)
+{
+	if(!gp_isStatic)
+	return addVector(gp_position,multiplyVector(gp_velocity,deltaTime));
+	return gp_position;
+};
 void SpringPoint::IntegrateVelocity(float deltaTime)
 {
 	setVelocity(addVector(gp_velocity,multiplyVector(gp_acceleration,deltaTime)));
+};
+XMFLOAT3 SpringPoint::IntegrateVelocityTmp(float deltaTime)
+{
+	return addVector(gp_velocity,multiplyVector(gp_acceleration,deltaTime));
 };
 void SpringPoint::computeAcceleration()
 {

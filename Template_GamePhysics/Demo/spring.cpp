@@ -60,3 +60,10 @@ void Spring::computeElasticForces()
 	gs_point1->addForce(multiplyVector(subVector(gs_point1->gp_position,gs_point2->gp_position),-(gs_stiffness*(gs_currentLength-gs_initialLength))/gs_currentLength));
 	gs_point2->addForce(multiplyVector(subVector(gs_point2->gp_position,gs_point1->gp_position),-(gs_stiffness*(gs_currentLength-gs_initialLength))/gs_currentLength));
 };
+void Spring::computeElasticForcesTmp()
+{
+	//-k(l-L)(xi-xj)/l
+	computeCurrentLength();
+	gs_point1->addForce(multiplyVector(subVector(gs_point1->gp_posTemp,gs_point2->gp_posTemp),-(gs_stiffness*(gs_currentLength-gs_initialLength))/gs_currentLength));
+	gs_point2->addForce(multiplyVector(subVector(gs_point2->gp_posTemp,gs_point1->gp_posTemp),-(gs_stiffness*(gs_currentLength-gs_initialLength))/gs_currentLength));
+};

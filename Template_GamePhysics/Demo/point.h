@@ -12,7 +12,9 @@ class SpringPoint
 {
 public:
 	XMFLOAT3 gp_position;
+	XMFLOAT3 gp_posTemp;
 	XMFLOAT3 gp_velocity;
+	XMFLOAT3 gp_velTemp;
 	XMFLOAT3 gp_force;
 	XMFLOAT3 gp_acceleration;
 	float gp_mass;
@@ -36,7 +38,10 @@ public:
 
 	
 	void SpringPoint::IntegrateVelocity(float deltaTime);
+	XMFLOAT3 SpringPoint::IntegrateVelocityTmp(float deltaTime);
 	void SpringPoint::IntegratePosition(float deltaTime);
+	void SpringPoint::IntegratePosition(float deltaTime, XMFLOAT3 vel);
+	XMFLOAT3 SpringPoint::IntegratePositionTmp(float deltaTime);
 	void SpringPoint::computeAcceleration();
 	void SpringPoint::resetForces();
 };
