@@ -789,22 +789,21 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 
 void static colideWithBOundaryCube(float* vecs[2][3], float boundaryCubeHalfSide, float friction, float bounciness) {
 	bool outOfBoundary = false;
-	float boundary;
+	short whereToBounce;
 	
 	for (int i = 0; i < 3; i++) {
 		outOfBoundary = false;
 
-		if (*vecs[0][i]/* - g_fSphereSize*/ < -1 * boundaryCubeHalfSide) {
-			boundary = -1 * boundaryCubeHalfSide;
+		if (*vecs[0][i] - g_fSphereSize < -1 * boundaryCubeHalfSide) {
+			whereToBounce = -1;
 			outOfBoundary = true;
-		} else if (*vecs[0][i]/* + g_fSphereSize*/ > boundaryCubeHalfSide) {
-			boundary = boundaryCubeHalfSide;
+		} else if (*vecs[0][i] + g_fSphereSize > boundaryCubeHalfSide) {
+			whereToBounce = 1;
 			outOfBoundary = true;
 		}
 
 		if (outOfBoundary) {
-			*vecs[0][i] = boundary - 0.00001;
-			//*vecs[0][i] = (boundary - abs(boundary - *vecs[0][i])) * bounciness;
+			*vecs[0][i] = boundaryCubeHalfSide * whereToBounce + g_fSphereSize;
 			*vecs[1][i] = -*vecs[1][i] * bounciness; // [1] - velocity vector
 			for (int j = 0; j < 3; j++) {
 				if (j != i) {
@@ -1013,12 +1012,12 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 				{&a->gp_velocity.x, &a->gp_velocity.y, &a->gp_velocity.z} // velocity
 			};
 
-			//colideWithBOundaryCube(vecs, 1, friction, bounciness);
+			colideWithBOundaryCube(vecs, 1, friction, bounciness);
 
-			if (a->gp_position.y < -1+g_fSphereSize ) {
+			/*if (a->gp_position.y < -1+g_fSphereSize ) {
 				a->setPosition(XMFLOAT3 (a->gp_position.x, -0.9999+g_fSphereSize, a->gp_position.z)); 
 				a->setVelocity(XMFLOAT3 (a->gp_velocity.x*friction, -a->gp_velocity.y*bounciness, a->gp_velocity.z*friction)); 	
-			}
+			}*/
 		}	
 
 
