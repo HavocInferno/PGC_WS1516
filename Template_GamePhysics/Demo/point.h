@@ -19,6 +19,8 @@ public:
 	XMFLOAT3 gp_acceleration;
 	float gp_mass;
 	float gp_damping;
+	float gp_groundFriction;
+	float gp_bouncyness;
 	bool gp_isStatic;
 
 	void initialize();
@@ -44,6 +46,8 @@ public:
 	XMFLOAT3 SpringPoint::IntegratePositionTmp(float deltaTime);
 	void SpringPoint::computeAcceleration();
 	void SpringPoint::resetForces();
+	void SpringPoint::computeCollision(float deltaTime, float sphereSize);
+	void SpringPoint::computeCollisionWithWalls(float deltaTime, float sphereSize, float xWall, float zWall, float ceiling);
 };
 
 #endif

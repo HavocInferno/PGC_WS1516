@@ -110,6 +110,9 @@ float g_manualTimestep = 0.005;
 float g_gravity = -9.81;
 bool g_useGravity = true;
 int g_demoCase = 0, g_preDemoCase = 0;
+float groundFriction, groundBouncyness;
+float g_xWall =1.0f, g_zWall=1.0f, g_ceiling=1.0f;
+bool g_usingWalls = true;
 #endif
 
 // Mass Spring variable
@@ -290,6 +293,11 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "-> timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
 		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
 		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
+		TwAddVarRW(g_pTweakBar, "Collide with walls:", TW_TYPE_BOOLCPP, &g_usingWalls, "");
+		TwAddVarRW(g_pTweakBar, "X-Wall Positions", TW_TYPE_FLOAT, &g_xWall, "min=0.5 ma=10 step=0.1");
+		TwAddVarRW(g_pTweakBar, "Z-Wall Positions", TW_TYPE_FLOAT, &g_zWall, "min=0.5 ma=10 step=0.1");
+		TwAddVarRW(g_pTweakBar, "Ceiling height", TW_TYPE_FLOAT, &g_ceiling, "min=0.5 ma=10 step=0.1");
+
 		break;
 #endif
 	default:
@@ -947,6 +955,10 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 				a->computeAcceleration();
 				a->IntegrateVelocity(deltaTime);
 				a->resetForces();
+				if(g_usingWalls)
+					a->computeCollisionWithWalls(deltaTime,g_fSphereSize,g_xWall,g_zWall,g_ceiling);
+				else
+					a->computeCollision(deltaTime, g_fSphereSize);
 			}	
 			break;
 		case 1: //MIDPOINT
@@ -975,7 +987,11 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			{
 				a =  (((SpringPoint*)*point));
 				a->IntegrateVelocity(deltaTime);
-				a->resetForces();
+				a->resetForces();				
+				if(g_usingWalls)
+					a->computeCollisionWithWalls(deltaTime,g_fSphereSize,g_xWall,g_zWall,g_ceiling);
+				else
+					a->computeCollision(deltaTime, g_fSphereSize);
 			}	
 			break;
 		case 2: //LEAP FROG
@@ -993,6 +1009,10 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 				a->addDamping(deltaTime);
 				a->IntegratePosition(deltaTime);
 				a->resetForces();
+				if(g_usingWalls)
+					a->computeCollisionWithWalls(deltaTime,g_fSphereSize,g_xWall,g_zWall,g_ceiling);
+				else
+					a->computeCollision(deltaTime, g_fSphereSize);
 			}	
 			break;
 		default:
@@ -1000,6 +1020,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		}
 
 		// REALLY SIMPLE COLLISION DETECTION WITH GROUND PLANE
+		/*
 		for (auto point = points.begin(); point != points.end();point++)
 		{
 			float friction = 0.98; // 1.0 means NO friction
@@ -1017,8 +1038,9 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			/*if (a->gp_position.y < -1+g_fSphereSize ) {
 				a->setPosition(XMFLOAT3 (a->gp_position.x, -0.9999+g_fSphereSize, a->gp_position.z)); 
 				a->setVelocity(XMFLOAT3 (a->gp_velocity.x*friction, -a->gp_velocity.y*bounciness, a->gp_velocity.z*friction)); 	
-			}*/
-		}	
+			}
+		}
+		*/
 
 
 
