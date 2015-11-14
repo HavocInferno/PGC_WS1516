@@ -112,7 +112,7 @@ bool g_useGravity = true;
 int g_demoCase = 0, g_preDemoCase = 0;
 float groundFriction, groundBouncyness;
 float g_xWall =1.0f, g_zWall=1.0f, g_ceiling=1.0f;
-bool g_usingWalls = true;
+bool g_usingWalls = false;
 #endif
 
 // Mass Spring variable
@@ -243,7 +243,7 @@ void ResetMassSprings(float deltaTime) {
 		for(auto point = points.begin(); point != points.end();point++)
 		{
 			a =  (((SpringPoint*)*point));
-		//	a->addGravity(g_gravity);
+			if(g_useGravity) { a->addGravity(g_gravity); }
 			a->computeAcceleration();
 			a->IntegrateVelocity(deltaTime/2.0f);
 			a->resetForces();
@@ -294,8 +294,8 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
 		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
 		TwAddVarRW(g_pTweakBar, "Collide with walls:", TW_TYPE_BOOLCPP, &g_usingWalls, "");
-		TwAddVarRW(g_pTweakBar, "X-Wall Positions", TW_TYPE_FLOAT, &g_xWall, "min=0.5 ma=10 step=0.1");
-		TwAddVarRW(g_pTweakBar, "Z-Wall Positions", TW_TYPE_FLOAT, &g_zWall, "min=0.5 ma=10 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> X-Wall Positions", TW_TYPE_FLOAT, &g_xWall, "min=0.5 ma=10 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> Z-Wall Positions", TW_TYPE_FLOAT, &g_zWall, "min=0.5 ma=10 step=0.1");
 		TwAddVarRW(g_pTweakBar, "Ceiling height", TW_TYPE_FLOAT, &g_ceiling, "min=0.5 ma=10 step=0.1");
 
 		break;
