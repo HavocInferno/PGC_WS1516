@@ -87,7 +87,7 @@ XMFLOAT3 g_vfRotate = XMFLOAT3(0, 0, 0);
 
 // TweakAntBar GUI variables
 
-int g_iTestCase = 1;
+int g_iTestCase = 0;
 int g_iPreTestCase = -1;
 bool  g_bSimulateByStep = false;
 bool  g_bIsSpaceReleased = true;
@@ -109,6 +109,7 @@ bool g_fixedTimestep = false;
 float g_manualTimestep = 0.005;
 float g_gravity = -9.81;
 bool g_useGravity = true;
+bool g_useDamping = true;
 int g_demoCase = 0, g_preDemoCase = 0;
 float groundFriction, groundBouncyness;
 float g_xWall =1.0f, g_zWall=1.0f, g_ceiling=1.0f;
@@ -252,7 +253,7 @@ void ResetMassSprings(float deltaTime) {
 		}	
 	}
 
-	if(g_demoCase == 0)
+	if(g_iTestCase == 0)
 	{
 		Spring* b;
 		for(auto spring = springs.begin(); spring != springs.end(); spring++)
@@ -279,7 +280,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 
 	TwType TW_TYPE_INTEGRATOR = TwDefineEnumFromString("Integration Method", "Euler,Midpoint,LeapFrog");
 	TwType TW_TYPE_DEMOCASE = TwDefineEnumFromString("Demo Setup", "Demo 1/2/3,Demo 4");
-	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "BasicTest,Setup1,Setup2,MassSpringSystem");
+	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "Demo 1,Demo 2,Demo 3,Demo 4");
 	TwAddVarRW(g_pTweakBar, "Test Scene", TW_TYPE_TESTCASE, &g_iTestCase, "");
 	// HINT: For buttons you can directly pass the callback function as a lambda expression.
 	TwAddButton(g_pTweakBar, "Reset Scene", [](void *){g_iPreTestCase = -1; }, nullptr, "");
@@ -291,20 +292,16 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 	switch (g_iTestCase)
 	{
 	case 0:
-		TwAddVarRW(g_pTweakBar, "Draw Spheres", TW_TYPE_BOOLCPP, &g_bDrawSpheres, "");
-		TwAddVarRW(g_pTweakBar, "Num Spheres", TW_TYPE_INT32, &g_iNumSpheres, "min=1");
-		TwAddVarRW(g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &g_fSphereSize, "min=0.01 step=0.01");
 		break;
 	case 1:
-		TwAddVarRW(g_pTweakBar, "Draw Teapot",   TW_TYPE_BOOLCPP, &g_bDrawTeapot, "");
 		break;
 	case 2:
-		TwAddVarRW(g_pTweakBar, "Draw Triangle", TW_TYPE_BOOLCPP, &g_bDrawTriangle, "");
 		break;
 #ifdef MASS_SPRING_SYSTEM
 	case 3:
 		TwAddVarRW(g_pTweakBar, "Demo Setup", TW_TYPE_DEMOCASE, &g_demoCase, "");
 		TwAddVarRW(g_pTweakBar, "-> Integration Method", TW_TYPE_INTEGRATOR, &g_integrationMethod, "");
+		TwAddVarRW(g_pTweakBar, "Use damping", TW_TYPE_BOOLCPP, &g_useDamping, "");
 		TwAddVarRW(g_pTweakBar, "Point Size", TW_TYPE_FLOAT, &g_fSphereSize, "min=0.01 step=0.01");
 		TwAddVarRW(g_pTweakBar, "Use fixed timestep", TW_TYPE_BOOLCPP, &g_fixedTimestep, "");
 		TwAddVarRW(g_pTweakBar, "-> timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
@@ -313,7 +310,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "Collide with walls:", TW_TYPE_BOOLCPP, &g_usingWalls, "");
 		TwAddVarRW(g_pTweakBar, "-> X-Wall Positions", TW_TYPE_FLOAT, &g_xWall, "min=0.5 ma=10 step=0.1");
 		TwAddVarRW(g_pTweakBar, "-> Z-Wall Positions", TW_TYPE_FLOAT, &g_zWall, "min=0.5 ma=10 step=0.1");
-		TwAddVarRW(g_pTweakBar, "Ceiling height", TW_TYPE_FLOAT, &g_ceiling, "min=0.5 ma=10 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> Ceiling height", TW_TYPE_FLOAT, &g_ceiling, "min=0.5 ma=10 step=0.1");
 
 		break;
 #endif
@@ -869,23 +866,96 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		switch (g_iTestCase)
 		{
 		case 0:
-			cout << "Basic Test!\n";
-			g_bDrawSpheres = true;
-			g_iNumSpheres = 100;
+			cout << "Demo 1!\n";
 			g_fSphereSize = 0.05f;
+					//EULER
+		deltaTime = 0.1;
+		SpringPoint* a;
+		Spring* b;
+		g_demoCase = 0;
+		g_integrationMethod = 0;
+		ResetMassSprings(0.1f);
+		for(auto spring = springs.begin(); spring != springs.end(); spring++)
+			{
+				b= &((Spring)*spring);
+				b->computeElasticForces();
+			}
+		for(auto point = points.begin(); point != points.end();point++)
+			{
+
+				a =  ((SpringPoint*)*point);
+				a->IntegratePosition(deltaTime);
+				a->computeAcceleration();
+				a->IntegrateVelocity(deltaTime);
+				a->resetForces();
+			}	
+		for(auto spring = springs.begin(); spring != springs.end(); spring++)
+				{
+					b= &((Spring)*spring);
+					std::cout << "\nEuler demo1 after one time step:\n";
+					b->printSpring();
+				}
+
+		//Midpoint
+		g_integrationMethod =1;
+		ResetMassSprings(0.1);
+		for(auto spring = springs.begin(); spring != springs.end();spring++)
+			{
+				b= &(((Spring)*spring));
+				b->computeElasticForces();
+			}
+			for(auto point = points.begin(); point != points.end();point++)
+			{	
+				a =  (((SpringPoint*)*point));
+				a->gp_posTemp = a->IntegratePositionTmp(deltaTime/2.0f);
+				a->computeAcceleration();
+				a->gp_velTemp = a->IntegrateVelocityTmp(deltaTime/2.0f);
+				a->IntegratePosition(deltaTime, a->gp_velTemp);
+				a->resetForces();
+			}
+			for(auto spring = springs.begin(); spring != springs.end();spring++)
+			{
+				b= &(((Spring)*spring));
+				b->computeElasticForcesTmp();
+			}
+			for(auto point = points.begin(); point != points.end();point++)
+			{
+				a =  (((SpringPoint*)*point));
+				a->IntegrateVelocity(deltaTime);
+				a->resetForces();
+			}
+			for(auto spring = springs.begin(); spring != springs.end(); spring++)
+				{
+					b= &((Spring)*spring);
+					std::cout << "\nMidpoint demo1 after one time step:\n";
+					b->printSpring();
+				}
+
 			break;
 		case 1:
-			cout << "Test1!\n";
-			g_bDrawTeapot = true;			
-			g_vfMovableObjectPos = XMFLOAT3(0, 0, 0);
-			g_vfRotate = XMFLOAT3(0, 0, 0);
+			cout << "Demo2!\n";
+			g_fSphereSize = 0.05f;
+			deltaTime = 0.005f;
+			ResetMassSprings(0.005f);
 			break;
 		case 2:
-			cout << "Test2!\n";
-			g_bDrawTriangle = true;
+			cout << "Demo3!\n";
+			g_fSphereSize = 0.05f;
+			deltaTime = 0.005f;
+			ResetMassSprings(0.005f);
 			break;
 		case 3:
-			cout << "Mass Spring System\n";
+			cout << "Demo4\n";
+			g_integrationMethod = 0;
+			g_demoCase = 1;
+			g_fSphereSize = 0.05f;
+			g_gravity = -9.81f;
+			g_useDamping = true;
+			g_useGravity = true;
+			g_usingWalls = true;
+			g_ceiling =1;
+			g_xWall =1;
+			g_zWall =1;
 			currentTime = timeGetTime();
 			g_bDrawMassSpringSystem = true;
 			//here we might want to reset the points/springs
@@ -906,37 +976,55 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 	if (g_bSimulateByStep && g_bIsSpaceReleased)
 		return;
 	// update current setup for each frame
+	SpringPoint* a;
+	Spring* b;
 	switch (g_iTestCase)
 	{// handling different cases
+	case 0:
+		break;
 	case 1:
-		// Apply accumulated mouse deltas to g_vfMovableObjectPos (move along cameras view plane)
-		if (g_viMouseDelta.x != 0 || g_viMouseDelta.y != 0)
-		{
-			// Calcuate camera directions in world space
-			XMMATRIX viewInv = XMMatrixInverse(nullptr, g_camera.GetViewMatrix());
-			XMVECTOR camRightWorld = XMVector3TransformNormal(g_XMIdentityR0, viewInv);
-			XMVECTOR camUpWorld = XMVector3TransformNormal(g_XMIdentityR1, viewInv);
+		deltaTime = 0.005f;
+		for(auto spring = springs.begin(); spring != springs.end(); spring++)
+			{
+				b= &((Spring)*spring);
+				b->computeElasticForces();
+			}
+			for(auto point = points.begin(); point != points.end();point++)
+			{
 
-			// Add accumulated mouse deltas to movable object pos
-			XMVECTOR vMovableObjectPos = XMLoadFloat3(&g_vfMovableObjectPos);
-
-			float speedScale = 0.001f;
-			vMovableObjectPos = XMVectorAdd(vMovableObjectPos, speedScale * (float)g_viMouseDelta.x * camRightWorld);
-			vMovableObjectPos = XMVectorAdd(vMovableObjectPos, -speedScale * (float)g_viMouseDelta.y * camUpWorld);
-
-			XMStoreFloat3(&g_vfMovableObjectPos, vMovableObjectPos);
-
-			// Reset accumulated mouse deltas
-			g_viMouseDelta = XMINT2(0, 0);
-		}
-		// rotate the teapot
-		g_vfRotate.x += 0.005f;
-		if (g_vfRotate.x > 2 * M_PI) g_vfRotate.x -= 2 * M_PI;
-		g_vfRotate.y += 0.005f;
-		if (g_vfRotate.y > 2 * M_PI) g_vfRotate.y -= 2 * M_PI;
-		g_vfRotate.z += 0.005f;
-		if (g_vfRotate.z > 2 * M_PI) g_vfRotate.z -= 2 * M_PI;
-
+				a =  ((SpringPoint*)*point);
+				a->IntegratePosition(deltaTime);
+				a->computeAcceleration();
+				a->IntegrateVelocity(deltaTime);
+				a->resetForces();
+			}	
+		break;
+	case 2:
+			for(auto spring = springs.begin(); spring != springs.end();spring++)
+			{
+				b= &(((Spring)*spring));
+				b->computeElasticForces();
+			}
+			for(auto point = points.begin(); point != points.end();point++)
+			{	
+				a =  (((SpringPoint*)*point));
+				a->gp_posTemp = a->IntegratePositionTmp(deltaTime/2.0f);
+				a->computeAcceleration();
+				a->gp_velTemp = a->IntegrateVelocityTmp(deltaTime/2.0f);
+				a->IntegratePosition(deltaTime, a->gp_velTemp);
+				a->resetForces();
+			}
+			for(auto spring = springs.begin(); spring != springs.end();spring++)
+			{
+				b= &(((Spring)*spring));
+				b->computeElasticForcesTmp();
+			}
+			for(auto point = points.begin(); point != points.end();point++)
+			{
+				a =  (((SpringPoint*)*point));
+				a->IntegrateVelocity(deltaTime);
+				a->resetForces();
+			}
 		break;
 	case 3:
 		previousTime = currentTime;
@@ -951,9 +1039,6 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			g_preIntegrationMethod = g_integrationMethod;
 			g_preDemoCase = g_demoCase;
 		}
-
-		SpringPoint* a;
-		Spring* b;
 		switch (g_integrationMethod)
 		{
 		case 0: //EULER
@@ -967,7 +1052,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 
 				a =  ((SpringPoint*)*point);
 				if(g_useGravity) { a->addGravity(g_gravity); }
-				a->addDamping(deltaTime);
+				if(g_useDamping) {a->addDamping(deltaTime); }
 				a->IntegratePosition(deltaTime);
 				a->computeAcceleration();
 				a->IntegrateVelocity(deltaTime);
@@ -1002,7 +1087,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 				a->gp_posTemp = a->IntegratePositionTmp(deltaTime/2.0f);
 				a->computeAcceleration();
 				a->gp_velTemp = a->IntegrateVelocityTmp(deltaTime/2.0f);
-				a->addDamping(deltaTime);
+				if(g_useDamping) {a->addDamping(deltaTime); }
 				a->IntegratePosition(deltaTime, a->gp_velTemp);
 				a->resetForces();
 			}
@@ -1045,7 +1130,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 				if(g_useGravity) { a->addGravity(g_gravity); }
 				a->computeAcceleration();
 				a->IntegrateVelocity(deltaTime);
-				a->addDamping(deltaTime);
+				if(g_useDamping) {a->addDamping(deltaTime); }
 				a->IntegratePosition(deltaTime);
 				a->resetForces();
 				if(g_usingWalls)
@@ -1125,16 +1210,13 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 	switch (g_iTestCase)
 	{
 	case 0:
-		// Draw speheres
-		if (g_bDrawSpheres) DrawSomeRandomObjects(pd3dImmediateContext);
+		if (g_bDrawMassSpringSystem) DrawMassSpringSystem(pd3dImmediateContext);
 		break;
 	case 1:
-		// Draw movable teapot
-		if (g_bDrawTeapot) DrawMovableTeapot(pd3dImmediateContext);
+		if (g_bDrawMassSpringSystem) DrawMassSpringSystem(pd3dImmediateContext);
 		break;
 	case 2:
-		// Draw simple triangle
-		if (g_bDrawTriangle) DrawTriangle(pd3dImmediateContext);
+		if (g_bDrawMassSpringSystem) DrawMassSpringSystem(pd3dImmediateContext);
 		break;
 #ifdef MASS_SPRING_SYSTEM
 	case 3:
