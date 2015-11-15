@@ -3,6 +3,7 @@
 using namespace DirectX;
 
 #include "point.h"
+#include <iostream>
 
 
 SpringPoint* gs_point1;
@@ -66,4 +67,11 @@ void Spring::computeElasticForcesTmp()
 	computeCurrentLength();
 	gs_point1->addForce(multiplyVector(subVector(gs_point1->gp_posTemp,gs_point2->gp_posTemp),-(gs_stiffness*(gs_currentLength-gs_initialLength))/gs_currentLength));
 	gs_point2->addForce(multiplyVector(subVector(gs_point2->gp_posTemp,gs_point1->gp_posTemp),-(gs_stiffness*(gs_currentLength-gs_initialLength))/gs_currentLength));
+};
+
+void Spring::printSpring()
+{
+	std::cout << "spring info: [stiffness=" << gs_stiffness << ", length=" << gs_currentLength << " (initial=" << gs_initialLength << ")]\n";
+	std::cout << "point1: [x=" << gs_point1->gp_position.x << ", y=" << gs_point1->gp_position.y << ", z=" << gs_point1->gp_position.z << "]\n";
+	std::cout << "point2: [x=" << gs_point2->gp_position.x << ", y=" << gs_point2->gp_position.y << ", z=" << gs_point2->gp_position.z << "]\n";
 };

@@ -113,6 +113,8 @@ int g_demoCase = 0, g_preDemoCase = 0;
 float groundFriction, groundBouncyness;
 float g_xWall =1.0f, g_zWall=1.0f, g_ceiling=1.0f;
 bool g_usingWalls = false;
+
+bool g_firstStep = true;
 #endif
 
 // Mass Spring variable
@@ -249,6 +251,21 @@ void ResetMassSprings(float deltaTime) {
 			a->resetForces();
 		}	
 	}
+
+	if(g_demoCase == 0)
+	{
+		Spring* b;
+		for(auto spring = springs.begin(); spring != springs.end(); spring++)
+		{
+			b= &((Spring)*spring);
+			if(g_integrationMethod == 0)
+				{std::cout << "\nEuler demo1 initially:\n";}
+			else if(g_integrationMethod == 1)
+				{std::cout << "\nMidpoint demo1 initially:\n";}
+			b->printSpring();
+		}
+	}
+	g_firstStep = true;
 }
 
 // Video recorder
@@ -960,6 +977,17 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 				else
 					a->computeCollision(deltaTime, g_fSphereSize);
 			}	
+			
+			if(g_firstStep == true && g_demoCase == 0)
+			{
+				for(auto spring = springs.begin(); spring != springs.end(); spring++)
+				{
+					b= &((Spring)*spring);
+					std::cout << "\nEuler demo1 after one time step:\n";
+					b->printSpring();
+				}
+				g_firstStep = false;
+			}
 			break;
 		case 1: //MIDPOINT
 			for(auto spring = springs.begin(); spring != springs.end();spring++)
@@ -992,7 +1020,18 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 					a->computeCollisionWithWalls(deltaTime,g_fSphereSize,g_xWall,g_zWall,g_ceiling);
 				else
 					a->computeCollision(deltaTime, g_fSphereSize);
-			}	
+			}
+
+			if(g_firstStep == true && g_demoCase == 0)
+			{
+				for(auto spring = springs.begin(); spring != springs.end(); spring++)
+				{
+					b= &((Spring)*spring);
+					std::cout << "\nMidpoint demo1 after one time step:\n";
+					b->printSpring();
+				}
+				g_firstStep = false;
+			}
 			break;
 		case 2: //LEAP FROG
 			for(auto spring = springs.begin(); spring != springs.end();spring++)

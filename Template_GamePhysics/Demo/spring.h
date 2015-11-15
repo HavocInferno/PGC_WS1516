@@ -30,6 +30,7 @@ public:
 	void setLength(float newlen);
 	void computeCurrentLength();
 
+	void printSpring();
 };
 
 #endif

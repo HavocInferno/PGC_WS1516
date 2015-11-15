@@ -37,7 +37,6 @@ public:
 	void addForce(XMFLOAT3 newForce);
 	void addGravity(float gravity);
 	void addDamping(float deltaTime);
-
 	
 	void SpringPoint::IntegrateVelocity(float deltaTime);
 	XMFLOAT3 SpringPoint::IntegrateVelocityTmp(float deltaTime);

@@ -195,4 +195,3 @@ void SpringPoint::computeCollisionWithWalls(float deltaTime, float sphereSize, f
 		}
 	}
 }
-
