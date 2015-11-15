@@ -114,6 +114,7 @@ int g_demoCase = 0, g_preDemoCase = 0;
 float groundFriction, groundBouncyness;
 float g_xWall =1.0f, g_zWall=1.0f, g_ceiling=1.0f;
 bool g_usingWalls = false;
+float g_explosionForce =1;
 
 bool g_firstStep = true;
 #endif
@@ -145,12 +146,14 @@ void InitMassSprings()
 		springs.push_back(g_spring1);
 	} else if(g_demoCase == 1) {
 		//TWO RANDOM 5-Springs
-		Spring g_springs[10] = {};
-		SpringPoint* g_points[12] = {};
+		Spring g_springs[15] = {};
+		SpringPoint* g_points[18] = {};
 		float x1 = 0;
 		float vx1 = -1;
 		float x2 = -2;
 		float vx2 = -1;
+		float x3 = 1;
+		float vx3 = -4;
 		
 		for(int i = 0; i < 6; i++) {
 			g_points[i] = new SpringPoint(XMFLOAT3(x1,x1,x1));
@@ -166,7 +169,16 @@ void InitMassSprings()
 			x2 += 1;
 			vx2 *= -1;
 			points.push_back(g_points[i+6]);
+
+			g_points[i+12] = new SpringPoint(XMFLOAT3(x2,-x3,-x1));
+			g_points[i+12]->setVelocity(XMFLOAT3(vx2,vx1,vx3));
+			g_points[i+12]->setDamping(0.1f);
+			x3 += 1;
+			vx3 *= -1;
+			points.push_back(g_points[i+12]);
 		}
+		g_points[12]->gp_isStatic = true;
+		g_points[12]->setPosition(XMFLOAT3(0,1,0));
 
 		for(int i = 0; i < 5; i++) {
 			g_springs[i].setPoint(1, g_points[i]);
@@ -176,7 +188,19 @@ void InitMassSprings()
 			g_springs[i+5].setPoint(1, g_points[i+6]);
 			g_springs[i+5].setPoint(2, g_points[i+6+1]);
 			springs.push_back(g_springs[i+5]);
+
+			g_springs[i+10].setPoint(1, g_points[i+12]);
+			g_springs[i+10].setPoint(2, g_points[i+12+1]);
+			springs.push_back(g_springs[i+10]);
 		}
+		Spring cirle;
+		cirle.setPoint(1,g_points[14]);
+		cirle.setPoint(2,g_points[17]);
+		springs.push_back(cirle);
+		cirle.setPoint(1,g_points[1]);
+		cirle.setPoint(2,g_points[17]);
+		springs.push_back(cirle);
+
 
 		//GRID STUFF
 		/*Spring g_springs[24] = {};
@@ -268,6 +292,18 @@ void ResetMassSprings(float deltaTime) {
 	}
 	g_firstStep = true;
 }
+//simulates an explosion one meter under the ground
+void explode()
+{
+	SpringPoint* a;
+		for(auto point = points.begin(); point != points.end();point++)
+		{
+			a =  (((SpringPoint*)*point));
+			//a->setVelocity(addVector(a->gp_velocity,invertVector(addVector(a->gp_position,XMFLOAT3(0,3,0)),g_explosionForce)));
+			a->setVelocity(addVector(a->gp_velocity,multiplyVector(normalizeVector(addVector(a->gp_position,XMFLOAT3(0,2,0))),g_explosionForce/vectorLength(a->gp_position))));
+		}
+
+}
 
 // Video recorder
 FFmpeg* g_pFFmpegVideoRecorder = nullptr;
@@ -311,6 +347,8 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "-> X-Wall Positions", TW_TYPE_FLOAT, &g_xWall, "min=0.5 ma=10 step=0.1");
 		TwAddVarRW(g_pTweakBar, "-> Z-Wall Positions", TW_TYPE_FLOAT, &g_zWall, "min=0.5 ma=10 step=0.1");
 		TwAddVarRW(g_pTweakBar, "-> Ceiling height", TW_TYPE_FLOAT, &g_ceiling, "min=0.5 ma=10 step=0.1");
+		TwAddButton(g_pTweakBar, "Explode!!", [](void *){explode(); }, nullptr, "");	
+		TwAddVarRW(g_pTweakBar, "-> Explosion Force", TW_TYPE_FLOAT, &g_explosionForce, "min=0.1 ma=10 step=0.1");
 
 		break;
 #endif
@@ -952,7 +990,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			g_gravity = -9.81f;
 			g_useDamping = true;
 			g_useGravity = true;
-			g_usingWalls = true;
+			g_usingWalls = false;
 			g_ceiling =1;
 			g_xWall =1;
 			g_zWall =1;

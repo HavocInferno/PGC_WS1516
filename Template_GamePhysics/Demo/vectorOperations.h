@@ -14,9 +14,17 @@ static XMFLOAT3 multiplyVector(XMFLOAT3 vector, float factor)
 {
 	return XMFLOAT3(vector.x*factor, vector.y*factor, vector.z*factor);
 }
+static XMFLOAT3 invertVector(XMFLOAT3 vector, float factor)
+{
+	return XMFLOAT3(factor/vector.x, factor/vector.y, factor/vector.z);
+}
 static float vectorLength(XMFLOAT3 vector)
 {
 	return sqrtf(vector.x*vector.x+vector.y*vector.y+vector.z*vector.z);
+}
+static XMFLOAT3 normalizeVector(XMFLOAT3 vector)
+{
+	return multiplyVector(vector,1/vectorLength(vector));
 }
 	
 #endif

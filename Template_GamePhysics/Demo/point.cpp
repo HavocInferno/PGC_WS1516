@@ -87,7 +87,6 @@ XMFLOAT3 SpringPoint::IntegratePositionTmp(float deltaTime)
 {
 	if(!gp_isStatic)
 	return addVector(gp_position,multiplyVector(gp_velocity,deltaTime));
-	return gp_position;
 };
 void SpringPoint::IntegrateVelocity(float deltaTime)
 {
@@ -108,90 +107,96 @@ void SpringPoint::resetForces()
 void SpringPoint::computeCollision(float deltaTime, float sphereSize)
 {
 	//Ground at y=-1;
-	if(gp_position.y<-1+sphereSize)
+	if(!gp_isStatic)
 	{
-		gp_position.y = (-1+sphereSize)-(gp_position.y+1-sphereSize)*gp_bouncyness; //simulates a dampend bounce with constant velocity
-		gp_velocity.y = -gp_velocity.y*gp_bouncyness;
-
-		//apply friction, scaled on the frametime
-		gp_velocity.x -= gp_velocity.x*deltaTime*(1-gp_groundFriction);
-		gp_velocity.z -= gp_velocity.z*deltaTime*(1-gp_groundFriction);
-	}
-}
-void SpringPoint::computeCollisionWithWalls(float deltaTime, float sphereSize, float xWall, float zWall, float ceiling)
-{
-	//Ground at y=-1;
-	bool collided = true;
-	while(collided)
-	{
-		collided = false;
-
-		//test floor collision
 		if(gp_position.y<-1+sphereSize)
 		{
-			collided = true;
 			gp_position.y = (-1+sphereSize)-(gp_position.y+1-sphereSize)*gp_bouncyness; //simulates a dampend bounce with constant velocity
 			gp_velocity.y = -gp_velocity.y*gp_bouncyness;
 
 			//apply friction, scaled on the frametime
-			gp_velocity.x -= gp_velocity.x*deltaTime*(gp_groundFriction);
-			gp_velocity.z -= gp_velocity.z*deltaTime*(gp_groundFriction);
+			gp_velocity.x -= gp_velocity.x*deltaTime*(1-gp_groundFriction);
+			gp_velocity.z -= gp_velocity.z*deltaTime*(1-gp_groundFriction);
 		}
-		//test negative x-wall collision
-		if(gp_position.x<-xWall+sphereSize)
+	}
+}
+void SpringPoint::computeCollisionWithWalls(float deltaTime, float sphereSize, float xWall, float zWall, float ceiling)
+{
+	if(!gp_isStatic)
+	{
+		//Ground at y=-1;
+		bool collided = true;
+		while(collided)
 		{
-			collided = true;
-			gp_position.x = (-xWall+sphereSize)-(gp_position.x+xWall-sphereSize)*gp_bouncyness; //simulates a dampend bounce with constant velocity
-			gp_velocity.x = -gp_velocity.x*gp_bouncyness;
+			collided = false;
 
-			//apply friction, scaled on the frametime
-			gp_velocity.y -= gp_velocity.y*deltaTime*(gp_groundFriction);
-			gp_velocity.z -= gp_velocity.z*deltaTime*(gp_groundFriction);
-		}
-		//test negative z-wall collision
-		if(gp_position.z<-zWall+sphereSize)
-		{
-			collided = true;
-			gp_position.z = (-zWall+sphereSize)-(gp_position.z+zWall-sphereSize)*gp_bouncyness; //simulates a dampend bounce with constant velocity
-			gp_velocity.z = -gp_velocity.z*gp_bouncyness;
+			//test floor collision
+			if(gp_position.y<-1+sphereSize)
+			{
+				collided = true;
+				gp_position.y = (-1+sphereSize)-(gp_position.y+1-sphereSize)*gp_bouncyness; //simulates a dampend bounce with constant velocity
+				gp_velocity.y = -gp_velocity.y*gp_bouncyness;
 
-			//apply friction, scaled on the frametime
-			gp_velocity.y -= gp_velocity.y*deltaTime*(gp_groundFriction);
-			gp_velocity.x -= gp_velocity.x*deltaTime*(gp_groundFriction);
-		}
+				//apply friction, scaled on the frametime
+				gp_velocity.x -= gp_velocity.x*deltaTime*(gp_groundFriction);
+				gp_velocity.z -= gp_velocity.z*deltaTime*(gp_groundFriction);
+			}
+			//test negative x-wall collision
+			if(gp_position.x<-xWall+sphereSize)
+			{
+				collided = true;
+				gp_position.x = (-xWall+sphereSize)-(gp_position.x+xWall-sphereSize)*gp_bouncyness; //simulates a dampend bounce with constant velocity
+				gp_velocity.x = -gp_velocity.x*gp_bouncyness;
 
-		//test ceiling collision
-		if(gp_position.y>ceiling-sphereSize)
-		{
-			collided = true;
-			gp_position.y = (ceiling-sphereSize)-(gp_position.y-(ceiling-sphereSize))*gp_bouncyness; //simulates a dampend bounce with constant velocity
-			gp_velocity.y = -gp_velocity.y*gp_bouncyness;
+				//apply friction, scaled on the frametime
+				gp_velocity.y -= gp_velocity.y*deltaTime*(gp_groundFriction);
+				gp_velocity.z -= gp_velocity.z*deltaTime*(gp_groundFriction);
+			}
+			//test negative z-wall collision
+			if(gp_position.z<-zWall+sphereSize)
+			{
+				collided = true;
+				gp_position.z = (-zWall+sphereSize)-(gp_position.z+zWall-sphereSize)*gp_bouncyness; //simulates a dampend bounce with constant velocity
+				gp_velocity.z = -gp_velocity.z*gp_bouncyness;
 
-			//apply friction, scaled on the frametime
-			gp_velocity.x -= gp_velocity.x*deltaTime*(gp_groundFriction);
-			gp_velocity.z -= gp_velocity.z*deltaTime*(gp_groundFriction);
-		}
-		//test positive x-wall collision
-		if(gp_position.x>xWall-sphereSize)
-		{
-			collided = true;
-			gp_position.x = (xWall-sphereSize)-(gp_position.x-(xWall-sphereSize))*gp_bouncyness; //simulates a dampend bounce with constant velocity
-			gp_velocity.x = -gp_velocity.x*gp_bouncyness;
+				//apply friction, scaled on the frametime
+				gp_velocity.y -= gp_velocity.y*deltaTime*(gp_groundFriction);
+				gp_velocity.x -= gp_velocity.x*deltaTime*(gp_groundFriction);
+			}
 
-			//apply friction, scaled on the frametime
-			gp_velocity.y -= gp_velocity.y*deltaTime*(gp_groundFriction);
-			gp_velocity.z -= gp_velocity.z*deltaTime*(gp_groundFriction);
-		}
-		//test positive z-wall collision
-		if(gp_position.z>zWall-sphereSize)
-		{
-			collided = true;
-			gp_position.z = (zWall-sphereSize)-(gp_position.z-(zWall-sphereSize))*gp_bouncyness; //simulates a dampend bounce with constant velocity
-			gp_velocity.z = -gp_velocity.z*gp_bouncyness;
+			//test ceiling collision
+			if(gp_position.y>ceiling-sphereSize)
+			{
+				collided = true;
+				gp_position.y = (ceiling-sphereSize)-(gp_position.y-(ceiling-sphereSize))*gp_bouncyness; //simulates a dampend bounce with constant velocity
+				gp_velocity.y = -gp_velocity.y*gp_bouncyness;
 
-			//apply friction, scaled on the frametime
-			gp_velocity.y -= gp_velocity.y*deltaTime*(gp_groundFriction);
-			gp_velocity.x -= gp_velocity.x*deltaTime*(gp_groundFriction);
+				//apply friction, scaled on the frametime
+				gp_velocity.x -= gp_velocity.x*deltaTime*(gp_groundFriction);
+				gp_velocity.z -= gp_velocity.z*deltaTime*(gp_groundFriction);
+			}
+			//test positive x-wall collision
+			if(gp_position.x>xWall-sphereSize)
+			{
+				collided = true;
+				gp_position.x = (xWall-sphereSize)-(gp_position.x-(xWall-sphereSize))*gp_bouncyness; //simulates a dampend bounce with constant velocity
+				gp_velocity.x = -gp_velocity.x*gp_bouncyness;
+
+				//apply friction, scaled on the frametime
+				gp_velocity.y -= gp_velocity.y*deltaTime*(gp_groundFriction);
+				gp_velocity.z -= gp_velocity.z*deltaTime*(gp_groundFriction);
+			}
+			//test positive z-wall collision
+			if(gp_position.z>zWall-sphereSize)
+			{
+				collided = true;
+				gp_position.z = (zWall-sphereSize)-(gp_position.z-(zWall-sphereSize))*gp_bouncyness; //simulates a dampend bounce with constant velocity
+				gp_velocity.z = -gp_velocity.z*gp_bouncyness;
+
+				//apply friction, scaled on the frametime
+				gp_velocity.y -= gp_velocity.y*deltaTime*(gp_groundFriction);
+				gp_velocity.x -= gp_velocity.x*deltaTime*(gp_groundFriction);
+			}
 		}
 	}
 }
