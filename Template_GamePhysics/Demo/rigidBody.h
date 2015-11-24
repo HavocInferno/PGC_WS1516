@@ -6,13 +6,15 @@
 using namespace DirectX;
 
 #include "vectorOperations.h"
+#include "MassPoint.h"
+#include <list>
 
 class rigidBody
 {
 public:
 	float massInverse;
-	XMFLOAT3 position;
-	XMFLOAT3 velocity;
+	XMFLOAT3 r_position;
+	XMFLOAT3 r_velocity;
 	XMMATRIX inertiaTensorInverse;
 	XMFLOAT4 orientation;
 	XMFLOAT3 angularVelocity;

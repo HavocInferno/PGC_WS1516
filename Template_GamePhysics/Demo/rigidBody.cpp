@@ -3,12 +3,12 @@
 using namespace DirectX;
 
 #include "vectorOperations.h"
-#include <list>
 #include "MassPoint.h"
+#include <list>
 
 float massInverse;
-XMFLOAT3 position;
-XMFLOAT3 velocity;
+XMFLOAT3 r_position;
+XMFLOAT3 r_velocity;
 XMMATRIX inertiaTensorInverse;
 XMFLOAT4 orientation;
 XMFLOAT3 angularVelocity;
@@ -23,17 +23,17 @@ std::list<MassPoint>* points;
 
 void rigidBody::preCompute()
 {
-	position = angularMomentum =XMFLOAT3(0,0,0);
+	r_position = angularMomentum =XMFLOAT3(0,0,0);
 	massInverse = 0.0f;
 	for(auto mp = points->begin(); mp != points->end(); mp++) {
 		massInverse += mp->mass;
-		position = addVector(position, multiplyVector(mp->position, mp->mass));
+		r_position = addVector(r_position, multiplyVector(mp->position, mp->mass));
 	}
 	massInverse = 1/massInverse;
-	position = multiplyVector(position, massInverse);
+	r_position = multiplyVector(r_position, massInverse);
 	inertiaTensorInverse = XMMATRIX(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 	for(auto mp = points->begin(); mp != points->end(); mp++) {
-		mp->position = subVector(mp->position, position);
+		mp->position = subVector(mp->position, r_position);
 		inertiaTensorInverse += multiplyVectorTranspose(multiplyVector(mp->position,mp->mass),mp->position); 
 		XMFLOAT3 L = XMFLOAT3(0,0,0);
 	//	XMVECTOR x = XMLoadFloat3(&(mp->position));
@@ -52,7 +52,7 @@ rigidBody::rigidBody(void)
 rigidBody::rigidBody(std::list<MassPoint>* pointList, XMFLOAT3 vel, XMFLOAT3 rotation)
 {
 	points = pointList;
-	velocity = vel;
+	r_velocity = vel;
 	preCompute();
 	XMStoreFloat4(&rotationQuaternion,XMQuaternionRotationRollPitchYaw(rotation.x,rotation.y, rotation.z));
 }

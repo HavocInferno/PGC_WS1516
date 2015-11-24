@@ -208,15 +208,21 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Contact.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MassPoint.cpp" />
     <ClCompile Include="point.cpp" />
+    <ClCompile Include="rigidBody.cpp" />
     <ClCompile Include="spring.cpp" />
     <ClCompile Include="util\FFmpeg.cpp" />
     <ClCompile Include="util\util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\Dropbox\Uni\Semester 5\PGC\collisionDetect.h" />
+    <ClInclude Include="Contact.h" />
+    <ClInclude Include="MassPoint.h" />
     <ClInclude Include="point.h" />
+    <ClInclude Include="rigidBody.h" />
     <ClInclude Include="spring.h" />
     <ClInclude Include="util\FFmpeg.h" />
     <ClInclude Include="util\util.h" />

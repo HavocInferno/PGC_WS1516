@@ -10,6 +10,9 @@
     </ClCompile>
     <ClCompile Include="point.cpp" />
     <ClCompile Include="spring.cpp" />
+    <ClCompile Include="rigidBody.cpp" />
+    <ClCompile Include="Contact.cpp" />
+    <ClCompile Include="MassPoint.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="util">
@@ -27,6 +30,9 @@
     <ClInclude Include="point.h" />
     <ClInclude Include="vectorOperations.h" />
     <ClInclude Include="..\..\..\..\..\Dropbox\Uni\Semester 5\PGC\collisionDetect.h" />
+    <ClInclude Include="rigidBody.h" />
+    <ClInclude Include="Contact.h" />
+    <ClInclude Include="MassPoint.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="effect.fx" />
