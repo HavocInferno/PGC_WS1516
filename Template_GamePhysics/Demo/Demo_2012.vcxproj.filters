@@ -26,6 +26,7 @@
     <ClInclude Include="spring.h" />
     <ClInclude Include="point.h" />
     <ClInclude Include="vectorOperations.h" />
+    <ClInclude Include="..\..\..\..\..\Dropbox\Uni\Semester 5\PGC\collisionDetect.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="effect.fx" />
