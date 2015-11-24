@@ -78,6 +78,7 @@ PrimitiveBatch<VertexPositionNormalColor>* g_pPrimitiveBatchPositionNormalColor 
 // DirectXTK simple geometric primitives
 std::unique_ptr<GeometricPrimitive> g_pSphere;
 std::unique_ptr<GeometricPrimitive> g_pTeapot;
+std::unique_ptr<GeometricPrimitive> g_pCube;
 
 // Movable object management
 XMINT2   g_viMouseDelta = XMINT2(0,0);
@@ -620,6 +621,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	InitMassSprings();
 
     // Create DirectXTK geometric primitives for later usage
+	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);
     g_pSphere = GeometricPrimitive::CreateGeoSphere(pd3dImmediateContext, 2.0f, 2, false);
     g_pTeapot = GeometricPrimitive::CreateTeapot(pd3dImmediateContext, 1.5f, 8, false);
 
