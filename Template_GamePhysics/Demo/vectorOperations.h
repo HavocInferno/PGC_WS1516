@@ -26,5 +26,10 @@ static XMFLOAT3 normalizeVector(XMFLOAT3 vector)
 {
 	return multiplyVector(vector,1/vectorLength(vector));
 }
+static XMMATRIX multiplyVectorTranspose(XMFLOAT3 vec, XMFLOAT3 vecT)
+{
+	return XMMATRIX(vec.x*vecT.x,vec.x*vecT.y,vec.x*vecT.z,0.0f,vec.y*vecT.x,vec.y*vecT.y,vec.y*vecT.z,0.0f,vec.z*vecT.x,vec.z*vecT.y,vec.z*vecT.z,0.0f,0.0f,0.0f,0.0f,1.0f);
+}
+
 	
 #endif

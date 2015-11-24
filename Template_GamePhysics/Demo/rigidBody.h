@@ -22,7 +22,12 @@ public:
 
 	XMMATRIX transform;
 
+	std::list<MassPoint>* points;
+
+	void preCompute();
+
 	rigidBody(void);
+	rigidBody(std::list<MassPoint>* points, XMFLOAT3 vel, XMFLOAT3 rotation);
 	~rigidBody(void);
 };
 
