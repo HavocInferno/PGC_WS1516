@@ -39,12 +39,16 @@ using std::cout;
 
 #define TEMPLATE_DEMO
 #define MASS_SPRING_SYSTEM
+#define RIGID_BODY_SIMULATION
 
 // Mass Spring includes
 #include "spring.h"
 #include "point.h"
 #include <list>
 #include <Windows.h>
+
+//Rigid Body includes
+#include "rigidBody.h"
 
 // DXUT camera
 // NOTE: CModelViewerCamera does not only manage the standard view transformation/camera position 
@@ -118,6 +122,15 @@ bool g_usingWalls = false;
 float g_explosionForce =1;
 
 bool g_firstStep = true;
+#endif
+
+#ifdef RIGID_BODY_SIMULATION
+
+bool g_bDrawRigidBodySimulation = true;
+std::list<MassPoint>* pointList;
+rigidBody* rb;
+float g_fCubeSize = .5f;
+
 #endif
 
 // Mass Spring variable
@@ -317,7 +330,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 
 	TwType TW_TYPE_INTEGRATOR = TwDefineEnumFromString("Integration Method", "Euler,Midpoint,LeapFrog");
 	TwType TW_TYPE_DEMOCASE = TwDefineEnumFromString("Demo Setup", "Demo 1/2/3,Demo 4");
-	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "Demo 1,Demo 2,Demo 3,Demo 4");
+	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "Demo 1,Demo 2,Demo 3,Demo 4, RB Demo");
 	TwAddVarRW(g_pTweakBar, "Test Scene", TW_TYPE_TESTCASE, &g_iTestCase, "");
 	// HINT: For buttons you can directly pass the callback function as a lambda expression.
 	TwAddButton(g_pTweakBar, "Reset Scene", [](void *){g_iPreTestCase = -1; }, nullptr, "");
@@ -350,7 +363,24 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "-> Ceiling height", TW_TYPE_FLOAT, &g_ceiling, "min=0.5 ma=10 step=0.1");
 		TwAddButton(g_pTweakBar, "Explode!!", [](void *){explode(); }, nullptr, "");	
 		TwAddVarRW(g_pTweakBar, "-> Explosion Force", TW_TYPE_FLOAT, &g_explosionForce, "min=0.1 ma=10 step=0.1");
-
+		break;
+#endif
+	#ifdef RIGID_BODY_SIMULATION
+	case 4:
+		//TwAddVarRW(g_pTweakBar, "Demo Setup", TW_TYPE_DEMOCASE, &g_demoCase, "");
+		//TwAddVarRW(g_pTweakBar, "-> Integration Method", TW_TYPE_INTEGRATOR, &g_integrationMethod, "");
+		TwAddVarRW(g_pTweakBar, "Use damping", TW_TYPE_BOOLCPP, &g_useDamping, "");
+		//TwAddVarRW(g_pTweakBar, "Point Size", TW_TYPE_FLOAT, &g_fSphereSize, "min=0.01 step=0.01");
+		//TwAddVarRW(g_pTweakBar, "Use fixed timestep", TW_TYPE_BOOLCPP, &g_fixedTimestep, "");
+		//TwAddVarRW(g_pTweakBar, "-> timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
+		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
+		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
+		//TwAddVarRW(g_pTweakBar, "Collide with walls:", TW_TYPE_BOOLCPP, &g_usingWalls, "");
+		//TwAddVarRW(g_pTweakBar, "-> X-Wall Positions", TW_TYPE_FLOAT, &g_xWall, "min=0.5 ma=10 step=0.1");
+		//TwAddVarRW(g_pTweakBar, "-> Z-Wall Positions", TW_TYPE_FLOAT, &g_zWall, "min=0.5 ma=10 step=0.1");
+		//TwAddVarRW(g_pTweakBar, "-> Ceiling height", TW_TYPE_FLOAT, &g_ceiling, "min=0.5 ma=10 step=0.1");
+		//TwAddButton(g_pTweakBar, "Explode!!", [](void *){explode(); }, nullptr, "");	
+		//TwAddVarRW(g_pTweakBar, "-> Explosion Force", TW_TYPE_FLOAT, &g_explosionForce, "min=0.1 ma=10 step=0.1");
 		break;
 #endif
 	default:
@@ -570,6 +600,29 @@ void DrawMassSpringSystem(ID3D11DeviceContext* pd3dImmediateContext)
 
 
 #endif
+
+#ifdef RIGID_BODY_SIMULATION
+
+void DrawCube(rigidBody* rb) {
+	//set color
+	g_pEffectPositionNormal->SetDiffuseColor(TUM_BLUE_LIGHT);
+	g_pEffectPositionNormal->SetEmissiveColor(Colors::Black);
+	g_pEffectPositionNormal->SetSpecularColor(0.5f * Colors::White);
+    g_pEffectPositionNormal->SetSpecularPower(50);
+
+	//set position
+	//cout << "scale x,y,z: " << rb->scale.x << ", " << rb->scale.y << ", " << rb->scale.z << std::endl;
+	//cout << "pos x,y,z: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+	XMMATRIX scale    = XMMatrixScaling(rb->scale.x, rb->scale.y, rb->scale.z);
+	XMMATRIX trans    = XMMatrixTranslation(rb->r_position.x,rb->r_position.y,rb->r_position.z);
+	XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->rotationQuaternion));
+    g_pEffectPositionNormal->SetWorld(scale * trans * rotation);
+
+	//draw everything
+    g_pCube->Draw(g_pEffectPositionNormal, g_pInputLayoutPositionNormal);
+}
+
+#endif
 // ============================================================
 // DXUT Callbacks
 // ============================================================
@@ -619,6 +672,19 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 
 	// Init Mass Spring System
 	InitMassSprings();
+
+	//Init Rigid Body Simulation
+	pointList = new std::list<MassPoint>;
+	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f));
+	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,-0.25f), .25f, 0.f));
+	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,-0.25f), .25f, 0.f));
+	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,0.25f), .25f, 0.f));
+	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,0.25f), .25f, 0.f));
+	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,-0.25f), .25f, 0.f));
+	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,-0.25f), .25f, 0.f));
+	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,0.25f), .25f, 0.f));
+
+	rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(1.f, .6f, .5f));
 
     // Create DirectXTK geometric primitives for later usage
 	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);
@@ -1001,6 +1067,13 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			//here we might want to reset the points/springs
 			ResetMassSprings(deltaTime);
 			break;
+		case 4:
+		{
+			cout << "Rigid Body Simulation!" << std::endl;
+			g_fCubeSize = .5f;
+			deltaTime = 0.005f;
+			g_bDrawRigidBodySimulation = true;
+		}
 		default:
 			cout << "Empty Test!\n";
 			break;
@@ -1263,7 +1336,11 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		if (g_bDrawMassSpringSystem) DrawMassSpringSystem(pd3dImmediateContext);
 		break;
 #endif
-
+#ifdef RIGID_BODY_SIMULATION
+	case 4:
+		if (g_bDrawRigidBodySimulation) DrawCube(rb);
+		break;
+#endif
 	default:
 		break;
 	}

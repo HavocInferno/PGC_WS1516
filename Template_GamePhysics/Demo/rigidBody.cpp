@@ -31,6 +31,7 @@ void rigidBody::preCompute()
 	}
 	massInverse = 1/massInverse;
 	r_position = multiplyVector(r_position, massInverse);
+
 	inertiaTensorInverse = XMMATRIX(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 	for(auto mp = points->begin(); mp != points->end(); mp++) {
 		mp->position = subVector(mp->position, r_position);
@@ -49,8 +50,8 @@ rigidBody::rigidBody(void)
 	points = new std::list<MassPoint>();
 }
 
-rigidBody::rigidBody(std::list<MassPoint>* pointList, XMFLOAT3 vel, XMFLOAT3 rotation)
-{
+rigidBody::rigidBody(std::list<MassPoint>* pointList, XMFLOAT3 vel, XMFLOAT3 rotation, XMFLOAT3 scale = XMFLOAT3(1.f, 1.f, 1.f)) {
+	this->scale = scale;
 	points = pointList;
 	r_velocity = vel;
 	preCompute();

@@ -10,13 +10,25 @@
     </ClCompile>
     <ClCompile Include="point.cpp" />
     <ClCompile Include="spring.cpp" />
-    <ClCompile Include="rigidBody.cpp" />
-    <ClCompile Include="Contact.cpp" />
-    <ClCompile Include="MassPoint.cpp" />
+    <ClCompile Include="rigidBody.cpp">
+      <Filter>rigidbody</Filter>
+    </ClCompile>
+    <ClCompile Include="Contact.cpp">
+      <Filter>rigidbody</Filter>
+    </ClCompile>
+    <ClCompile Include="MassPoint.cpp">
+      <Filter>rigidbody</Filter>
+    </ClCompile>
+    <ClCompile Include="rigidBodyController.cpp">
+      <Filter>rigidbody</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="util">
       <UniqueIdentifier>{ba535b4e-0c95-4992-8a48-6babc14c1f7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rigidbody">
+      <UniqueIdentifier>{bd34c153-7ab0-4609-8f99-9032ddaea009}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -29,10 +41,21 @@
     <ClInclude Include="spring.h" />
     <ClInclude Include="point.h" />
     <ClInclude Include="vectorOperations.h" />
-    <ClInclude Include="..\..\..\..\..\Dropbox\Uni\Semester 5\PGC\collisionDetect.h" />
-    <ClInclude Include="rigidBody.h" />
-    <ClInclude Include="Contact.h" />
-    <ClInclude Include="MassPoint.h" />
+    <ClInclude Include="rigidBody.h">
+      <Filter>rigidbody</Filter>
+    </ClInclude>
+    <ClInclude Include="Contact.h">
+      <Filter>rigidbody</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\Dropbox\Uni\Semester 5\PGC\collisionDetect.h">
+      <Filter>rigidbody</Filter>
+    </ClInclude>
+    <ClInclude Include="MassPoint.h">
+      <Filter>rigidbody</Filter>
+    </ClInclude>
+    <ClInclude Include="rigidBodyController.h">
+      <Filter>rigidbody</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="effect.fx" />

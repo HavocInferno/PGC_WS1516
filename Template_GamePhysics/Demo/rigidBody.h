@@ -18,6 +18,10 @@ public:
 	XMMATRIX inertiaTensorInverse;
 	XMFLOAT4 orientation;
 	XMFLOAT3 angularVelocity;
+	XMFLOAT3 angularMomentum;
+	XMFLOAT4 rotationQuaternion;
+	//for shaping to the right ratio
+	XMFLOAT3 scale;
 
 	XMFLOAT3 forceAccumulator;
 	XMFLOAT3 torqueAccumulator;
@@ -29,7 +33,7 @@ public:
 	void preCompute();
 
 	rigidBody(void);
-	rigidBody(std::list<MassPoint>* points, XMFLOAT3 vel, XMFLOAT3 rotation);
+	rigidBody(std::list<MassPoint>* points, XMFLOAT3 vel, XMFLOAT3 rotation, XMFLOAT3 scale);
 	~rigidBody(void);
 };
 
