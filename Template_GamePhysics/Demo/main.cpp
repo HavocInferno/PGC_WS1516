@@ -611,13 +611,22 @@ void DrawCube(rigidBody* rb) {
 	g_pEffectPositionNormal->SetSpecularColor(0.5f * Colors::White);
     g_pEffectPositionNormal->SetSpecularPower(50);
 
+	/* //FROM TEAPOT:
+	XMMATRIX scale    = XMMatrixScaling(0.5f, 0.5f, 0.5f);    
+    XMMATRIX trans    = XMMatrixTranslation(g_vfMovableObjectPos.x, g_vfMovableObjectPos.y, g_vfMovableObjectPos.z);
+	XMMATRIX rotations = XMMatrixRotationRollPitchYaw(g_vfRotate.x, g_vfRotate.y, g_vfRotate.z);
+	g_pEffectPositionNormal->SetWorld(rotations * scale * trans);
+	*/
+
 	//set position
 	//cout << "scale x,y,z: " << rb->scale.x << ", " << rb->scale.y << ", " << rb->scale.z << std::endl;
 	//cout << "pos x,y,z: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 	XMMATRIX scale    = XMMatrixScaling(rb->scale.x, rb->scale.y, rb->scale.z);
 	XMMATRIX trans    = XMMatrixTranslation(rb->r_position.x,rb->r_position.y,rb->r_position.z);
 	XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->rotationQuaternion));
-    g_pEffectPositionNormal->SetWorld(scale * trans * rotation);
+	XMFLOAT4X4 debug; 
+	XMStoreFloat4x4(&debug, rotation);
+    g_pEffectPositionNormal->SetWorld(rotation * scale * trans* g_camera.GetWorldMatrix()); //scale * trans * rotation * g_camera.GetWorldMatrix());
 
 	//draw everything
     g_pCube->Draw(g_pEffectPositionNormal, g_pInputLayoutPositionNormal);
@@ -675,6 +684,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	InitMassSprings();
 
 	//Init Rigid Body Simulation
+	//TODO: put this in an own method
 	pointList = new std::list<MassPoint>;
 	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(1.f, 1.f, 0.f)));
 	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
@@ -1289,6 +1299,10 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 
 
 
+		break;
+	case 4:
+		rb->integrateValues(deltaTime);
+		cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 		break;
 	default:
 		break;
