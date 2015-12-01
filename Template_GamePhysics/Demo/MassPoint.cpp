@@ -11,10 +11,11 @@ MassPoint::MassPoint(void)
 {
 }
 
-MassPoint::MassPoint(XMFLOAT3 pos, float m, float v)
+MassPoint::MassPoint(XMFLOAT3 pos, float m, float v, XMFLOAT3 force)
 {
 	position = pos;
 	mass = m;
+	this->force = force;
 }
 
 MassPoint::~MassPoint(void)

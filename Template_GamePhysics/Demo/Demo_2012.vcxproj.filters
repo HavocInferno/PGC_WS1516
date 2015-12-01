@@ -19,9 +19,6 @@
     <ClCompile Include="MassPoint.cpp">
       <Filter>rigidbody</Filter>
     </ClCompile>
-    <ClCompile Include="rigidBodyController.cpp">
-      <Filter>rigidbody</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="util">
@@ -51,9 +48,6 @@
       <Filter>rigidbody</Filter>
     </ClInclude>
     <ClInclude Include="MassPoint.h">
-      <Filter>rigidbody</Filter>
-    </ClInclude>
-    <ClInclude Include="rigidBodyController.h">
       <Filter>rigidbody</Filter>
     </ClInclude>
   </ItemGroup>

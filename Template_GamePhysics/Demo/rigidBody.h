@@ -31,6 +31,7 @@ public:
 	std::list<MassPoint>* points;
 
 	void preCompute();
+	void integrateValues(float timeStep);
 
 	rigidBody(void);
 	rigidBody(std::list<MassPoint>* points, XMFLOAT3 vel, XMFLOAT3 rotation, XMFLOAT3 scale);

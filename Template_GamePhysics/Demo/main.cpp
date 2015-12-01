@@ -108,13 +108,6 @@ bool g_bDrawMassSpringSystem = true;
 XMVECTORF32 TUM_BLUE = {0, 0.396, 0.741,1};
 XMVECTORF32 TUM_BLUE_LIGHT = {.259, .522, .957,1};
 int g_integrationMethod = 0, g_preIntegrationMethod = 0;
-DWORD previousTime, currentTime;
-float deltaTime =0;
-bool g_fixedTimestep = false;
-float g_manualTimestep = 0.005;
-float g_gravity = -9.81;
-bool g_useGravity = true;
-bool g_useDamping = true;
 int g_demoCase = 0, g_preDemoCase = 0;
 float groundFriction, groundBouncyness;
 float g_xWall =1.0f, g_zWall=1.0f, g_ceiling=1.0f;
@@ -124,12 +117,20 @@ float g_explosionForce =1;
 bool g_firstStep = true;
 #endif
 
+//general variables for both simulations
+DWORD previousTime, currentTime;
+float deltaTime = 0;
+bool g_fixedTimestep = false;
+float g_manualTimestep = 0.005;
+float g_gravity = -9.81;
+bool g_useGravity = true;
+bool g_useDamping = true;
+
 #ifdef RIGID_BODY_SIMULATION
 
 bool g_bDrawRigidBodySimulation = true;
 std::list<MassPoint>* pointList;
 rigidBody* rb;
-float g_fCubeSize = .5f;
 
 #endif
 
@@ -371,8 +372,8 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		//TwAddVarRW(g_pTweakBar, "-> Integration Method", TW_TYPE_INTEGRATOR, &g_integrationMethod, "");
 		TwAddVarRW(g_pTweakBar, "Use damping", TW_TYPE_BOOLCPP, &g_useDamping, "");
 		//TwAddVarRW(g_pTweakBar, "Point Size", TW_TYPE_FLOAT, &g_fSphereSize, "min=0.01 step=0.01");
-		//TwAddVarRW(g_pTweakBar, "Use fixed timestep", TW_TYPE_BOOLCPP, &g_fixedTimestep, "");
-		//TwAddVarRW(g_pTweakBar, "-> timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
+		TwAddVarRW(g_pTweakBar, "Use fixed timestep", TW_TYPE_BOOLCPP, &g_fixedTimestep, "");
+		TwAddVarRW(g_pTweakBar, "-> timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
 		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
 		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
 		//TwAddVarRW(g_pTweakBar, "Collide with walls:", TW_TYPE_BOOLCPP, &g_usingWalls, "");
@@ -457,7 +458,7 @@ void DrawFloor(ID3D11DeviceContext* pd3dImmediateContext)
         for (float x = -n; x < n; x++)
         {
             // Quad vertex positions
-            XMVECTOR pos[] = { XMVectorSet(x  , -1, z+1, 0),
+            XMVECTOR pos[] = { XMVectorSet(x  , -1, z+1, 0), 
                                XMVectorSet(x+1, -1, z+1, 0),
                                XMVectorSet(x+1, -1, z  , 0),
                                XMVectorSet(x  , -1, z  , 0) };
@@ -675,14 +676,14 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 
 	//Init Rigid Body Simulation
 	pointList = new std::list<MassPoint>;
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f));
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,-0.25f), .25f, 0.f));
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,-0.25f), .25f, 0.f));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,0.25f), .25f, 0.f));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,0.25f), .25f, 0.f));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,-0.25f), .25f, 0.f));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,-0.25f), .25f, 0.f));
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,0.25f), .25f, 0.f));
+	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(1.f, 1.f, 0.f)));
+	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
 
 	rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(1.f, .6f, .5f));
 
@@ -771,6 +772,10 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
 
     g_pSphere.reset();
     g_pTeapot.reset();
+
+	//Destroy Rigid Body Simulation
+	delete(pointList);
+	delete(rb);
     
     SAFE_DELETE (g_pPrimitiveBatchPositionColor);
     SAFE_RELEASE(g_pInputLayoutPositionColor);
@@ -1070,9 +1075,12 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		case 4:
 		{
 			cout << "Rigid Body Simulation!" << std::endl;
-			g_fCubeSize = .5f;
+			cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 			deltaTime = 0.005f;
 			g_bDrawRigidBodySimulation = true;
+			rb->integrateValues(deltaTime);
+			cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+			break;
 		}
 		default:
 			cout << "Empty Test!\n";
