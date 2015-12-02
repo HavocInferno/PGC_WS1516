@@ -65,6 +65,8 @@ void rigidBody::integrateValues(float timeStep) {
 	//External forces
 	for (auto mp = points->begin(); mp != points->end(); mp++) {
 		forceAccumulator = addVector(forceAccumulator, mp->force);
+		//TODO: uncomment?
+		//mp->force = XMFLOAT3(0.f, 0.f, 0.f);
 		XMStoreFloat3(&tmpFloat3, XMVector3Cross(XMLoadFloat3(&mp->position), XMLoadFloat3(&mp->force)));
 		torqueAccumulator = addVector(torqueAccumulator, tmpFloat3);
 	}
@@ -75,20 +77,34 @@ void rigidBody::integrateValues(float timeStep) {
 	
 	
 	//Quaternion
+	XMFLOAT4 deltaQuaternion(0.f, 0.f, 0.f, 0.f);
+	XMStoreFloat4(&deltaQuaternion, 
+		XMQuaternionMultiply(
+			XMLoadFloat4(&XMFLOAT4(angularVelocity.x, angularVelocity.y, angularVelocity.z, .0f)), 
+			XMLoadFloat4(&rotationQuaternion)
+	));
+	XMStoreFloat4(&deltaQuaternion, 
+		XMVectorScale( XMLoadFloat4(&rotationQuaternion), timeStep / 2)
+	);
+	XMStoreFloat4(&rotationQuaternion, 
+		XMVectorAdd(XMLoadFloat4(&rotationQuaternion), XMLoadFloat4(&deltaQuaternion))
+	);
 	XMStoreFloat4(&rotationQuaternion, 
 		XMQuaternionNormalize(
-			//(0,w)r * h/2 + original rotation
-			XMVectorAdd(
-					// (0,w)r * h/2
-					XMVectorScale(
-						// (0,w)r
-						XMQuaternionMultiply(
-							XMLoadFloat4(&XMFLOAT4(angularVelocity.x, angularVelocity.y, angularVelocity.z, .0f)), 
-							XMLoadFloat4(&rotationQuaternion))
-						, timeStep / 2), 
-					// + original rotation
-					XMLoadFloat4(&rotationQuaternion))));
-	//rotationQuaternion = XMFLOAT4(0,0,0,0);
+			////(0,w)r * h/2 + original rotation
+			//XMVectorAdd(
+			//		// (0,w)r * h/2
+			//		XMVectorScale(
+			//			// (0,w)r
+			//			XMQuaternionMultiply(
+			//				XMLoadFloat4(&XMFLOAT4(angularVelocity.x, angularVelocity.y, angularVelocity.z, .0f)), 
+			//				XMLoadFloat4(&rotationQuaternion))
+			//			, timeStep / 2), 
+			//		// + original rotation
+			//		XMLoadFloat4(&rotationQuaternion))
+			XMLoadFloat4(&rotationQuaternion)
+		)
+	);
 		
 	angularMomentum = addVector(angularMomentum, multiplyVector(torqueAccumulator, timeStep));
 	//inverse inertia tensor

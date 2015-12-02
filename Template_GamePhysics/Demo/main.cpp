@@ -92,7 +92,7 @@ XMFLOAT3 g_vfRotate = XMFLOAT3(0, 0, 0);
 
 // TweakAntBar GUI variables
 
-int g_iTestCase = 0;
+int g_iTestCase = 4;
 int g_iPreTestCase = -1;
 bool  g_bSimulateByStep = false;
 bool  g_bIsSpaceReleased = true;
@@ -626,7 +626,7 @@ void DrawCube(rigidBody* rb) {
 	XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->rotationQuaternion));
 	XMFLOAT4X4 debug; 
 	XMStoreFloat4x4(&debug, rotation);
-    g_pEffectPositionNormal->SetWorld(rotation * scale * trans* g_camera.GetWorldMatrix()); //scale * trans * rotation * g_camera.GetWorldMatrix());
+    g_pEffectPositionNormal->SetWorld(rotation * scale * trans/** g_camera.GetWorldMatrix()*/); //scale * trans * rotation * g_camera.GetWorldMatrix());
 
 	//draw everything
     g_pCube->Draw(g_pEffectPositionNormal, g_pInputLayoutPositionNormal);
