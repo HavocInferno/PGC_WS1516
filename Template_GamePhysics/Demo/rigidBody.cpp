@@ -56,10 +56,13 @@ void rigidBody::computeInverInertTensAndAngVel()
 	//
 	//inverse inertia tensor
 	XMMATRIX rotationMatrix = XMMatrixRotationQuaternion(XMLoadFloat4(&rotationQuaternion));
-	currentInertiaInverse = XMMatrixMultiply(XMMatrixMultiply(rotationMatrix, inertiaTensorInverse), XMMatrixTranspose(rotationMatrix));
+	//TODO: fix this more neatly.. There was a problem with inertiaTensor beeing private, so i just made a temp copy for now
+	//currentInertiaInverse = XMMatrixMultiply(XMMatrixMultiply(rotationMatrix, inertiaTensorInverse), XMMatrixTranspose(rotationMatrix));
+	XMMATRIX temp = inertiaTensorInverse;
+	currentInertiaInverse = XMMatrixMultiply(rotationMatrix*temp,XMMatrixTranspose(rotationMatrix));
 	//angular velocity
 	XMStoreFloat3(&angularVelocity, XMVector3Transform(XMLoadFloat3(&angularMomentum), currentInertiaInverse));
-	angularVelocity = normalizeVector(angularVelocity);
+	//angularVelocity = normalizeVector(angularVelocity);
 }
 
 void rigidBody::integrateValues(float timeStep) {
@@ -168,8 +171,8 @@ rigidBody::rigidBody(std::list<MassPoint>* pointList, XMFLOAT3 vel, XMFLOAT3 rot
 	points = pointList;
 	r_velocity = vel;
 	preCompute();
-	computeInverInertTensAndAngVel();
 	XMStoreFloat4(&rotationQuaternion,XMQuaternionRotationRollPitchYaw(rotation.x,rotation.y, rotation.z));
+	computeInverInertTensAndAngVel();
 }
 
 rigidBody::~rigidBody(void)

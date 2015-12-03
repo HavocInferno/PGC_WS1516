@@ -17,6 +17,8 @@ MassPoint::MassPoint(XMFLOAT3 pos, float m, float v, XMFLOAT3 force)
 	position = worldPosition = pos;
 	mass = m;
 	this->force = force;
+	velocity = XMFLOAT3(0.f, 0.f, 0.f);
+
 }
 
 MassPoint::~MassPoint(void)
