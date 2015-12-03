@@ -1,5 +1,9 @@
 #include "rigidBody.h"
 #include <DirectXMath.h>
+
+#include <iostream>
+#include <iomanip>
+
 using namespace DirectX;
 
 #include "vectorOperations.h"
@@ -46,7 +50,7 @@ void rigidBody::preCompute()
 	//XMStoreFloat3(&angularVelocity, XMVector3Transform(XMLoadFloat3(&angularMomentum),inertiaTensorInverse));
 }
 
-void rigidBody::initialize()
+void rigidBody::computeInverInertTensAndAngVel()
 {
 	//INITIALIZATION
 	//
@@ -55,63 +59,83 @@ void rigidBody::initialize()
 	currentInertiaInverse = XMMatrixMultiply(XMMatrixMultiply(rotationMatrix, inertiaTensorInverse), XMMatrixTranspose(rotationMatrix));
 	//angular velocity
 	XMStoreFloat3(&angularVelocity, XMVector3Transform(XMLoadFloat3(&angularMomentum), currentInertiaInverse));
+	angularVelocity = normalizeVector(angularVelocity);
 }
 
 void rigidBody::integrateValues(float timeStep) {
 	XMFLOAT3 tmpFloat3 = torqueAccumulator = forceAccumulator = XMFLOAT3(0,0,0);
-	XMMATRIX rotationMatrix;
 	
-
 	//External forces
 	for (auto mp = points->begin(); mp != points->end(); mp++) {
 		forceAccumulator = addVector(forceAccumulator, mp->force);
-		//TODO: uncomment?
-		//mp->force = XMFLOAT3(0.f, 0.f, 0.f);
 		XMStoreFloat3(&tmpFloat3, XMVector3Cross(XMLoadFloat3(&mp->position), XMLoadFloat3(&mp->force)));
 		torqueAccumulator = addVector(torqueAccumulator, tmpFloat3);
+		//nullify the force
+		mp->force = XMFLOAT3(0.f, 0.f, 0.f);
 	}
 
 	//Euler step
 	r_position = addVector(r_position, multiplyVector(r_velocity, timeStep));
 	r_velocity = addVector(r_velocity, multiplyVector(forceAccumulator, timeStep * massInverse));
 	
-	
 	//Quaternion
-	XMFLOAT4 deltaQuaternion(0.f, 0.f, 0.f, 0.f);
+	//
+
+	/*XMFLOAT4 deltaQuaternion (0.f, 0.f, 0.f, 0.f);
+	XMFLOAT4 tempQuaternion;
+
 	XMStoreFloat4(&deltaQuaternion, 
 		XMQuaternionMultiply(
 			XMLoadFloat4(&XMFLOAT4(angularVelocity.x, angularVelocity.y, angularVelocity.z, .0f)), 
 			XMLoadFloat4(&rotationQuaternion)
 	));
+
+	tempQuaternion = deltaQuaternion;
 	XMStoreFloat4(&deltaQuaternion, 
-		XMVectorScale( XMLoadFloat4(&rotationQuaternion), timeStep / 2)
+		XMVectorScale( XMLoadFloat4(&tempQuaternion), timeStep / 2)
 	);
+
+	tempQuaternion = rotationQuaternion;
 	XMStoreFloat4(&rotationQuaternion, 
-		XMVectorAdd(XMLoadFloat4(&rotationQuaternion), XMLoadFloat4(&deltaQuaternion))
-	);
+		XMVectorAdd(XMLoadFloat4(&tempQuaternion), XMLoadFloat4(&deltaQuaternion))
+	);*/
+
+	/*std::cout << "rotation" << std::endl;
+	std::cout << std::setprecision(10) << rotationQuaternion.x << std::endl;
+	std::cout << std::setprecision(10) << rotationQuaternion.y << std::endl;
+	std::cout << std::setprecision(10) << rotationQuaternion.z << std::endl;
+	std::cout << std::setprecision(10) << rotationQuaternion.w << std::endl;
+	std::cout << "delta" << std::endl;
+	std::cout << std::setprecision(40) << deltaQuaternion.x << std::endl;
+	std::cout << std::setprecision(40) << deltaQuaternion.y << std::endl;
+	std::cout << std::setprecision(40) << deltaQuaternion.z << std::endl;
+	std::cout << std::setprecision(40) << deltaQuaternion.w << std::endl;
+
+	rotationQuaternion.x += deltaQuaternion.x;
+	rotationQuaternion.y += deltaQuaternion.y;
+	rotationQuaternion.z += deltaQuaternion.z;
+	rotationQuaternion.w += deltaQuaternion.w;*/
+
+	//tempQuaternion = rotationQuaternion;
 	XMStoreFloat4(&rotationQuaternion, 
 		XMQuaternionNormalize(
-			////(0,w)r * h/2 + original rotation
-			//XMVectorAdd(
-			//		// (0,w)r * h/2
-			//		XMVectorScale(
-			//			// (0,w)r
-			//			XMQuaternionMultiply(
-			//				XMLoadFloat4(&XMFLOAT4(angularVelocity.x, angularVelocity.y, angularVelocity.z, .0f)), 
-			//				XMLoadFloat4(&rotationQuaternion))
-			//			, timeStep / 2), 
-			//		// + original rotation
-			//		XMLoadFloat4(&rotationQuaternion))
-			XMLoadFloat4(&rotationQuaternion)
+			//(0,w)r * h/2 + original rotation
+			XMVectorAdd(
+					// (0,w)r * h/2
+					XMVectorScale(
+						// (0,w)r
+						XMQuaternionMultiply(
+							XMLoadFloat4(&XMFLOAT4(angularVelocity.x, angularVelocity.y, angularVelocity.z, .0f)), 
+							XMLoadFloat4(&rotationQuaternion))
+						, timeStep / 2), 
+					// + original rotation
+					XMLoadFloat4(&rotationQuaternion))
 		)
 	);
-		
+
 	angularMomentum = addVector(angularMomentum, multiplyVector(torqueAccumulator, timeStep));
-	//inverse inertia tensor
-	rotationMatrix = XMMatrixRotationQuaternion(XMLoadFloat4(&rotationQuaternion));
-	currentInertiaInverse = XMMatrixMultiply(XMMatrixMultiply(rotationMatrix, inertiaTensorInverse), XMMatrixTranspose(rotationMatrix));
-	//angular velocity
-	XMStoreFloat3(&angularVelocity, XMVector3Transform(XMLoadFloat3(&angularMomentum), currentInertiaInverse));
+	computeInverInertTensAndAngVel();
+
 
 	//World position
 	//r_position = XMFLOAT3(.0f, .0f, .0f);
@@ -120,6 +144,18 @@ void rigidBody::integrateValues(float timeStep) {
 		mp->worldPosition = addVector(r_position, mp->worldPosition);
 		//TODO: do we need to compute v for each point?
 	}
+}
+
+XMFLOAT3 rigidBody::getScale() {
+	return scale;
+}
+
+XMFLOAT3 rigidBody::getPosition() {
+	return r_position;
+}
+
+XMFLOAT4 rigidBody::getRotationQuaternion() {
+	return rotationQuaternion;
 }
 
 rigidBody::rigidBody(void)
@@ -132,7 +168,7 @@ rigidBody::rigidBody(std::list<MassPoint>* pointList, XMFLOAT3 vel, XMFLOAT3 rot
 	points = pointList;
 	r_velocity = vel;
 	preCompute();
-	initialize();
+	computeInverInertTensAndAngVel();
 	XMStoreFloat4(&rotationQuaternion,XMQuaternionRotationRollPitchYaw(rotation.x,rotation.y, rotation.z));
 }
 

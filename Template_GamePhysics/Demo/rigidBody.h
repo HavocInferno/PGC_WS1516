@@ -11,7 +11,7 @@ using namespace DirectX;
 
 class rigidBody
 {
-public:
+private:
 	float massInverse;
 	XMFLOAT3 r_position;
 	XMFLOAT3 r_velocity;
@@ -29,10 +29,14 @@ public:
 	XMMATRIX transform;
 
 	std::list<MassPoint>* points;
-
+public:
 	void preCompute();
-	void initialize();
+	void computeInverInertTensAndAngVel();
 	void integrateValues(float timeStep);
+
+	XMFLOAT3 getScale();
+	XMFLOAT3 getPosition();
+	XMFLOAT4 getRotationQuaternion();
 
 	rigidBody(void);
 	rigidBody(std::list<MassPoint>* points, XMFLOAT3 vel, XMFLOAT3 rotation, XMFLOAT3 scale);

@@ -621,9 +621,9 @@ void DrawCube(rigidBody* rb) {
 	//set position
 	//cout << "scale x,y,z: " << rb->scale.x << ", " << rb->scale.y << ", " << rb->scale.z << std::endl;
 	//cout << "pos x,y,z: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
-	XMMATRIX scale    = XMMatrixScaling(rb->scale.x, rb->scale.y, rb->scale.z);
-	XMMATRIX trans    = XMMatrixTranslation(rb->r_position.x,rb->r_position.y,rb->r_position.z);
-	XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->rotationQuaternion));
+	XMMATRIX scale    = XMMatrixScaling(rb->getScale().x, rb->getScale().y, rb->getScale().z);
+	XMMATRIX trans    = XMMatrixTranslation(rb->getPosition().x,rb->getPosition().y,rb->getPosition().z);
+	XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->getRotationQuaternion()));
 	XMFLOAT4X4 debug; 
 	XMStoreFloat4x4(&debug, rotation);
     g_pEffectPositionNormal->SetWorld(rotation * scale * trans/** g_camera.GetWorldMatrix()*/); //scale * trans * rotation * g_camera.GetWorldMatrix());
@@ -686,7 +686,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	//Init Rigid Body Simulation
 	//TODO: put this in an own method
 	pointList = new std::list<MassPoint>;
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(1.f, 1.f, 0.f)));
+	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(100.f, 100.f, 0.f)));
 	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
 	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
 	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
@@ -900,6 +900,12 @@ void CALLBACK OnMouse( bool bLeftButtonDown, bool bRightButtonDown, bool bMiddle
 			yPosSave = yPos;
 		}
 		break;
+	case 4:
+		//rigid body
+		if (bLeftButtonDown) {
+			std::cout << "Plus over9000 force" << std::endl;
+		}
+		break;
 	default:
 		break;
 	}
@@ -1085,11 +1091,11 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		case 4:
 		{
 			cout << "Rigid Body Simulation!" << std::endl;
-			cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 			deltaTime = 0.005f;
 			g_bDrawRigidBodySimulation = true;
 			rb->integrateValues(deltaTime);
-			cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 			break;
 		}
 		default:
@@ -1302,7 +1308,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		break;
 	case 4:
 		rb->integrateValues(deltaTime);
-		cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+		//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 		break;
 	default:
 		break;
