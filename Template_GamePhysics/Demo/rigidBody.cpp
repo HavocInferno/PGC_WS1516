@@ -39,7 +39,12 @@ void rigidBody::preCompute()
 
 	inertiaTensorInverse = XMMATRIX(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 	for(auto mp = points->begin(); mp != points->end(); mp++) {
+		//position to model view
 		mp->position = subVector(mp->position, r_position);
+		//initial rotation
+		//TODO: may be unnecessary
+		XMStoreFloat3(&mp->position, XMVector3Rotate(XMLoadFloat3(&mp->position), XMLoadFloat4(&rotationQuaternion)));
+		
 		inertiaTensorInverse += multiplyVectorTranspose(multiplyVector(mp->position,mp->mass),mp->position); 
 		XMFLOAT3 L = XMFLOAT3(0,0,0);
 	//	XMVECTOR x = XMLoadFloat3(&(mp->position));
@@ -83,43 +88,6 @@ void rigidBody::integrateValues(float timeStep) {
 	
 	//Quaternion
 	//
-
-	/*XMFLOAT4 deltaQuaternion (0.f, 0.f, 0.f, 0.f);
-	XMFLOAT4 tempQuaternion;
-
-	XMStoreFloat4(&deltaQuaternion, 
-		XMQuaternionMultiply(
-			XMLoadFloat4(&XMFLOAT4(angularVelocity.x, angularVelocity.y, angularVelocity.z, .0f)), 
-			XMLoadFloat4(&rotationQuaternion)
-	));
-
-	tempQuaternion = deltaQuaternion;
-	XMStoreFloat4(&deltaQuaternion, 
-		XMVectorScale( XMLoadFloat4(&tempQuaternion), timeStep / 2)
-	);
-
-	tempQuaternion = rotationQuaternion;
-	XMStoreFloat4(&rotationQuaternion, 
-		XMVectorAdd(XMLoadFloat4(&tempQuaternion), XMLoadFloat4(&deltaQuaternion))
-	);*/
-
-	/*std::cout << "rotation" << std::endl;
-	std::cout << std::setprecision(10) << rotationQuaternion.x << std::endl;
-	std::cout << std::setprecision(10) << rotationQuaternion.y << std::endl;
-	std::cout << std::setprecision(10) << rotationQuaternion.z << std::endl;
-	std::cout << std::setprecision(10) << rotationQuaternion.w << std::endl;
-	std::cout << "delta" << std::endl;
-	std::cout << std::setprecision(40) << deltaQuaternion.x << std::endl;
-	std::cout << std::setprecision(40) << deltaQuaternion.y << std::endl;
-	std::cout << std::setprecision(40) << deltaQuaternion.z << std::endl;
-	std::cout << std::setprecision(40) << deltaQuaternion.w << std::endl;
-
-	rotationQuaternion.x += deltaQuaternion.x;
-	rotationQuaternion.y += deltaQuaternion.y;
-	rotationQuaternion.z += deltaQuaternion.z;
-	rotationQuaternion.w += deltaQuaternion.w;*/
-
-	//tempQuaternion = rotationQuaternion;
 	XMStoreFloat4(&rotationQuaternion, 
 		XMQuaternionNormalize(
 			//(0,w)r * h/2 + original rotation
@@ -145,7 +113,8 @@ void rigidBody::integrateValues(float timeStep) {
 	for (auto mp = points->begin(); mp != points->end(); mp++) {
 		XMStoreFloat3(&mp->worldPosition, XMVector3Rotate(XMLoadFloat3(&mp->position), XMLoadFloat4(&rotationQuaternion)));
 		mp->worldPosition = addVector(r_position, mp->worldPosition);
-		//TODO: do we need to compute v for each point?
+		//
+		//TODO: apply rotation to each point?
 	}
 }
 
@@ -161,6 +130,10 @@ XMFLOAT4 rigidBody::getRotationQuaternion() {
 	return rotationQuaternion;
 }
 
+std::list<MassPoint>* rigidBody::getMassPoints() {
+	return points;
+}
+
 rigidBody::rigidBody(void)
 {
 	points = new std::list<MassPoint>();
@@ -170,8 +143,8 @@ rigidBody::rigidBody(std::list<MassPoint>* pointList, XMFLOAT3 vel, XMFLOAT3 rot
 	this->scale = scale;
 	points = pointList;
 	r_velocity = vel;
-	preCompute();
 	XMStoreFloat4(&rotationQuaternion,XMQuaternionRotationRollPitchYaw(rotation.x,rotation.y, rotation.z));
+	preCompute();
 	computeInverInertTensAndAngVel();
 }
 

@@ -131,6 +131,8 @@ bool g_useDamping = true;
 bool g_bDrawRigidBodySimulation = true;
 std::list<MassPoint>* pointList;
 rigidBody* rb;
+XMFLOAT3 forceStart;
+XMFLOAT3 forceEnd;
 
 #endif
 
@@ -626,7 +628,7 @@ void DrawCube(rigidBody* rb) {
 	XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->getRotationQuaternion()));
 	XMFLOAT4X4 debug; 
 	XMStoreFloat4x4(&debug, rotation);
-    g_pEffectPositionNormal->SetWorld(rotation * scale * trans/** g_camera.GetWorldMatrix()*/); //scale * trans * rotation * g_camera.GetWorldMatrix());
+    g_pEffectPositionNormal->SetWorld(scale * trans * rotation/** g_camera.GetWorldMatrix()*/); //scale * trans * rotation * g_camera.GetWorldMatrix());
 
 	//draw everything
     g_pCube->Draw(g_pEffectPositionNormal, g_pInputLayoutPositionNormal);
@@ -684,6 +686,11 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	InitMassSprings();
 
 	//Init Rigid Body Simulation
+	//
+	/*g_pPrimitiveBatchPositionColor->DrawLine(
+		VertexPositionColor(XMVectorSet(-0.5f, (float)(i%2)-0.5f, (float)(i/2)-0.5f, 1), Colors::Red),
+            VertexPositionColor(XMVectorSet( 0.5f, (float)(i%2)-0.5f, (float)(i/2)-0.5f, 1), Colors::Red)
+	);*/
 	//TODO: put this in an own method
 	pointList = new std::list<MassPoint>;
 	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(100.f, 100.f, 0.f)));
@@ -1094,6 +1101,14 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 			deltaTime = 0.005f;
 			g_bDrawRigidBodySimulation = true;
+			
+			/*for (auto massPoint = *rb->getMassPoints().begin(); massPoint != rb->getMassPoints().end(); massPoint++) {
+				if (massPoint->force.x != 0.f || massPoint->force.y != 0.f || massPoint->force.z != 0.f) {
+					forceStart = XMFLOAT3(rb->getPosition().x + massPoint->position.x, rb->getPosition().y + massPoint->position.y, rb->getPosition().z + massPoint->position.z);
+					forceEnd = XMFLOAT3(rb->getPosition().x + massPoint->position.x + massPoint->force.x, rb->getPosition().y + massPoint->position.y + massPoint->force.y, rb->getPosition().z + massPoint->position.z + massPoint->force.z);;
+				}
+			}*/
+
 			rb->integrateValues(deltaTime);
 			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 			break;
