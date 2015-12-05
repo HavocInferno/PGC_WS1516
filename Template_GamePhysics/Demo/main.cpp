@@ -626,7 +626,7 @@ void DrawCube(rigidBody* rb) {
 	XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->getRotationQuaternion()));
 	XMFLOAT4X4 debug; 
 	XMStoreFloat4x4(&debug, rotation);
-    g_pEffectPositionNormal->SetWorld(rotation * scale * trans/** g_camera.GetWorldMatrix()*/); //scale * trans * rotation * g_camera.GetWorldMatrix());
+    g_pEffectPositionNormal->SetWorld( scale * rotation * trans/* g_camera.GetWorldMatrix()*/); //scale * trans * rotation * g_camera.GetWorldMatrix());
 
 	//draw everything
     g_pCube->Draw(g_pEffectPositionNormal, g_pInputLayoutPositionNormal);
@@ -695,7 +695,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
 	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
 
-	rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(1.f, .6f, .5f));
+	rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(1.0f, .60f, .50f));
 
     // Create DirectXTK geometric primitives for later usage
 	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);

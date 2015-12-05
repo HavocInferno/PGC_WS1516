@@ -30,24 +30,29 @@ void rigidBody::preCompute()
 {
 	r_position = angularMomentum = forceAccumulator = torqueAccumulator = XMFLOAT3(0,0,0);
 	massInverse = 0.0f;
+	float m = 0.0f;
 	for(auto mp = points->begin(); mp != points->end(); mp++) {
-		massInverse += mp->mass;
+		m += mp->mass;
 		r_position = addVector(r_position, multiplyVector(mp->position, mp->mass));
 	}
-	massInverse = 1/massInverse;
+	massInverse = 1/m;
+	m = m/12;
+	float x = scale.x*scale.x, y = scale.y*scale.y, z = scale.z*scale.z;
 	r_position = multiplyVector(r_position, massInverse);
 
-	inertiaTensorInverse = XMMATRIX(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+	//inertiaTensorInverse = XMMATRIX(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+	XMMATRIX I =  DirectX::XMMatrixInverse(nullptr,XMMATRIX(m*(y+z),0,0,0,0,m*(x+z),0,0,0,0,m*(x+y),0,0,0,0,1));
+	inertiaTensorInverse = currentInertiaInverse = I;
 	for(auto mp = points->begin(); mp != points->end(); mp++) {
 		mp->position = subVector(mp->position, r_position);
-		inertiaTensorInverse += multiplyVectorTranspose(multiplyVector(mp->position,mp->mass),mp->position); 
+		//inertiaTensorInverse += multiplyVectorTranspose(multiplyVector(mp->position,mp->mass),mp->position); 
 		XMFLOAT3 L = XMFLOAT3(0,0,0);
 	//	XMVECTOR x = XMLoadFloat3(&(mp->position));
 	//	XMVECTOR mv = XMLoadFloat3();
-		XMStoreFloat3(&L,XMVector3Cross(XMLoadFloat3(&(mp->position)), XMLoadFloat3( &multiplyVector(mp->velocity,mp->mass))));
+		XMStoreFloat3(&L,DirectX::XMVector3Cross(XMLoadFloat3(&(mp->position)), XMLoadFloat3( &multiplyVector(mp->velocity,mp->mass))));
 		angularMomentum = addVector(angularMomentum,L);
 	}
-	//XMStoreFloat3(&angularVelocity, XMVector3Transform(XMLoadFloat3(&angularMomentum),inertiaTensorInverse));
+	XMStoreFloat3(&angularVelocity, XMVector3Transform(XMLoadFloat3(&angularMomentum),I));
 }
 
 void rigidBody::computeInverInertTensAndAngVel()
@@ -172,7 +177,7 @@ rigidBody::rigidBody(std::list<MassPoint>* pointList, XMFLOAT3 vel, XMFLOAT3 rot
 	r_velocity = vel;
 	preCompute();
 	XMStoreFloat4(&rotationQuaternion,XMQuaternionRotationRollPitchYaw(rotation.x,rotation.y, rotation.z));
-	computeInverInertTensAndAngVel();
+	//computeInverInertTensAndAngVel();
 }
 
 rigidBody::~rigidBody(void)
