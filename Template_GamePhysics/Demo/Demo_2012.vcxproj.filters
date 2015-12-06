@@ -50,6 +50,9 @@
     <ClInclude Include="MassPoint.h">
       <Filter>rigidbody</Filter>
     </ClInclude>
+    <ClInclude Include="collisionDetect.h">
+      <Filter>rigidbody</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="effect.fx" />

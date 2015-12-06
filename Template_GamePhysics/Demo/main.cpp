@@ -50,6 +50,7 @@ using std::cout;
 
 //Rigid Body includes
 #include "rigidBody.h"
+#include "collisionDetect.h"
 
 // DXUT camera
 // NOTE: CModelViewerCamera does not only manage the standard view transformation/camera position 
@@ -139,7 +140,8 @@ rigidBody* rb;
 bool g_bDrawRigidBodyCollision = true;
 std::list<MassPoint>* pointList1, * pointList2;
 rigidBody* rb1, * rb2;
-
+XMMATRIX mat1, mat2;
+CollisionInfo simpletest;
 #endif
 
 // Mass Spring variable
@@ -676,6 +678,12 @@ void DrawCube(rigidBody* rb) {
 
 #endif
 #ifdef RIGID_BODY_COLLISION
+XMMATRIX getObj2WorldMat(rigidBody* rb1){
+		XMMATRIX scale1    = XMMatrixScaling(rb1->getScale().x, rb1->getScale().y, rb1->getScale().z);
+		XMMATRIX trans1    = XMMatrixTranslation(rb1->getPosition().x,rb1->getPosition().y,rb1->getPosition().z);
+		XMMATRIX rotation1 = XMMatrixRotationQuaternion(XMLoadFloat4(&rb1->getRotationQuaternion()));
+		return scale1 * rotation1 * trans1;
+}
 void DrawCollisionCubes(rigidBody* rb1) {
 	//TODO FIX ALL CODE IN THIS TO SUIT COLLISIONS
 	//set color
@@ -774,13 +782,15 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	w /= 2, h /= 2, d /= 2;
 	pointList1 = new std::list<MassPoint>;
 	pointList2 = new std::list<MassPoint>;
-	InitRigidBox(pointList1, 1.0f,0.6f,0.5f,2.f);
-	InitRigidBox(pointList2, 1.0f,0.6f,0.5f,2.f);
-	rb1 = new rigidBody(pointList1, XMFLOAT3(.0f , -1.f, .0f), XMFLOAT3(.0f , .0f, 0.f), XMFLOAT3(w, h, d));
+	InitRigidBox(pointList1, w,h,d,2.f);
+	InitRigidBox(pointList2, w,h,d,2.f);
+	rb1 = new rigidBody(pointList1, XMFLOAT3(.0f , -1.f, .0f), XMFLOAT3(.0f , .0f, 0.f), XMFLOAT3(d, h, d));
 	rb2 = new rigidBody(pointList2, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(d, w, h));
 
 	rb1->setPosition(XMFLOAT3(.0f,1.0f,.0f));
 	//rb2->setPosition(XMFLOAT3(.0f,1.0f,.0f));
+
+	mat1 = mat2 = XMMATRIX(.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f);
 
     // Create DirectXTK geometric primitives for later usage
 	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);
@@ -1415,6 +1425,26 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 	case 5:
 		rb1->integrateValues(deltaTime);
 		rb2->integrateValues(deltaTime);
+
+		//CHECK COLLISIONS 
+		mat1 = getObj2WorldMat(rb1); 
+		mat2 = getObj2WorldMat(rb2);
+
+		// Check if a corner of mat2 is in mat1
+		simpletest = checkCollision(mat1, mat2);// should find out a collision here
+		if (!simpletest.isValid){
+			// Check if a corner of mat1 is in mat2
+			simpletest = checkCollision(mat2, mat1);
+			simpletest.normalWorld = -simpletest.normalWorld;// we compute the impulse to A
+		}
+		if (!simpletest.isValid)
+			std::printf("No Collision\n");
+		else{
+			std::printf("collision detected at normal: %f, %f, %f\n",XMVectorGetX(simpletest.normalWorld), XMVectorGetY(simpletest.normalWorld), XMVectorGetZ(simpletest.normalWorld));
+			std::printf("collision point : %f, %f, %f\n",XMVectorGetX(simpletest.collisionPointWorld), XMVectorGetY(simpletest.collisionPointWorld), XMVectorGetZ(simpletest.collisionPointWorld));
+		}
+
+
 		//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 		break;
 	default:

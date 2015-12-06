@@ -219,6 +219,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\Dropbox\Uni\Semester 5\PGC\collisionDetect.h" />
+    <ClInclude Include="collisionDetect.h" />
     <ClInclude Include="Contact.h" />
     <ClInclude Include="MassPoint.h" />
     <ClInclude Include="point.h" />
