@@ -38,10 +38,13 @@ public:
 	XMFLOAT3 getPosition();
 	XMFLOAT3 getVelocity();
 	XMFLOAT3 getAngularVelocity();
+	XMFLOAT3 getAngularMomentum();
 	XMFLOAT4 getRotationQuaternion();
 	float getMassInverse();
 	XMMATRIX getInertiaTensorInverse();
 	void setPosition(XMFLOAT3 newPos);
+	void setLinearVelocity(XMFLOAT3 lV);
+	void setAngularMomentum(XMFLOAT3 aM);
 
 	rigidBody(void);
 	rigidBody(std::list<MassPoint>* points, XMFLOAT3 vel, XMFLOAT3 rotation, XMFLOAT3 scale);

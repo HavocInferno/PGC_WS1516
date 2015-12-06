@@ -786,7 +786,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	pointList2 = new std::list<MassPoint>;
 	InitRigidBox(pointList1, w,h,d,2.f);
 	InitRigidBox(pointList2, w,h,d,2.f);
-	rb1 = new rigidBody(pointList1, XMFLOAT3(.0f , -1.f, .0f), XMFLOAT3(.0f , .0f, 0.f), XMFLOAT3(d/2, h, d));
+	rb1 = new rigidBody(pointList1, XMFLOAT3(.0f , -1.f, .0f), XMFLOAT3(.0f , .0f, 0.785398f), XMFLOAT3(d/2, h, d));
 	rb2 = new rigidBody(pointList2, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(d, w, h));
 
 	rb1->setPosition(XMFLOAT3(.0f,1.0f,.0f));

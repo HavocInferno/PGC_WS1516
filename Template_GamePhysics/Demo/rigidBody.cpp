@@ -163,6 +163,13 @@ void rigidBody::setPosition(XMFLOAT3 newPos) {
 
 }
 
+void rigidBody::setLinearVelocity(XMFLOAT3 lV) {
+	r_velocity = lV;
+}
+void rigidBody::setAngularMomentum(XMFLOAT3 aM) {
+	angularMomentum = aM;
+}
+
 XMFLOAT3 rigidBody::getScale() {
 	return scale;
 }
@@ -178,6 +185,9 @@ XMFLOAT3 rigidBody::getVelocity() {
 XMFLOAT3 rigidBody::getAngularVelocity() {
 	return angularVelocity;
 }
+XMFLOAT3 rigidBody::getAngularMomentum() {
+	return angularMomentum;
+} 
 
 XMFLOAT4 rigidBody::getRotationQuaternion() {
 	return rotationQuaternion;

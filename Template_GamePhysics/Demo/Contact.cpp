@@ -52,6 +52,26 @@ void Contact::calculateImpulse() {
 
 	impulse = numerator / denominator;
 
+	XMFLOAT3 newVelocity_1, newVelocity_2, newAngMom_1, newAngMom_2,tempf3;
+	c_normal *= impulse; //scale the normal with the impulse
+	
+	XMStoreFloat3(&tempf3, c_normal*ma);
+	newVelocity_1 = addVector(body1->getAngularVelocity(),tempf3);
+
+	XMStoreFloat3(&tempf3, c_normal*mb);
+	newVelocity_2 = addVector(body2->getAngularVelocity(),tempf3);
+
+	XMStoreFloat3(&tempf3, XMVector3Cross(center_1,c_normal));
+	newAngMom_1 = addVector(body1->getAngularMomentum(),tempf3);
+
+	XMStoreFloat3(&tempf3, XMVector3Cross(center_2,c_normal));
+	newAngMom_2 = addVector(body2->getAngularMomentum(),tempf3);
+
+	body1->setLinearVelocity(newVelocity_1);
+	body1->setAngularMomentum(newAngMom_1);
+
+	body2->setLinearVelocity(newVelocity_2);
+	body2->setAngularMomentum(newAngMom_2);
 
 }
 	
