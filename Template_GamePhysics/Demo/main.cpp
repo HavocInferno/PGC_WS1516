@@ -138,7 +138,7 @@ rigidBody* rb;
 
 bool g_bDrawRigidBodyCollision = true;
 std::list<MassPoint>* pointList1, * pointList2;
-rigidBody* rb1, rb2;
+rigidBody* rb1, * rb2;
 
 #endif
 
@@ -355,7 +355,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 
 	TwType TW_TYPE_INTEGRATOR = TwDefineEnumFromString("Integration Method", "Euler,Midpoint,LeapFrog");
 	TwType TW_TYPE_DEMOCASE = TwDefineEnumFromString("Demo Setup", "Demo 1/2/3,Demo 4");
-	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "Demo 1,Demo 2,Demo 3,Demo 4, RB Demo");
+	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "Demo 1,Demo 2,Demo 3,Demo 4, RB Demo, RB Collision");
 	TwAddVarRW(g_pTweakBar, "Test Scene", TW_TYPE_TESTCASE, &g_iTestCase, "");
 	// HINT: For buttons you can directly pass the callback function as a lambda expression.
 	TwAddButton(g_pTweakBar, "Reset Scene", [](void *){g_iPreTestCase = -1; }, nullptr, "");
@@ -676,7 +676,7 @@ void DrawCube(rigidBody* rb) {
 
 #endif
 #ifdef RIGID_BODY_COLLISION
-void DrawCollisionCubes(rigidBody* rb1, rigidBody* rb2) {
+void DrawCollisionCubes(rigidBody* rb1) {
 	//TODO FIX ALL CODE IN THIS TO SUIT COLLISIONS
 	//set color
 	g_pEffectPositionNormal->SetDiffuseColor(TUM_BLUE_LIGHT);
@@ -694,12 +694,12 @@ void DrawCollisionCubes(rigidBody* rb1, rigidBody* rb2) {
 	//set position
 	//cout << "scale x,y,z: " << rb->scale.x << ", " << rb->scale.y << ", " << rb->scale.z << std::endl;
 	//cout << "pos x,y,z: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
-	XMMATRIX scale    = XMMatrixScaling(rb->getScale().x, rb->getScale().y, rb->getScale().z);
-	XMMATRIX trans    = XMMatrixTranslation(rb->getPosition().x,rb->getPosition().y,rb->getPosition().z);
-	XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->getRotationQuaternion()));
+	XMMATRIX scale1    = XMMatrixScaling(rb1->getScale().x, rb1->getScale().y, rb1->getScale().z);
+	XMMATRIX trans1    = XMMatrixTranslation(rb1->getPosition().x,rb1->getPosition().y,rb1->getPosition().z);
+	XMMATRIX rotation1 = XMMatrixRotationQuaternion(XMLoadFloat4(&rb1->getRotationQuaternion()));
 	XMFLOAT4X4 debug; 
-	XMStoreFloat4x4(&debug, rotation);
-    g_pEffectPositionNormal->SetWorld( scale * rotation * trans/* g_camera.GetWorldMatrix()*/); //scale * trans * rotation * g_camera.GetWorldMatrix());
+	XMStoreFloat4x4(&debug, rotation1);
+    g_pEffectPositionNormal->SetWorld( scale1 * rotation1 * trans1/* g_camera.GetWorldMatrix()*/); //scale * trans * rotation * g_camera.GetWorldMatrix());
 
 	//draw everything
     g_pCube->Draw(g_pEffectPositionNormal, g_pInputLayoutPositionNormal);
@@ -759,7 +759,8 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	//Init Rigid Body Simulation
 	//TODO: put this in an own method
 	pointList = new std::list<MassPoint>;
-	InitRigidBox(pointList, 1.0f,0.6f,0.5f,2.f);
+	float w = 1.0f, h = 0.6f, d = 0.5f;
+	InitRigidBox(pointList, w,h,d,2.f);
 	for(auto mp = pointList->begin(); mp != pointList->end(); mp++) {
 		//if (mp->position.x == 0.5f && mp->position.x == -0.3f && mp->position.x ==0.25f) {
 			mp->SetForce(XMFLOAT3(100.f,100.f,0.f));
@@ -767,16 +768,17 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 		//}
 	}
 
-	/*pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(100.f, 100.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));*/
+	rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(w, h, d));
 
-	rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(1.0f, .60f, .50f));
+	//Init Rigid Body Collision
+	w /= 2, h /= 2, d /= 2;
+	pointList1 = new std::list<MassPoint>;
+	pointList2 = new std::list<MassPoint>;
+	InitRigidBox(pointList1, 1.0f,0.6f,0.5f,2.f);
+	InitRigidBox(pointList2, 1.0f,0.6f,0.5f,2.f);
+	rb1 = new rigidBody(pointList1, XMFLOAT3(.0f , -1.f, .0f), XMFLOAT3(.0f , .0f, 0.f), XMFLOAT3(w, h, d));
+	rb2 = new rigidBody(pointList2, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(d, w, h));
+
 
     // Create DirectXTK geometric primitives for later usage
 	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);
@@ -987,6 +989,12 @@ void CALLBACK OnMouse( bool bLeftButtonDown, bool bRightButtonDown, bool bMiddle
 			std::cout << "Plus over9000 force" << std::endl;
 		}
 		break;
+	case 5:
+		//rigid body collision
+		if (bLeftButtonDown) {
+			std::cout << "Plus over9000 force" << std::endl;
+		}
+		break;
 	default:
 		break;
 	}
@@ -1176,6 +1184,17 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			deltaTime = 0.005f;
 			g_bDrawRigidBodySimulation = true;
 			rb->integrateValues(deltaTime);
+			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+			break;
+		}
+		case 5:
+		{
+			cout << "Rigid Body Collision!" << std::endl;
+			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+			deltaTime = 0.005f;
+			g_bDrawRigidBodyCollision = true;
+			rb1->integrateValues(deltaTime);
+			rb2->integrateValues(deltaTime);
 			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 			break;
 		}
@@ -1391,6 +1410,11 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		rb->integrateValues(deltaTime);
 		//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 		break;
+	case 5:
+		rb1->integrateValues(deltaTime);
+		rb2->integrateValues(deltaTime);
+		//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+		break;
 	default:
 		break;
 	}
@@ -1448,6 +1472,14 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 #ifdef RIGID_BODY_SIMULATION
 	case 4:
 		if (g_bDrawRigidBodySimulation) DrawCube(rb);
+		break;
+#endif
+#ifdef RIGID_BODY_COLLISION
+	case 5:
+		if (g_bDrawRigidBodyCollision) {
+			DrawCollisionCubes(rb1);
+			DrawCollisionCubes(rb2);
+		}
 		break;
 #endif
 	default:
