@@ -40,6 +40,7 @@ using std::cout;
 #define TEMPLATE_DEMO
 #define MASS_SPRING_SYSTEM
 #define RIGID_BODY_SIMULATION
+#define RIGID_BODY_COLLISION
 
 // Mass Spring includes
 #include "spring.h"
@@ -131,6 +132,13 @@ bool g_useDamping = true;
 bool g_bDrawRigidBodySimulation = true;
 std::list<MassPoint>* pointList;
 rigidBody* rb;
+
+#endif
+#ifdef RIGID_BODY_COLLISION
+
+bool g_bDrawRigidBodyCollision = true;
+std::list<MassPoint>* pointList1, * pointList2;
+rigidBody* rb1, rb2;
 
 #endif
 
@@ -320,6 +328,22 @@ void explode()
 
 }
 
+void InitRigidBox(std::list<MassPoint>* listOfPoints, float width, float height, float depth, float mass) {
+	width /= 2;
+	height /= 2;
+	depth /= 2;
+	mass /= 8;
+
+	listOfPoints->push_front(MassPoint(XMFLOAT3(width,height,depth), mass ));
+	listOfPoints->push_front(MassPoint(XMFLOAT3(width,-height,-depth), mass ));
+	listOfPoints->push_front(MassPoint(XMFLOAT3(width,height,-depth), mass ));
+	listOfPoints->push_front(MassPoint(XMFLOAT3(-width,-height,depth), mass ));
+	listOfPoints->push_front(MassPoint(XMFLOAT3(-width,height,depth), mass ));
+	listOfPoints->push_front(MassPoint(XMFLOAT3(-width,-height,-depth), mass ));
+	listOfPoints->push_front(MassPoint(XMFLOAT3(-width,height,-depth), mass ));
+	listOfPoints->push_front(MassPoint(XMFLOAT3(width,-height,depth), mass ));
+}
+
 // Video recorder
 FFmpeg* g_pFFmpegVideoRecorder = nullptr;
 
@@ -366,8 +390,26 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "-> Explosion Force", TW_TYPE_FLOAT, &g_explosionForce, "min=0.1 ma=10 step=0.1");
 		break;
 #endif
-	#ifdef RIGID_BODY_SIMULATION
+#ifdef RIGID_BODY_SIMULATION
 	case 4:
+		//TwAddVarRW(g_pTweakBar, "Demo Setup", TW_TYPE_DEMOCASE, &g_demoCase, "");
+		//TwAddVarRW(g_pTweakBar, "-> Integration Method", TW_TYPE_INTEGRATOR, &g_integrationMethod, "");
+		TwAddVarRW(g_pTweakBar, "Use damping", TW_TYPE_BOOLCPP, &g_useDamping, "");
+		//TwAddVarRW(g_pTweakBar, "Point Size", TW_TYPE_FLOAT, &g_fSphereSize, "min=0.01 step=0.01");
+		TwAddVarRW(g_pTweakBar, "Use fixed timestep", TW_TYPE_BOOLCPP, &g_fixedTimestep, "");
+		TwAddVarRW(g_pTweakBar, "-> timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
+		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
+		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
+		//TwAddVarRW(g_pTweakBar, "Collide with walls:", TW_TYPE_BOOLCPP, &g_usingWalls, "");
+		//TwAddVarRW(g_pTweakBar, "-> X-Wall Positions", TW_TYPE_FLOAT, &g_xWall, "min=0.5 ma=10 step=0.1");
+		//TwAddVarRW(g_pTweakBar, "-> Z-Wall Positions", TW_TYPE_FLOAT, &g_zWall, "min=0.5 ma=10 step=0.1");
+		//TwAddVarRW(g_pTweakBar, "-> Ceiling height", TW_TYPE_FLOAT, &g_ceiling, "min=0.5 ma=10 step=0.1");
+		//TwAddButton(g_pTweakBar, "Explode!!", [](void *){explode(); }, nullptr, "");	
+		//TwAddVarRW(g_pTweakBar, "-> Explosion Force", TW_TYPE_FLOAT, &g_explosionForce, "min=0.1 ma=10 step=0.1");
+		break;
+#endif
+		#ifdef RIGID_BODY_COLLISION
+	case 5:
 		//TwAddVarRW(g_pTweakBar, "Demo Setup", TW_TYPE_DEMOCASE, &g_demoCase, "");
 		//TwAddVarRW(g_pTweakBar, "-> Integration Method", TW_TYPE_INTEGRATOR, &g_integrationMethod, "");
 		TwAddVarRW(g_pTweakBar, "Use damping", TW_TYPE_BOOLCPP, &g_useDamping, "");
@@ -633,6 +675,37 @@ void DrawCube(rigidBody* rb) {
 }
 
 #endif
+#ifdef RIGID_BODY_COLLISION
+void DrawCollisionCubes(rigidBody* rb1, rigidBody* rb2) {
+	//TODO FIX ALL CODE IN THIS TO SUIT COLLISIONS
+	//set color
+	g_pEffectPositionNormal->SetDiffuseColor(TUM_BLUE_LIGHT);
+	g_pEffectPositionNormal->SetEmissiveColor(Colors::Black);
+	g_pEffectPositionNormal->SetSpecularColor(0.5f * Colors::White);
+    g_pEffectPositionNormal->SetSpecularPower(50);
+
+	/* //FROM TEAPOT:
+	XMMATRIX scale    = XMMatrixScaling(0.5f, 0.5f, 0.5f);    
+    XMMATRIX trans    = XMMatrixTranslation(g_vfMovableObjectPos.x, g_vfMovableObjectPos.y, g_vfMovableObjectPos.z);
+	XMMATRIX rotations = XMMatrixRotationRollPitchYaw(g_vfRotate.x, g_vfRotate.y, g_vfRotate.z);
+	g_pEffectPositionNormal->SetWorld(rotations * scale * trans);
+	*/
+
+	//set position
+	//cout << "scale x,y,z: " << rb->scale.x << ", " << rb->scale.y << ", " << rb->scale.z << std::endl;
+	//cout << "pos x,y,z: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+	XMMATRIX scale    = XMMatrixScaling(rb->getScale().x, rb->getScale().y, rb->getScale().z);
+	XMMATRIX trans    = XMMatrixTranslation(rb->getPosition().x,rb->getPosition().y,rb->getPosition().z);
+	XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->getRotationQuaternion()));
+	XMFLOAT4X4 debug; 
+	XMStoreFloat4x4(&debug, rotation);
+    g_pEffectPositionNormal->SetWorld( scale * rotation * trans/* g_camera.GetWorldMatrix()*/); //scale * trans * rotation * g_camera.GetWorldMatrix());
+
+	//draw everything
+    g_pCube->Draw(g_pEffectPositionNormal, g_pInputLayoutPositionNormal);
+}
+
+#endif
 // ============================================================
 // DXUT Callbacks
 // ============================================================
@@ -686,14 +759,22 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	//Init Rigid Body Simulation
 	//TODO: put this in an own method
 	pointList = new std::list<MassPoint>;
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(100.f, 100.f, 0.f)));
+	InitRigidBox(pointList, 1.0f,0.6f,0.5f,8.f);
+	for(auto mp = pointList->begin(); mp != pointList->end(); mp++) {
+		//if (mp->position.x == 0.5f && mp->position.x == -0.3f && mp->position.x ==0.25f) {
+			mp->SetForce(XMFLOAT3(100.f,100.f,0.f));
+			break;
+		//}
+	}
+
+	/*pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(100.f, 100.f, 0.f)));
 	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
 	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
 	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
 	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
 	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
 	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));*/
 
 	rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(1.0f, .60f, .50f));
 

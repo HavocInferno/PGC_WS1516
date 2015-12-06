@@ -13,7 +13,9 @@ public:
 	XMFLOAT3 force;
 
 	MassPoint(void);
+	MassPoint(XMFLOAT3 pos, float m);
 	MassPoint(XMFLOAT3 pos, float m, float v, XMFLOAT3 force);
 	~MassPoint(void);
+	void SetForce(XMFLOAT3 f);
 };
 
