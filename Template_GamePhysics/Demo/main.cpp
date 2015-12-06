@@ -779,6 +779,8 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	rb1 = new rigidBody(pointList1, XMFLOAT3(.0f , -1.f, .0f), XMFLOAT3(.0f , .0f, 0.f), XMFLOAT3(w, h, d));
 	rb2 = new rigidBody(pointList2, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(d, w, h));
 
+	rb1->setPosition(XMFLOAT3(.0f,1.0f,.0f));
+	//rb2->setPosition(XMFLOAT3(.0f,1.0f,.0f));
 
     // Create DirectXTK geometric primitives for later usage
 	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);
@@ -986,13 +988,13 @@ void CALLBACK OnMouse( bool bLeftButtonDown, bool bRightButtonDown, bool bMiddle
 	case 4:
 		//rigid body
 		if (bLeftButtonDown) {
-			std::cout << "Plus over9000 force" << std::endl;
+			//std::cout << "Plus over9000 force" << std::endl;
 		}
 		break;
 	case 5:
 		//rigid body collision
 		if (bLeftButtonDown) {
-			std::cout << "Plus over9000 force" << std::endl;
+			//std::cout << "Plus over9000 force" << std::endl;
 		}
 		break;
 	default:
