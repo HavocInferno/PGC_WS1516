@@ -36,8 +36,11 @@ public:
 
 	XMFLOAT3 getScale();
 	XMFLOAT3 getPosition();
+	XMFLOAT3 getVelocity();
+	XMFLOAT3 getAngularVelocity();
 	XMFLOAT4 getRotationQuaternion();
 	std::vector<MassPoint>* getMassPoints();
+	void setPosition(XMFLOAT3 newPos);
 
 	rigidBody(void);
 	rigidBody(std::vector<MassPoint>* points, XMFLOAT3 vel, XMFLOAT3 rotation, XMFLOAT3 scale);

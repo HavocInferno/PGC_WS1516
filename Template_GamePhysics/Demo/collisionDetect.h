@@ -15,7 +15,7 @@ struct CollisionInfo{
 obj2World_A, the transfer matrix from object space of A to the world space
 obj2World_B, the transfer matrix from object space of B to the world space
 */
-inline CollisionInfo checkCollision(const XMMATRIX obj2World_A, const XMMATRIX obj2World_B) {
+inline CollisionInfo checkCollision(const XMMATRIX &obj2World_A, const XMMATRIX &obj2World_B) {
 
 	// the transfer matrix from the world space to object space of A:
 	const XMMATRIX world2Obj_A = XMMatrixInverse(nullptr, obj2World_A);	

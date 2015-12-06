@@ -40,6 +40,7 @@ using std::cout;
 #define TEMPLATE_DEMO
 #define MASS_SPRING_SYSTEM
 #define RIGID_BODY_SIMULATION
+#define RIGID_BODY_COLLISION
 
 // Mass Spring includes
 #include "spring.h"
@@ -50,6 +51,8 @@ using std::cout;
 
 //Rigid Body includes
 #include "rigidBody.h"
+#include "collisionDetect.h"
+#include "Contact.h"
 
 // DXUT camera
 // NOTE: CModelViewerCamera does not only manage the standard view transformation/camera position 
@@ -138,6 +141,15 @@ rigidBody* rb;
 XMFLOAT3 forceStart;
 XMFLOAT3 forceEnd;
 
+#endif
+#ifdef RIGID_BODY_COLLISION
+
+bool g_bDrawRigidBodyCollision = true;
+std::vector<MassPoint>* pointList1, * pointList2;
+rigidBody* rb1, * rb2;
+XMMATRIX mat1, mat2;
+CollisionInfo simpletest;
+Contact contact;
 #endif
 
 // Mass Spring variable
@@ -326,6 +338,22 @@ void explode()
 
 }
 
+void InitRigidBox(std::vector<MassPoint>* listOfPoints, float width, float height, float depth, float mass) {
+	width /= 2;
+	height /= 2;
+	depth /= 2;
+	mass /= 8;
+
+	listOfPoints->push_back(MassPoint(XMFLOAT3(width,height,depth), mass ));
+	listOfPoints->push_back(MassPoint(XMFLOAT3(width,-height,-depth), mass ));
+	listOfPoints->push_back(MassPoint(XMFLOAT3(width,height,-depth), mass ));
+	listOfPoints->push_back(MassPoint(XMFLOAT3(-width,-height,depth), mass ));
+	listOfPoints->push_back(MassPoint(XMFLOAT3(-width,height,depth), mass ));
+	listOfPoints->push_back(MassPoint(XMFLOAT3(-width,-height,-depth), mass ));
+	listOfPoints->push_back(MassPoint(XMFLOAT3(-width,height,-depth), mass ));
+	listOfPoints->push_back(MassPoint(XMFLOAT3(width,-height,depth), mass ));
+}
+
 // Video recorder
 FFmpeg* g_pFFmpegVideoRecorder = nullptr;
 
@@ -337,7 +365,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 
 	TwType TW_TYPE_INTEGRATOR = TwDefineEnumFromString("Integration Method", "Euler,Midpoint,LeapFrog");
 	TwType TW_TYPE_DEMOCASE = TwDefineEnumFromString("Demo Setup", "Demo 1/2/3,Demo 4");
-	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "Demo 1,Demo 2,Demo 3,Demo 4, RB Demo");
+	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "Demo 1,Demo 2,Demo 3,Demo 4, RB Demo, RB Collision");
 	TwAddVarRW(g_pTweakBar, "Test Scene", TW_TYPE_TESTCASE, &g_iTestCase, "");
 	// HINT: For buttons you can directly pass the callback function as a lambda expression.
 	TwAddButton(g_pTweakBar, "Reset Scene", [](void *){g_iPreTestCase = -1; }, nullptr, "");
@@ -372,8 +400,26 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "-> Explosion Force", TW_TYPE_FLOAT, &g_explosionForce, "min=0.1 ma=10 step=0.1");
 		break;
 #endif
-	#ifdef RIGID_BODY_SIMULATION
+#ifdef RIGID_BODY_SIMULATION
 	case 4:
+		//TwAddVarRW(g_pTweakBar, "Demo Setup", TW_TYPE_DEMOCASE, &g_demoCase, "");
+		//TwAddVarRW(g_pTweakBar, "-> Integration Method", TW_TYPE_INTEGRATOR, &g_integrationMethod, "");
+		TwAddVarRW(g_pTweakBar, "Use damping", TW_TYPE_BOOLCPP, &g_useDamping, "");
+		//TwAddVarRW(g_pTweakBar, "Point Size", TW_TYPE_FLOAT, &g_fSphereSize, "min=0.01 step=0.01");
+		TwAddVarRW(g_pTweakBar, "Use fixed timestep", TW_TYPE_BOOLCPP, &g_fixedTimestep, "");
+		TwAddVarRW(g_pTweakBar, "-> timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
+		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
+		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
+		//TwAddVarRW(g_pTweakBar, "Collide with walls:", TW_TYPE_BOOLCPP, &g_usingWalls, "");
+		//TwAddVarRW(g_pTweakBar, "-> X-Wall Positions", TW_TYPE_FLOAT, &g_xWall, "min=0.5 ma=10 step=0.1");
+		//TwAddVarRW(g_pTweakBar, "-> Z-Wall Positions", TW_TYPE_FLOAT, &g_zWall, "min=0.5 ma=10 step=0.1");
+		//TwAddVarRW(g_pTweakBar, "-> Ceiling height", TW_TYPE_FLOAT, &g_ceiling, "min=0.5 ma=10 step=0.1");
+		//TwAddButton(g_pTweakBar, "Explode!!", [](void *){explode(); }, nullptr, "");	
+		//TwAddVarRW(g_pTweakBar, "-> Explosion Force", TW_TYPE_FLOAT, &g_explosionForce, "min=0.1 ma=10 step=0.1");
+		break;
+#endif
+		#ifdef RIGID_BODY_COLLISION
+	case 5:
 		//TwAddVarRW(g_pTweakBar, "Demo Setup", TW_TYPE_DEMOCASE, &g_demoCase, "");
 		//TwAddVarRW(g_pTweakBar, "-> Integration Method", TW_TYPE_INTEGRATOR, &g_integrationMethod, "");
 		TwAddVarRW(g_pTweakBar, "Use damping", TW_TYPE_BOOLCPP, &g_useDamping, "");
@@ -637,6 +683,43 @@ void DrawCube(rigidBody* rb) {
 }
 
 #endif
+#ifdef RIGID_BODY_COLLISION
+XMMATRIX getObj2WorldMat(rigidBody* rb1){
+		XMMATRIX scale1    = XMMatrixScaling(rb1->getScale().x, rb1->getScale().y, rb1->getScale().z);
+		XMMATRIX trans1    = XMMatrixTranslation(rb1->getPosition().x,rb1->getPosition().y,rb1->getPosition().z);
+		XMMATRIX rotation1 = XMMatrixRotationQuaternion(XMLoadFloat4(&rb1->getRotationQuaternion()));
+		return scale1 * rotation1 * trans1;
+}
+void DrawCollisionCubes(rigidBody* rb1) {
+	//TODO FIX ALL CODE IN THIS TO SUIT COLLISIONS
+	//set color
+	g_pEffectPositionNormal->SetDiffuseColor(TUM_BLUE_LIGHT);
+	g_pEffectPositionNormal->SetEmissiveColor(Colors::Black);
+	g_pEffectPositionNormal->SetSpecularColor(0.5f * Colors::White);
+    g_pEffectPositionNormal->SetSpecularPower(50);
+
+	/* //FROM TEAPOT:
+	XMMATRIX scale    = XMMatrixScaling(0.5f, 0.5f, 0.5f);    
+    XMMATRIX trans    = XMMatrixTranslation(g_vfMovableObjectPos.x, g_vfMovableObjectPos.y, g_vfMovableObjectPos.z);
+	XMMATRIX rotations = XMMatrixRotationRollPitchYaw(g_vfRotate.x, g_vfRotate.y, g_vfRotate.z);
+	g_pEffectPositionNormal->SetWorld(rotations * scale * trans);
+	*/
+
+	//set position
+	//cout << "scale x,y,z: " << rb->scale.x << ", " << rb->scale.y << ", " << rb->scale.z << std::endl;
+	//cout << "pos x,y,z: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+	XMMATRIX scale1    = XMMatrixScaling(rb1->getScale().x, rb1->getScale().y, rb1->getScale().z);
+	XMMATRIX trans1    = XMMatrixTranslation(rb1->getPosition().x,rb1->getPosition().y,rb1->getPosition().z);
+	XMMATRIX rotation1 = XMMatrixRotationQuaternion(XMLoadFloat4(&rb1->getRotationQuaternion()));
+	XMFLOAT4X4 debug; 
+	XMStoreFloat4x4(&debug, rotation1);
+    g_pEffectPositionNormal->SetWorld( scale1 * rotation1 * trans1/* g_camera.GetWorldMatrix()*/); //scale * trans * rotation * g_camera.GetWorldMatrix());
+
+	//draw everything
+    g_pCube->Draw(g_pEffectPositionNormal, g_pInputLayoutPositionNormal);
+}
+
+#endif
 // ============================================================
 // DXUT Callbacks
 // ============================================================
@@ -689,22 +772,31 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 
 	//Init Rigid Body Simulation
 	//
-	/*g_pPrimitiveBatchPositionColor->DrawLine(
-		VertexPositionColor(XMVectorSet(-0.5f, (float)(i%2)-0.5f, (float)(i/2)-0.5f, 1), Colors::Red),
-            VertexPositionColor(XMVectorSet( 0.5f, (float)(i%2)-0.5f, (float)(i/2)-0.5f, 1), Colors::Red)
-	);*/
-	//TODO: put this in an own method
 	pointList = new std::vector<MassPoint>;
-	pointList->push_back(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(1.f, 1.f, 0.f)));
-	pointList->push_back(MassPoint(XMFLOAT3(0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_back(MassPoint(XMFLOAT3(0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_back(MassPoint(XMFLOAT3(-0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_back(MassPoint(XMFLOAT3(-0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_back(MassPoint(XMFLOAT3(-0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_back(MassPoint(XMFLOAT3(-0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_back(MassPoint(XMFLOAT3(0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	float w = 1.0f, h = 0.6f, d = 0.5f;
+	InitRigidBox(pointList, w,h,d,2.f);
+	for(auto mp = pointList->begin(); mp != pointList->end(); mp++) {
+		//if (mp->position.x == 0.5f && mp->position.x == -0.3f && mp->position.x ==0.25f) {
+			mp->SetForce(XMFLOAT3(1.f,1.f,0.f));
+			break;
+		//}
+	}
 
-	rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(1.0f, .60f, .50f));
+	rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(w, h, d));
+
+	//Init Rigid Body Collision
+	w /= 2, h /= 2, d /= 2;
+	pointList1 = new std::vector<MassPoint>;
+	pointList2 = new std::vector<MassPoint>;
+	InitRigidBox(pointList1, w,h,d,2.f);
+	InitRigidBox(pointList2, w,h,d,2.f);
+	rb1 = new rigidBody(pointList1, XMFLOAT3(.0f , -1.f, .0f), XMFLOAT3(.0f , .0f, 0.f), XMFLOAT3(d/2, h, d));
+	rb2 = new rigidBody(pointList2, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(d, w, h));
+
+	rb1->setPosition(XMFLOAT3(.0f,1.0f,.0f));
+	//rb2->setPosition(XMFLOAT3(.0f,1.0f,.0f));
+
+	mat1 = mat2 = XMMATRIX(.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f);
 
     // Create DirectXTK geometric primitives for later usage
 	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);
@@ -942,19 +1034,15 @@ void CALLBACK OnMouse( bool bLeftButtonDown, bool bRightButtonDown, bool bMiddle
 			XMMATRIX trans    = XMMatrixTranslation(rb->getPosition().x,rb->getPosition().y,rb->getPosition().z);
 			XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->getRotationQuaternion()));*/
 
-			cout << std:: endl << "Points: " << std::endl;
+			//cout << std:: endl << "Points: " << std::endl;
 			for (auto point = (*rb->getMassPoints()).begin(); point != (*rb->getMassPoints()).end(); point++) {
-				//get projection coordinates 
-				/*XMStoreFloat3(&temp, XMVector3Transform(XMLoadFloat3(&point->position), 
-					g_camera.GetProjMatrix() *
-					g_camera.GetViewMatrix() *
-					scale * rotation * trans));*/
+				//get the projection coordinates of a point
 				XMStoreFloat3(&temp, XMVector3Rotate(XMLoadFloat3(&point->position), XMLoadFloat4(&rb->getRotationQuaternion())));
 				temp = addVector(rb->getPosition(), temp);
 				XMStoreFloat3(&temp, XMVector3Transform(XMLoadFloat3(&temp), 
 					g_camera.GetProjMatrix() *
 					g_camera.GetViewMatrix()));
-				cout << temp.x << "\t" << temp.y << "\t" << temp.z << std::endl;
+				//cout << temp.x << "\t" << temp.y << "\t" << temp.z << std::endl;
 				if (distanceMousePoint > sqrt(static_cast<double>(pow(2.f, temp.x - xPosProj) + pow(2.f, temp.y - yPosProj)))) {
 					distanceMousePoint = sqrt(static_cast<double>(pow(2.f, temp.x - xPosProj) + pow(2.f, temp.y - yPosProj)));
 					closest = point._Ptr;
@@ -962,19 +1050,13 @@ void CALLBACK OnMouse( bool bLeftButtonDown, bool bRightButtonDown, bool bMiddle
 			}
 
 			closest->force = vfForce;
-			XMStoreFloat3(&temp, XMVector3Transform(XMLoadFloat3(&closest->position), 
+			/*XMStoreFloat3(&temp, XMVector3Transform(XMLoadFloat3(&closest->position), 
 					g_camera.GetProjMatrix() *
 					g_camera.GetViewMatrix()));
 			cout << std:: endl << "Closest: " << "\t" << temp.x << "\t" << temp.y << std::endl;
 			cout << std:: endl << "Mouse: " << "\t" << xPos << "\t" << yPos << std::endl;
 			cout << std:: endl << "Width:" << "\t" << g_windowWidth << "\tHeight:\t" << g_windowHeight << std::endl;
-			cout << std:: endl << "Mouse [-1; 1]: " << "\t" << ((static_cast<float>(xPos)/g_windowWidth) * 2.f - 1.f) << "\t" << (((static_cast<double>(yPos)/g_windowHeight) * 2.f - 1.f) * -1.f) << std::endl;
-		/*} else {
-			if (bLeftWasDown) {
-				cout << "it was down!" << std::endl;
-				bLeftWasDown = false;
-			}
-		}*/
+			cout << std:: endl << "Mouse [-1; 1]: " << "\t" << ((static_cast<float>(xPos)/g_windowWidth) * 2.f - 1.f) << "\t" << (((static_cast<double>(yPos)/g_windowHeight) * 2.f - 1.f) * -1.f) << std::endl;*/
 			}
 		break;
 		}
@@ -1175,6 +1257,17 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			}*/
 
 			rb->integrateValues(.01f);
+			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+			break;
+		}
+		case 5:
+		{
+			cout << "Rigid Body Collision!" << std::endl;
+			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+			deltaTime = 0.005f;
+			g_bDrawRigidBodyCollision = true;
+			rb1->integrateValues(deltaTime);
+			rb2->integrateValues(deltaTime);
 			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 			break;
 		}
@@ -1390,6 +1483,41 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		rb->integrateValues(.01f);
 		//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 		break;
+	case 5:
+		rb1->integrateValues(deltaTime);
+		rb2->integrateValues(deltaTime);
+
+		//CHECK COLLISIONS 
+		mat1 = getObj2WorldMat(rb1); 
+		mat2 = getObj2WorldMat(rb2);
+
+		// Check if a corner of mat2 is in mat1
+		simpletest = checkCollision(mat1, mat2);// should find out a collision here
+		if (!simpletest.isValid){
+			// Check if a corner of mat1 is in mat2
+			simpletest = checkCollision(mat2, mat1);
+			simpletest.normalWorld = -simpletest.normalWorld;// we compute the impulse to A
+		}
+		if (!simpletest.isValid)
+		{
+			//std::printf("No Collision\n");
+		}
+		else{
+			std::printf("collision detected at normal: %f, %f, %f\n",XMVectorGetX(simpletest.normalWorld), XMVectorGetY(simpletest.normalWorld), XMVectorGetZ(simpletest.normalWorld));
+			std::printf("collision point : %f, %f, %f\n",XMVectorGetX(simpletest.collisionPointWorld), XMVectorGetY(simpletest.collisionPointWorld), XMVectorGetZ(simpletest.collisionPointWorld));
+			//angular velocities to linear velocity at the collision point
+
+			XMFLOAT3 collisionPoint;// ,collisionNormal;
+			XMStoreFloat3(&collisionPoint,simpletest.collisionPointWorld); 
+			//XMStoreFloat3(&collisionNormal,simpletest.normalWorld); 
+			contact = Contact(collisionPoint,/*collisionNormal*/simpletest.normalWorld, rb1, rb2);
+			contact.calcRelativeVelocity();
+
+		}
+
+
+		//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+		break;
 	default:
 		break;
 	}
@@ -1447,6 +1575,14 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 #ifdef RIGID_BODY_SIMULATION
 	case 4:
 		if (g_bDrawRigidBodySimulation) DrawCube(rb);
+		break;
+#endif
+#ifdef RIGID_BODY_COLLISION
+	case 5:
+		if (g_bDrawRigidBodyCollision) {
+			DrawCollisionCubes(rb1);
+			DrawCollisionCubes(rb2);
+		}
 		break;
 #endif
 	default:

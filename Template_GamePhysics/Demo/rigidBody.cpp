@@ -122,12 +122,29 @@ void rigidBody::integrateValues(float timeStep) {
 	}
 }
 
+void rigidBody::setPosition(XMFLOAT3 newPos) {
+	XMFLOAT3 centerOffset = subVector(newPos,r_position);
+	r_position = addVector(r_position,centerOffset);
+	for(auto mp = points->begin(); mp != points->end(); mp++) {
+		mp->worldPosition = addVector(centerOffset,mp->worldPosition);
+	}
+
+}
+
 XMFLOAT3 rigidBody::getScale() {
 	return scale;
 }
 
 XMFLOAT3 rigidBody::getPosition() {
 	return r_position;
+}
+
+XMFLOAT3 rigidBody::getVelocity() {
+	return r_velocity;
+}
+
+XMFLOAT3 rigidBody::getAngularVelocity() {
+	return angularVelocity;
 }
 
 XMFLOAT4 rigidBody::getRotationQuaternion() {
