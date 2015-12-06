@@ -7,7 +7,7 @@ using namespace DirectX;
 
 #include "vectorOperations.h"
 #include "MassPoint.h"
-#include <list>
+#include <vector>
 
 class rigidBody
 {
@@ -28,7 +28,7 @@ private:
 
 	XMMATRIX transform;
 
-	std::list<MassPoint>* points;
+	std::vector<MassPoint>* points;
 public:
 	void preCompute();
 	void computeInverInertTensAndAngVel();
@@ -37,10 +37,10 @@ public:
 	XMFLOAT3 getScale();
 	XMFLOAT3 getPosition();
 	XMFLOAT4 getRotationQuaternion();
-	std::list<MassPoint>* getMassPoints();
+	std::vector<MassPoint>* getMassPoints();
 
 	rigidBody(void);
-	rigidBody(std::list<MassPoint>* points, XMFLOAT3 vel, XMFLOAT3 rotation, XMFLOAT3 scale);
+	rigidBody(std::vector<MassPoint>* points, XMFLOAT3 vel, XMFLOAT3 rotation, XMFLOAT3 scale);
 	~rigidBody(void);
 };
 

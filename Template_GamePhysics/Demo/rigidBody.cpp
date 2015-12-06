@@ -10,49 +10,50 @@ using namespace DirectX;
 #include "MassPoint.h"
 #include <list>
 
-float massInverse;
-XMFLOAT3 r_position;
-XMFLOAT3 r_velocity;
-XMMATRIX inertiaTensorInverse;
+//float massInverse;
+//XMFLOAT3 r_position;
+//XMFLOAT3 r_velocity;
+//XMMATRIX inertiaTensorInverse;
 XMMATRIX currentInertiaInverse;
-XMFLOAT4 orientation;
-XMFLOAT3 angularVelocity;
-XMFLOAT3 angularMomentum;
-
-XMFLOAT3 forceAccumulator;
-XMFLOAT3 torqueAccumulator;
-
-XMMATRIX transform;
-XMFLOAT4 rotationQuaternion;
-std::list<MassPoint>* points;
+//XMFLOAT4 orientation;
+//XMFLOAT3 angularVelocity;
+//XMFLOAT3 angularMomentum;
+//
+//XMFLOAT3 forceAccumulator;
+//XMFLOAT3 torqueAccumulator;
+//
+//XMMATRIX transform;
+//XMFLOAT4 rotationQuaternion;
+//std::list<MassPoint>* points;
 
 void rigidBody::preCompute()
 {
 	r_position = angularMomentum = forceAccumulator = torqueAccumulator = XMFLOAT3(0,0,0);
 	massInverse = 0.0f;
+	float m = 0.0f;
 	for(auto mp = points->begin(); mp != points->end(); mp++) {
-		massInverse += mp->mass;
+		m += mp->mass;
 		r_position = addVector(r_position, multiplyVector(mp->position, mp->mass));
 	}
-	massInverse = 1/massInverse;
+	massInverse = 1/m;
+	m = m/12;
+	float x = scale.x*scale.x, y = scale.y*scale.y, z = scale.z*scale.z;
 	r_position = multiplyVector(r_position, massInverse);
 
-	inertiaTensorInverse = XMMATRIX(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+	//inertiaTensorInverse = XMMATRIX(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+	XMMATRIX I =  DirectX::XMMatrixInverse(nullptr,XMMATRIX(m*(y+z),0,0,0,0,m*(x+z),0,0,0,0,m*(x+y),0,0,0,0,1));
+	inertiaTensorInverse = currentInertiaInverse = I;
 	for(auto mp = points->begin(); mp != points->end(); mp++) {
 		//position to model view
 		mp->position = subVector(mp->position, r_position);
-		//initial rotation
-		//TODO: may be unnecessary
-		XMStoreFloat3(&mp->position, XMVector3Rotate(XMLoadFloat3(&mp->position), XMLoadFloat4(&rotationQuaternion)));
-		
-		inertiaTensorInverse += multiplyVectorTranspose(multiplyVector(mp->position,mp->mass),mp->position); 
+		//inertiaTensorInverse += multiplyVectorTranspose(multiplyVector(mp->position,mp->mass),mp->position); 
 		XMFLOAT3 L = XMFLOAT3(0,0,0);
 	//	XMVECTOR x = XMLoadFloat3(&(mp->position));
 	//	XMVECTOR mv = XMLoadFloat3();
-		XMStoreFloat3(&L,XMVector3Cross(XMLoadFloat3(&(mp->position)), XMLoadFloat3( &multiplyVector(mp->velocity,mp->mass))));
+		XMStoreFloat3(&L,DirectX::XMVector3Cross(XMLoadFloat3(&(mp->position)), XMLoadFloat3( &multiplyVector(mp->velocity,mp->mass))));
 		angularMomentum = addVector(angularMomentum,L);
 	}
-	//XMStoreFloat3(&angularVelocity, XMVector3Transform(XMLoadFloat3(&angularMomentum),inertiaTensorInverse));
+	XMStoreFloat3(&angularVelocity, XMVector3Transform(XMLoadFloat3(&angularMomentum),I));
 }
 
 void rigidBody::computeInverInertTensAndAngVel()
@@ -75,6 +76,9 @@ void rigidBody::integrateValues(float timeStep) {
 	
 	//External forces
 	for (auto mp = points->begin(); mp != points->end(); mp++) {
+		//rotate local positions
+		XMStoreFloat3(&mp->position, XMVector3Rotate(XMLoadFloat3(&mp->position), XMLoadFloat4(&rotationQuaternion)));
+
 		forceAccumulator = addVector(forceAccumulator, mp->force);
 		XMStoreFloat3(&tmpFloat3, XMVector3Cross(XMLoadFloat3(&mp->position), XMLoadFloat3(&mp->force)));
 		torqueAccumulator = addVector(torqueAccumulator, tmpFloat3);
@@ -130,16 +134,16 @@ XMFLOAT4 rigidBody::getRotationQuaternion() {
 	return rotationQuaternion;
 }
 
-std::list<MassPoint>* rigidBody::getMassPoints() {
+std::vector<MassPoint>* rigidBody::getMassPoints() {
 	return points;
 }
 
 rigidBody::rigidBody(void)
 {
-	points = new std::list<MassPoint>();
+	points = new std::vector<MassPoint>();
 }
 
-rigidBody::rigidBody(std::list<MassPoint>* pointList, XMFLOAT3 vel, XMFLOAT3 rotation, XMFLOAT3 scale = XMFLOAT3(1.f, 1.f, 1.f)) {
+rigidBody::rigidBody(std::vector<MassPoint>* pointList, XMFLOAT3 vel, XMFLOAT3 rotation, XMFLOAT3 scale = XMFLOAT3(1.f, 1.f, 1.f)) {
 	this->scale = scale;
 	points = pointList;
 	r_velocity = vel;

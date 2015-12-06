@@ -44,6 +44,7 @@ using std::cout;
 // Mass Spring includes
 #include "spring.h"
 #include "point.h"
+#include <vector>
 #include <list>
 #include <Windows.h>
 
@@ -126,10 +127,13 @@ float g_gravity = -9.81;
 bool g_useGravity = true;
 bool g_useDamping = true;
 
+int g_windowWidth;
+int g_windowHeight;
+
 #ifdef RIGID_BODY_SIMULATION
 
 bool g_bDrawRigidBodySimulation = true;
-std::list<MassPoint>* pointList;
+std::vector<MassPoint>* pointList;
 rigidBody* rb;
 XMFLOAT3 forceStart;
 XMFLOAT3 forceEnd;
@@ -626,9 +630,7 @@ void DrawCube(rigidBody* rb) {
 	XMMATRIX scale    = XMMatrixScaling(rb->getScale().x, rb->getScale().y, rb->getScale().z);
 	XMMATRIX trans    = XMMatrixTranslation(rb->getPosition().x,rb->getPosition().y,rb->getPosition().z);
 	XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->getRotationQuaternion()));
-	XMFLOAT4X4 debug; 
-	XMStoreFloat4x4(&debug, rotation);
-    g_pEffectPositionNormal->SetWorld(scale * trans * rotation/** g_camera.GetWorldMatrix()*/); //scale * trans * rotation * g_camera.GetWorldMatrix());
+    g_pEffectPositionNormal->SetWorld( scale * rotation * trans/* g_camera.GetWorldMatrix()*/); //scale * trans * rotation * g_camera.GetWorldMatrix());
 
 	//draw everything
     g_pCube->Draw(g_pEffectPositionNormal, g_pInputLayoutPositionNormal);
@@ -692,17 +694,17 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
             VertexPositionColor(XMVectorSet( 0.5f, (float)(i%2)-0.5f, (float)(i/2)-0.5f, 1), Colors::Red)
 	);*/
 	//TODO: put this in an own method
-	pointList = new std::list<MassPoint>;
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(100.f, 100.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList = new std::vector<MassPoint>;
+	pointList->push_back(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(1.f, 1.f, 0.f)));
+	pointList->push_back(MassPoint(XMFLOAT3(0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList->push_back(MassPoint(XMFLOAT3(0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList->push_back(MassPoint(XMFLOAT3(-0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList->push_back(MassPoint(XMFLOAT3(-0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList->push_back(MassPoint(XMFLOAT3(-0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList->push_back(MassPoint(XMFLOAT3(-0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+	pointList->push_back(MassPoint(XMFLOAT3(0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
 
-	rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(1.f, .6f, .5f));
+	rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(1.0f, .60f, .50f));
 
     // Create DirectXTK geometric primitives for later usage
 	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);
@@ -817,6 +819,10 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
     // Update camera parameters
 	int width = pBackBufferSurfaceDesc->Width;
 	int height = pBackBufferSurfaceDesc->Height;
+
+	g_windowWidth = width;
+	g_windowHeight = height;
+
 	g_camera.SetWindow(width, height);
 	g_camera.SetProjParams(XM_PI / 4.0f, float(width) / float(height), 0.1f, 100.0f);
 
@@ -889,30 +895,89 @@ void CALLBACK OnMouse( bool bLeftButtonDown, bool bRightButtonDown, bool bMiddle
                        bool bSideButton1Down, bool bSideButton2Down, int nMouseWheelDelta,
                        int xPos, int yPos, void* pUserContext )
 {
+	//static bool bLeftWasDown = false;
+	// Track mouse movement if left mouse key is pressed
+	static int xPosSave = 0, yPosSave = 0;
+
 	switch (g_iTestCase)
 	{
-	case 1:
-		// Track mouse movement if left mouse key is pressed
+	case 4:
 		{
-			static int xPosSave = 0, yPosSave = 0;
-
-			if (bLeftButtonDown)
-			{
-				// Accumulate deltas in g_viMouseDelta
-				g_viMouseDelta.x += xPos - xPosSave;
-				g_viMouseDelta.y += yPos - yPosSave;
-			}
+		if (bLeftButtonDown)
+		{
+			// Accumulate deltas in g_viMouseDelta
+			g_viMouseDelta.x += xPos - xPosSave;
+			g_viMouseDelta.y += yPos - yPosSave;
+		
 
 			xPosSave = xPos;
 			yPosSave = yPos;
-		}
+
+			// Calcuate camera directions in world space
+			XMMATRIX viewInv = XMMatrixInverse(nullptr, g_camera.GetViewMatrix());
+			XMVECTOR camRightWorld = XMVector3TransformNormal(g_XMIdentityR0, viewInv);
+			XMVECTOR camUpWorld = XMVector3TransformNormal(g_XMIdentityR1, viewInv);
+
+			// Add accumulated mouse deltas to force
+			XMFLOAT3 vfForce(0.f, 0.f, 0.f);
+			XMVECTOR vForce = XMLoadFloat3(&vfForce);
+
+			float forceScale = .01f;
+			vForce = XMVectorAdd(vForce, forceScale * (float)g_viMouseDelta.x * camRightWorld);
+			vForce = XMVectorAdd(vForce, -forceScale * (float)g_viMouseDelta.y * camUpWorld);
+
+			XMStoreFloat3(&vfForce, vForce);
+
+			// Reset accumulated mouse deltas
+			g_viMouseDelta = XMINT2(0, 0);
+		
+			//calculate the closest point to the mouse
+			MassPoint* closest;
+			XMFLOAT3 temp(0.f, 0.f, 0.f);
+			float xPosProj = ((static_cast<float>(xPos)/g_windowWidth) * 2.f - 1.f);
+			float yPosProj = (((static_cast<float>(yPos)/g_windowHeight) * 2.f - 1.f) * -1.f);
+			float distanceMousePoint = D3D11_FLOAT32_MAX;
+
+			/*XMMATRIX scale    = XMMatrixScaling(rb->getScale().x, rb->getScale().y, rb->getScale().z);
+			XMMATRIX trans    = XMMatrixTranslation(rb->getPosition().x,rb->getPosition().y,rb->getPosition().z);
+			XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->getRotationQuaternion()));*/
+
+			cout << std:: endl << "Points: " << std::endl;
+			for (auto point = (*rb->getMassPoints()).begin(); point != (*rb->getMassPoints()).end(); point++) {
+				//get projection coordinates 
+				/*XMStoreFloat3(&temp, XMVector3Transform(XMLoadFloat3(&point->position), 
+					g_camera.GetProjMatrix() *
+					g_camera.GetViewMatrix() *
+					scale * rotation * trans));*/
+				XMStoreFloat3(&temp, XMVector3Rotate(XMLoadFloat3(&point->position), XMLoadFloat4(&rb->getRotationQuaternion())));
+				temp = addVector(rb->getPosition(), temp);
+				XMStoreFloat3(&temp, XMVector3Transform(XMLoadFloat3(&temp), 
+					g_camera.GetProjMatrix() *
+					g_camera.GetViewMatrix()));
+				cout << temp.x << "\t" << temp.y << "\t" << temp.z << std::endl;
+				if (distanceMousePoint > sqrt(static_cast<double>(pow(2.f, temp.x - xPosProj) + pow(2.f, temp.y - yPosProj)))) {
+					distanceMousePoint = sqrt(static_cast<double>(pow(2.f, temp.x - xPosProj) + pow(2.f, temp.y - yPosProj)));
+					closest = point._Ptr;
+				}
+			}
+
+			closest->force = vfForce;
+			XMStoreFloat3(&temp, XMVector3Transform(XMLoadFloat3(&closest->position), 
+					g_camera.GetProjMatrix() *
+					g_camera.GetViewMatrix()));
+			cout << std:: endl << "Closest: " << "\t" << temp.x << "\t" << temp.y << std::endl;
+			cout << std:: endl << "Mouse: " << "\t" << xPos << "\t" << yPos << std::endl;
+			cout << std:: endl << "Width:" << "\t" << g_windowWidth << "\tHeight:\t" << g_windowHeight << std::endl;
+			cout << std:: endl << "Mouse [-1; 1]: " << "\t" << ((static_cast<float>(xPos)/g_windowWidth) * 2.f - 1.f) << "\t" << (((static_cast<double>(yPos)/g_windowHeight) * 2.f - 1.f) * -1.f) << std::endl;
+		/*} else {
+			if (bLeftWasDown) {
+				cout << "it was down!" << std::endl;
+				bLeftWasDown = false;
+			}
+		}*/
+			}
 		break;
-	case 4:
-		//rigid body
-		if (bLeftButtonDown) {
-			std::cout << "Plus over9000 force" << std::endl;
 		}
-		break;
 	default:
 		break;
 	}
@@ -1109,7 +1174,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 				}
 			}*/
 
-			rb->integrateValues(deltaTime);
+			rb->integrateValues(.01f);
 			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 			break;
 		}
@@ -1322,7 +1387,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 
 		break;
 	case 4:
-		rb->integrateValues(deltaTime);
+		rb->integrateValues(.01f);
 		//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 		break;
 	default:
