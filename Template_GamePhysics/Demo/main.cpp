@@ -759,7 +759,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	//Init Rigid Body Simulation
 	//TODO: put this in an own method
 	pointList = new std::list<MassPoint>;
-	InitRigidBox(pointList, 1.0f,0.6f,0.5f,8.f);
+	InitRigidBox(pointList, 1.0f,0.6f,0.5f,2.f);
 	for(auto mp = pointList->begin(); mp != pointList->end(); mp++) {
 		//if (mp->position.x == 0.5f && mp->position.x == -0.3f && mp->position.x ==0.25f) {
 			mp->SetForce(XMFLOAT3(100.f,100.f,0.f));
