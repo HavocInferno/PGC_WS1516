@@ -136,6 +136,39 @@ XMFLOAT3 forceEnd;
 
 #endif
 
+void InitRigidBodies() 
+{
+	switch(g_iTestCase) {
+	case 4:
+		pointList = new std::list<MassPoint>;
+		pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(100.f, 100.f, 0.f)));
+		pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+		pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+		pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+		pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+		pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+		pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+		pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
+
+		rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(1.f, .6f, .5f));
+		break;
+	default:
+		break;
+	}
+}
+
+void DestroyRigidBodies() 
+{
+	delete(pointList);
+	delete(rb);
+}
+
+void ResetRigidBodies() 
+{
+	DestroyRigidBodies();
+	InitRigidBodies();
+}
+
 // Mass Spring variable
 std::list<Spring> springs;
 std::list<SpringPoint*> points;
@@ -319,7 +352,6 @@ void explode()
 			//a->setVelocity(addVector(a->gp_velocity,invertVector(addVector(a->gp_position,XMFLOAT3(0,3,0)),g_explosionForce)));
 			a->setVelocity(addVector(a->gp_velocity,multiplyVector(normalizeVector(addVector(a->gp_position,XMFLOAT3(0,2,0))),g_explosionForce/vectorLength(a->gp_position))));
 		}
-
 }
 
 // Video recorder
@@ -333,7 +365,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 
 	TwType TW_TYPE_INTEGRATOR = TwDefineEnumFromString("Integration Method", "Euler,Midpoint,LeapFrog");
 	TwType TW_TYPE_DEMOCASE = TwDefineEnumFromString("Demo Setup", "Demo 1/2/3,Demo 4");
-	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "Demo 1,Demo 2,Demo 3,Demo 4, RB Demo");
+	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "Demo 1,Demo 2,Demo 3,Demo 4, RB Demo 1, RB Demo 2, RB Demo 3, RB Demo 4");
 	TwAddVarRW(g_pTweakBar, "Test Scene", TW_TYPE_TESTCASE, &g_iTestCase, "");
 	// HINT: For buttons you can directly pass the callback function as a lambda expression.
 	TwAddButton(g_pTweakBar, "Reset Scene", [](void *){g_iPreTestCase = -1; }, nullptr, "");
@@ -370,20 +402,11 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 #endif
 	#ifdef RIGID_BODY_SIMULATION
 	case 4:
-		//TwAddVarRW(g_pTweakBar, "Demo Setup", TW_TYPE_DEMOCASE, &g_demoCase, "");
-		//TwAddVarRW(g_pTweakBar, "-> Integration Method", TW_TYPE_INTEGRATOR, &g_integrationMethod, "");
 		TwAddVarRW(g_pTweakBar, "Use damping", TW_TYPE_BOOLCPP, &g_useDamping, "");
-		//TwAddVarRW(g_pTweakBar, "Point Size", TW_TYPE_FLOAT, &g_fSphereSize, "min=0.01 step=0.01");
 		TwAddVarRW(g_pTweakBar, "Use fixed timestep", TW_TYPE_BOOLCPP, &g_fixedTimestep, "");
 		TwAddVarRW(g_pTweakBar, "-> timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
 		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
 		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
-		//TwAddVarRW(g_pTweakBar, "Collide with walls:", TW_TYPE_BOOLCPP, &g_usingWalls, "");
-		//TwAddVarRW(g_pTweakBar, "-> X-Wall Positions", TW_TYPE_FLOAT, &g_xWall, "min=0.5 ma=10 step=0.1");
-		//TwAddVarRW(g_pTweakBar, "-> Z-Wall Positions", TW_TYPE_FLOAT, &g_zWall, "min=0.5 ma=10 step=0.1");
-		//TwAddVarRW(g_pTweakBar, "-> Ceiling height", TW_TYPE_FLOAT, &g_ceiling, "min=0.5 ma=10 step=0.1");
-		//TwAddButton(g_pTweakBar, "Explode!!", [](void *){explode(); }, nullptr, "");	
-		//TwAddVarRW(g_pTweakBar, "-> Explosion Force", TW_TYPE_FLOAT, &g_explosionForce, "min=0.1 ma=10 step=0.1");
 		break;
 #endif
 	default:
@@ -686,23 +709,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	InitMassSprings();
 
 	//Init Rigid Body Simulation
-	//
-	/*g_pPrimitiveBatchPositionColor->DrawLine(
-		VertexPositionColor(XMVectorSet(-0.5f, (float)(i%2)-0.5f, (float)(i/2)-0.5f, 1), Colors::Red),
-            VertexPositionColor(XMVectorSet( 0.5f, (float)(i%2)-0.5f, (float)(i/2)-0.5f, 1), Colors::Red)
-	);*/
-	//TODO: put this in an own method
-	pointList = new std::list<MassPoint>;
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(100.f, 100.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,-0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(-0.5f,0.3f,-0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-	pointList->push_front(MassPoint(XMFLOAT3(0.5f,-0.3f,0.25f), .25f, 0.f, XMFLOAT3(0.f, 0.f, 0.f)));
-
-	rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(1.f, .6f, .5f));
+	InitRigidBodies();
 
     // Create DirectXTK geometric primitives for later usage
 	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);
@@ -789,10 +796,10 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
 
     g_pSphere.reset();
     g_pTeapot.reset();
+	g_pCube.reset();
 
 	//Destroy Rigid Body Simulation
-	delete(pointList);
-	delete(rb);
+	DestroyRigidBodies();
     
     SAFE_DELETE (g_pPrimitiveBatchPositionColor);
     SAFE_RELEASE(g_pInputLayoutPositionColor);
@@ -910,7 +917,8 @@ void CALLBACK OnMouse( bool bLeftButtonDown, bool bRightButtonDown, bool bMiddle
 	case 4:
 		//rigid body
 		if (bLeftButtonDown) {
-			std::cout << "Plus over9000 force" << std::endl;
+			//TODO
+			std::cout << "Plus over9000 force (todo)" << std::endl;
 		}
 		break;
 	default:
@@ -1003,37 +1011,37 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			cout << "Demo 1!\n";
 			g_fSphereSize = 0.05f;
 					//EULER
-		deltaTime = 0.1;
-		SpringPoint* a;
-		Spring* b;
-		g_demoCase = 0;
-		g_integrationMethod = 0;
-		ResetMassSprings(0.1f);
-		for(auto spring = springs.begin(); spring != springs.end(); spring++)
-			{
-				b= &((Spring)*spring);
-				b->computeElasticForces();
-			}
-		for(auto point = points.begin(); point != points.end();point++)
-			{
+			deltaTime = 0.1;
+			SpringPoint* a;
+			Spring* b;
+			g_demoCase = 0;
+			g_integrationMethod = 0;
+			ResetMassSprings(0.1f);
+			for(auto spring = springs.begin(); spring != springs.end(); spring++)
+				{
+					b= &((Spring)*spring);
+					b->computeElasticForces();
+				}
+			for(auto point = points.begin(); point != points.end();point++)
+				{
 
-				a =  ((SpringPoint*)*point);
-				a->IntegratePosition(deltaTime);
-				a->computeAcceleration();
-				a->IntegrateVelocity(deltaTime);
-				a->resetForces();
-			}	
-		for(auto spring = springs.begin(); spring != springs.end(); spring++)
+					a =  ((SpringPoint*)*point);
+					a->IntegratePosition(deltaTime);
+					a->computeAcceleration();
+					a->IntegrateVelocity(deltaTime);
+					a->resetForces();
+				}	
+			for(auto spring = springs.begin(); spring != springs.end(); spring++)
 				{
 					b= &((Spring)*spring);
 					std::cout << "\nEuler demo1 after one time step:\n";
 					b->printSpring();
 				}
 
-		//Midpoint
-		g_integrationMethod =1;
-		ResetMassSprings(0.1);
-		for(auto spring = springs.begin(); spring != springs.end();spring++)
+			//Midpoint
+			g_integrationMethod =1;
+			ResetMassSprings(0.1);
+			for(auto spring = springs.begin(); spring != springs.end();spring++)
 			{
 				b= &(((Spring)*spring));
 				b->computeElasticForces();
@@ -1097,9 +1105,9 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			break;
 		case 4:
 		{
-			cout << "Rigid Body Simulation!" << std::endl;
-			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
-			deltaTime = 0.005f;
+			cout << "Rigid Body Simulation 1!" << std::endl;
+			ResetRigidBodies();
+			deltaTime = 2.0f;
 			g_bDrawRigidBodySimulation = true;
 			
 			/*for (auto massPoint = *rb->getMassPoints().begin(); massPoint != rb->getMassPoints().end(); massPoint++) {
@@ -1110,7 +1118,47 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			}*/
 
 			rb->integrateValues(deltaTime);
-			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+
+			cout << "\nlinear velocity: " << std::endl;
+			cout << "rb_vel: " << rb->getVelocity().x << ", " << rb->getVelocity().y << ", " << rb->getVelocity().z << std::endl;
+			cout << "\nangular velocity: " << std::endl;
+			cout << "rb_angVel: " << rb->getAngVel().x << ", " << rb->getAngVel().y << ", " << rb->getAngVel().z << std::endl;
+			
+			cout << "\nworld space velocity of (-0.3, -0.5, -0.25): " << std::endl;
+			auto l_front = (*pointList).begin();
+			std::advance(l_front, 5);
+			cout << "wsvel: " << l_front->velocity.x << ", " << l_front->velocity.y << ", " << l_front->velocity.z << std::endl;
+
+			break;
+		}
+		case 5:
+		{
+			cout << "Rigid Body Simulation 2!" << std::endl;
+			ResetRigidBodies();
+			deltaTime = 0.01f;
+			g_bDrawRigidBodySimulation = true;
+
+			rb->integrateValues(deltaTime);
+			break;
+		}
+		case 6:
+		{
+			cout << "Rigid Body Simulation 3!" << std::endl;
+			ResetRigidBodies();
+			deltaTime = 0.005f;
+			g_bDrawRigidBodySimulation = true;
+
+			//rb->integrateValues(deltaTime);
+			break;
+		}
+		case 7:
+		{
+			cout << "Rigid Body Simulation 4!" << std::endl;
+			ResetRigidBodies();
+			deltaTime = 0.01f;
+			g_bDrawRigidBodySimulation = true;
+
+			//rb->integrateValues(deltaTime);
 			break;
 		}
 		default:
@@ -1322,8 +1370,18 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 
 		break;
 	case 4:
+		//RB Demo 1
 		rb->integrateValues(deltaTime);
-		//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+		break;
+	case 5:
+		//RB Demo 2
+		rb->integrateValues(deltaTime);
+		break;
+	case 6:
+		//RB Demo 3
+		break;
+	case 7:
+		//RB Demo 4
 		break;
 	default:
 		break;
@@ -1381,7 +1439,20 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 #endif
 #ifdef RIGID_BODY_SIMULATION
 	case 4:
+		//RB Demo 1
 		if (g_bDrawRigidBodySimulation) DrawCube(rb);
+		break;
+	case 5:
+		//RB Demo 2
+		if (g_bDrawRigidBodySimulation) DrawCube(rb);
+		break;
+	case 6:
+		//RB Demo 3
+		if (g_bDrawRigidBodySimulation);
+		break;
+	case 7:
+		//RB Demo 4
+		if (g_bDrawRigidBodySimulation);
 		break;
 #endif
 	default:

@@ -36,6 +36,8 @@ public:
 
 	XMFLOAT3 getScale();
 	XMFLOAT3 getPosition();
+	XMFLOAT3 getVelocity();
+	XMFLOAT3 getAngVel();
 	XMFLOAT4 getRotationQuaternion();
 	std::list<MassPoint>* getMassPoints();
 

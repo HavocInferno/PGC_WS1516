@@ -110,11 +110,15 @@ void rigidBody::integrateValues(float timeStep) {
 
 	//World position
 	//r_position = XMFLOAT3(.0f, .0f, .0f);
+	XMFLOAT3 tmpF3 = XMFLOAT3(0,0,0);
 	for (auto mp = points->begin(); mp != points->end(); mp++) {
 		XMStoreFloat3(&mp->worldPosition, XMVector3Rotate(XMLoadFloat3(&mp->position), XMLoadFloat4(&rotationQuaternion)));
 		mp->worldPosition = addVector(r_position, mp->worldPosition);
 		//
 		//TODO: apply rotation to each point?
+		//mp->vel = r_vel + angVel cross mp->pos
+		XMStoreFloat3(&tmpF3 ,XMVector3Cross(XMLoadFloat3(&mp->position), XMLoadFloat3(&angularVelocity)));
+		mp->velocity = addVector(r_velocity, tmpF3);
 	}
 }
 
@@ -124,6 +128,14 @@ XMFLOAT3 rigidBody::getScale() {
 
 XMFLOAT3 rigidBody::getPosition() {
 	return r_position;
+}
+
+XMFLOAT3 rigidBody::getVelocity() {
+	return r_velocity;
+}
+
+XMFLOAT3 rigidBody::getAngVel() {
+	return angularVelocity;
 }
 
 XMFLOAT4 rigidBody::getRotationQuaternion() {
