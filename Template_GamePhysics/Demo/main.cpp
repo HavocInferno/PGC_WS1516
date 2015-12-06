@@ -51,6 +51,7 @@ using std::cout;
 //Rigid Body includes
 #include "rigidBody.h"
 #include "collisionDetect.h"
+#include "Contact.h"
 
 // DXUT camera
 // NOTE: CModelViewerCamera does not only manage the standard view transformation/camera position 
@@ -142,6 +143,7 @@ std::list<MassPoint>* pointList1, * pointList2;
 rigidBody* rb1, * rb2;
 XMMATRIX mat1, mat2;
 CollisionInfo simpletest;
+Contact contact;
 #endif
 
 // Mass Spring variable
@@ -784,7 +786,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	pointList2 = new std::list<MassPoint>;
 	InitRigidBox(pointList1, w,h,d,2.f);
 	InitRigidBox(pointList2, w,h,d,2.f);
-	rb1 = new rigidBody(pointList1, XMFLOAT3(.0f , -1.f, .0f), XMFLOAT3(.0f , .0f, 0.f), XMFLOAT3(d, h, d));
+	rb1 = new rigidBody(pointList1, XMFLOAT3(.0f , -1.f, .0f), XMFLOAT3(.0f , .0f, 0.f), XMFLOAT3(d/2, h, d));
 	rb2 = new rigidBody(pointList2, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(d, w, h));
 
 	rb1->setPosition(XMFLOAT3(.0f,1.0f,.0f));
@@ -1438,10 +1440,20 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			simpletest.normalWorld = -simpletest.normalWorld;// we compute the impulse to A
 		}
 		if (!simpletest.isValid)
-			std::printf("No Collision\n");
+		{
+			//std::printf("No Collision\n");
+		}
 		else{
 			std::printf("collision detected at normal: %f, %f, %f\n",XMVectorGetX(simpletest.normalWorld), XMVectorGetY(simpletest.normalWorld), XMVectorGetZ(simpletest.normalWorld));
 			std::printf("collision point : %f, %f, %f\n",XMVectorGetX(simpletest.collisionPointWorld), XMVectorGetY(simpletest.collisionPointWorld), XMVectorGetZ(simpletest.collisionPointWorld));
+			//angular velocities to linear velocity at the collision point
+
+			XMFLOAT3 collisionPoint;// ,collisionNormal;
+			XMStoreFloat3(&collisionPoint,simpletest.collisionPointWorld); 
+			//XMStoreFloat3(&collisionNormal,simpletest.normalWorld); 
+			contact = Contact(collisionPoint,/*collisionNormal*/simpletest.normalWorld, rb1, rb2);
+			contact.calcRelativeVelocity();
+
 		}
 
 

@@ -171,6 +171,14 @@ XMFLOAT3 rigidBody::getPosition() {
 	return r_position;
 }
 
+XMFLOAT3 rigidBody::getVelocity() {
+	return r_velocity;
+}
+
+XMFLOAT3 rigidBody::getAngularVelocity() {
+	return angularVelocity;
+}
+
 XMFLOAT4 rigidBody::getRotationQuaternion() {
 	return rotationQuaternion;
 }

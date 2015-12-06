@@ -36,6 +36,8 @@ public:
 
 	XMFLOAT3 getScale();
 	XMFLOAT3 getPosition();
+	XMFLOAT3 getVelocity();
+	XMFLOAT3 getAngularVelocity();
 	XMFLOAT4 getRotationQuaternion();
 	void setPosition(XMFLOAT3 newPos);
 

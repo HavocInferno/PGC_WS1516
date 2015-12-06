@@ -12,10 +12,16 @@ class Contact
 {
 public:
 	XMFLOAT3 c_position;
-	XMFLOAT3 c_normal;
+	XMVECTOR c_normal;
+	XMFLOAT3 v_relative;
+	float v_relative_dot;
 	float depth;
-	rigidBody body1, body2;
+	rigidBody* body1,* body2;
+	
 
+	void Contact::calcRelativeVelocity();
+
+	Contact(XMFLOAT3 pos, XMVECTOR norm, rigidBody* rb1, rigidBody* rb2);
 	Contact(void);
 	~Contact(void);
 };
