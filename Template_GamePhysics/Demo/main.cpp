@@ -1453,6 +1453,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			//XMStoreFloat3(&collisionNormal,simpletest.normalWorld); 
 			contact = Contact(collisionPoint,/*collisionNormal*/simpletest.normalWorld, rb1, rb2);
 			contact.calcRelativeVelocity();
+			contact.calculateImpulse();
 
 		}
 
