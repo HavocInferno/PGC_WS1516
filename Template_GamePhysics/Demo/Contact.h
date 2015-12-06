@@ -16,10 +16,12 @@ public:
 	XMFLOAT3 v_relative;
 	float v_relative_dot;
 	float depth;
+	float impulse;
 	rigidBody* body1,* body2;
 	
 
-	void Contact::calcRelativeVelocity();
+	void calcRelativeVelocity();
+	void calculateImpulse();
 
 	Contact(XMFLOAT3 pos, XMVECTOR norm, rigidBody* rb1, rigidBody* rb2);
 	Contact(void);

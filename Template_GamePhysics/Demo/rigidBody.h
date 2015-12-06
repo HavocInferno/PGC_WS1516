@@ -39,6 +39,8 @@ public:
 	XMFLOAT3 getVelocity();
 	XMFLOAT3 getAngularVelocity();
 	XMFLOAT4 getRotationQuaternion();
+	float getMassInverse();
+	XMMATRIX getInertiaTensorInverse();
 	void setPosition(XMFLOAT3 newPos);
 
 	rigidBody(void);

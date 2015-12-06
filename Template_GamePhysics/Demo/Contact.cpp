@@ -9,6 +9,7 @@ XMFLOAT3 c_position;
 XMVECTOR c_normal;
 float depth;
 rigidBody* body1, * body2;
+float impulse;
 
 
 void Contact::calcRelativeVelocity() {
@@ -30,6 +31,29 @@ void Contact::calcRelativeVelocity() {
 			}
 }
 
+
+void Contact::calculateImpulse() {
+	float c = 0; //this should determine if the body is elastic or plastic.. for now i'll leave it as plastic!
+
+	float ma = body1->getMassInverse(), mb = body2->getMassInverse();
+
+	float numerator = -(1+c)*v_relative_dot;
+
+	XMVECTOR tempVec_a, tempVec_b, center_1, center_2;
+	center_1 = XMLoadFloat3(body1->getPosition);
+	center_2 = XMLoadFloat3(body2->getPosition);
+	tempVec_a = XMVector3Transform(XMVector3Cross(XMVector3Cross(center_1,c_normal),center_1),body1->getInertiaTensorInverse());
+	tempVec_b = XMVector3Transform(XMVector3Cross(XMVector3Cross(center_2,c_normal),center_2),body1->getInertiaTensorInverse());
+	tempVec_a = XMVector3Dot(tempVec_a+tempVec_b,c_normal);
+
+	float temp;
+	XMStoreFloat(&temp, tempVec_a);
+	float denominator = ma + mb + temp;
+
+	impulse = numerator / denominator;
+
+
+}
 	
 	Contact::Contact(XMFLOAT3 pos, XMVECTOR norm, rigidBody* rb1,rigidBody* rb2)
 {

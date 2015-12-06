@@ -182,6 +182,13 @@ XMFLOAT3 rigidBody::getAngularVelocity() {
 XMFLOAT4 rigidBody::getRotationQuaternion() {
 	return rotationQuaternion;
 }
+float rigidBody::getMassInverse() {
+	return massInverse;
+} 
+
+XMMATRIX rigidBody::getInertiaTensorInverse() {
+	return inertiaTensorInverse;
+}
 
 rigidBody::rigidBody(void)
 {
