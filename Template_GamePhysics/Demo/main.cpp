@@ -96,7 +96,7 @@ XMFLOAT3 g_vfRotate = XMFLOAT3(0, 0, 0);
 
 // TweakAntBar GUI variables
 
-int g_iTestCase = 4;
+int g_iTestCase = 6;
 int g_iPreTestCase = -1;
 bool  g_bSimulateByStep = false;
 bool  g_bIsSpaceReleased = true;
@@ -1044,6 +1044,70 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
 	}
 }
 
+void applyForceByMouseDrag(int& xPos, int& yPos, int& xPosSave, int& yPosSave, rigidBody* rbs[], int rbsSize, float forceScale) {
+	// Accumulate deltas in g_viMouseDelta
+			g_viMouseDelta.x += xPos - xPosSave;
+			g_viMouseDelta.y += yPos - yPosSave;
+		
+
+			xPosSave = xPos;
+			yPosSave = yPos;
+
+			// Calcuate camera directions in world space
+			XMMATRIX viewInv = XMMatrixInverse(nullptr, g_camera.GetViewMatrix());
+			XMVECTOR camRightWorld = XMVector3TransformNormal(g_XMIdentityR0, viewInv);
+			XMVECTOR camUpWorld = XMVector3TransformNormal(g_XMIdentityR1, viewInv);
+
+			// Add accumulated mouse deltas to force
+			XMFLOAT3 vfForce(0.f, 0.f, 0.f);
+			XMVECTOR vForce = XMLoadFloat3(&vfForce);
+
+			vForce = XMVectorAdd(vForce, forceScale * (float)g_viMouseDelta.x * camRightWorld);
+			vForce = XMVectorAdd(vForce, -forceScale * (float)g_viMouseDelta.y * camUpWorld);
+
+			XMStoreFloat3(&vfForce, vForce);
+
+			// Reset accumulated mouse deltas
+			g_viMouseDelta = XMINT2(0, 0);
+		
+			//calculate the closest point to the mouse
+			MassPoint* closest;
+			XMFLOAT3 temp(0.f, 0.f, 0.f);
+			float xPosProj = ((static_cast<float>(xPos)/g_windowWidth) * 2.f - 1.f);
+			float yPosProj = (((static_cast<float>(yPos)/g_windowHeight) * 2.f - 1.f) * -1.f);
+			float distanceMousePoint = D3D11_FLOAT32_MAX;
+
+			for (int i = 0; i < rbsSize; i++) {
+				XMMATRIX scale    = XMMatrixScaling(rbs[i]->getScale().x, rbs[i]->getScale().y, rbs[i]->getScale().z);
+				XMMATRIX trans    = XMMatrixTranslation(rbs[i]->getPosition().x,rbs[i]->getPosition().y,rbs[i]->getPosition().z);
+				XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rbs[i]->getRotationQuaternion()));
+				XMMATRIX modelViewProjection = g_camera.GetProjMatrix() * g_camera.GetViewMatrix() * scale * /*rotation **/ trans;
+
+				//cout << std:: endl << "Points: " << std::endl;
+				for (auto point = (*rbs[i]->getMassPoints()).begin(); point != (*rbs[i]->getMassPoints()).end(); point++) {
+					//get the projection coordinates of a point
+					//XMStoreFloat3(&temp, XMVector3Rotate(XMLoadFloat3(&point->position), XMLoadFloat4(&rbs[i]->getRotationQuaternion())));
+					//temp = addVector(rbs[i]->getPosition(), temp);
+					//XMStoreFloat3(&temp, XMVector3Transform(XMLoadFloat3(&point->position), XMMatrixInverse(nullptr, rotation)));
+					XMStoreFloat3(&temp, XMVector3Transform(XMLoadFloat3(&temp), 
+						modelViewProjection));
+					//cout << temp.x << "\t" << temp.y << "\t" << temp.z << std::endl;
+					if (distanceMousePoint > sqrt(static_cast<double>(pow(temp.x - xPosProj, 2.f) + pow(temp.y - yPosProj, 2.f)))) {
+						distanceMousePoint = sqrt(static_cast<double>(pow(temp.x - xPosProj, 2.f) + pow(temp.y - yPosProj, 2.f)));
+						closest = point._Ptr;
+					}
+				}
+			}
+
+			closest->force = vfForce;
+			/*XMStoreFloat3(&temp, XMVector3Transform(XMLoadFloat3(&closest->position), 
+					g_camera.GetProjMatrix() *
+					g_camera.GetViewMatrix()));
+			cout << std:: endl << "Closest: " << "\t" << temp.x << "\t" << temp.y << std::endl;
+			cout << std:: endl << "Mouse: " << "\t" << xPos << "\t" << yPos << std::endl;
+			cout << std:: endl << "Width:" << "\t" << g_windowWidth << "\tHeight:\t" << g_windowHeight << std::endl;
+			cout << std:: endl << "Mouse [-1; 1]: " << "\t" << ((static_cast<float>(xPos)/g_windowWidth) * 2.f - 1.f) << "\t" << (((static_cast<double>(yPos)/g_windowHeight) * 2.f - 1.f) * -1.f) << std::endl;*/
+}
 
 //--------------------------------------------------------------------------------------
 // Handle mouse button presses
@@ -1063,59 +1127,63 @@ void CALLBACK OnMouse( bool bLeftButtonDown, bool bRightButtonDown, bool bMiddle
 		{
 		if (bLeftButtonDown)
 		{
+			//cout << std::endl << "case 5" << std::endl;
+			rigidBody* rbs[] = {rb};
+			//cout << std::endl << sizeof(rbs) / sizeof(*rbs) << std::endl;
+			applyForceByMouseDrag(xPos, yPos, xPosSave, yPosSave, rbs, 1, 0.1f);
 			// Accumulate deltas in g_viMouseDelta
-			g_viMouseDelta.x += xPos - xPosSave;
-			g_viMouseDelta.y += yPos - yPosSave;
+			//g_viMouseDelta.x += xPos - xPosSave;
+			//g_viMouseDelta.y += yPos - yPosSave;
 		
 
-			xPosSave = xPos;
-			yPosSave = yPos;
+			//xPosSave = xPos;
+			//yPosSave = yPos;
 
-			// Calcuate camera directions in world space
-			XMMATRIX viewInv = XMMatrixInverse(nullptr, g_camera.GetViewMatrix());
-			XMVECTOR camRightWorld = XMVector3TransformNormal(g_XMIdentityR0, viewInv);
-			XMVECTOR camUpWorld = XMVector3TransformNormal(g_XMIdentityR1, viewInv);
+			//// Calcuate camera directions in world space
+			//XMMATRIX viewInv = XMMatrixInverse(nullptr, g_camera.GetViewMatrix());
+			//XMVECTOR camRightWorld = XMVector3TransformNormal(g_XMIdentityR0, viewInv);
+			//XMVECTOR camUpWorld = XMVector3TransformNormal(g_XMIdentityR1, viewInv);
 
-			// Add accumulated mouse deltas to force
-			XMFLOAT3 vfForce(0.f, 0.f, 0.f);
-			XMVECTOR vForce = XMLoadFloat3(&vfForce);
+			//// Add accumulated mouse deltas to force
+			//XMFLOAT3 vfForce(0.f, 0.f, 0.f);
+			//XMVECTOR vForce = XMLoadFloat3(&vfForce);
 
-			float forceScale = .01f;
-			vForce = XMVectorAdd(vForce, forceScale * (float)g_viMouseDelta.x * camRightWorld);
-			vForce = XMVectorAdd(vForce, -forceScale * (float)g_viMouseDelta.y * camUpWorld);
+			//float forceScale = .1f;
+			//vForce = XMVectorAdd(vForce, forceScale * (float)g_viMouseDelta.x * camRightWorld);
+			//vForce = XMVectorAdd(vForce, -forceScale * (float)g_viMouseDelta.y * camUpWorld);
 
-			XMStoreFloat3(&vfForce, vForce);
+			//XMStoreFloat3(&vfForce, vForce);
 
-			// Reset accumulated mouse deltas
-			g_viMouseDelta = XMINT2(0, 0);
+			//// Reset accumulated mouse deltas
+			//g_viMouseDelta = XMINT2(0, 0);
 		
-			//calculate the closest point to the mouse
-			MassPoint* closest;
-			XMFLOAT3 temp(0.f, 0.f, 0.f);
-			float xPosProj = ((static_cast<float>(xPos)/g_windowWidth) * 2.f - 1.f);
-			float yPosProj = (((static_cast<float>(yPos)/g_windowHeight) * 2.f - 1.f) * -1.f);
-			float distanceMousePoint = D3D11_FLOAT32_MAX;
+			////calculate the closest point to the mouse
+			//MassPoint* closest;
+			//XMFLOAT3 temp(0.f, 0.f, 0.f);
+			//float xPosProj = ((static_cast<float>(xPos)/g_windowWidth) * 2.f - 1.f);
+			//float yPosProj = (((static_cast<float>(yPos)/g_windowHeight) * 2.f - 1.f) * -1.f);
+			//float distanceMousePoint = D3D11_FLOAT32_MAX;
 
-			/*XMMATRIX scale    = XMMatrixScaling(rb->getScale().x, rb->getScale().y, rb->getScale().z);
-			XMMATRIX trans    = XMMatrixTranslation(rb->getPosition().x,rb->getPosition().y,rb->getPosition().z);
-			XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->getRotationQuaternion()));*/
+			///*XMMATRIX scale    = XMMatrixScaling(rb->getScale().x, rb->getScale().y, rb->getScale().z);
+			//XMMATRIX trans    = XMMatrixTranslation(rb->getPosition().x,rb->getPosition().y,rb->getPosition().z);
+			//XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rb->getRotationQuaternion()));*/
 
-			//cout << std:: endl << "Points: " << std::endl;
-			for (auto point = (*rb->getMassPoints()).begin(); point != (*rb->getMassPoints()).end(); point++) {
-				//get the projection coordinates of a point
-				XMStoreFloat3(&temp, XMVector3Rotate(XMLoadFloat3(&point->position), XMLoadFloat4(&rb->getRotationQuaternion())));
-				temp = addVector(rb->getPosition(), temp);
-				XMStoreFloat3(&temp, XMVector3Transform(XMLoadFloat3(&temp), 
-					g_camera.GetProjMatrix() *
-					g_camera.GetViewMatrix()));
-				//cout << temp.x << "\t" << temp.y << "\t" << temp.z << std::endl;
-				if (distanceMousePoint > sqrt(static_cast<double>(pow(2.f, temp.x - xPosProj) + pow(2.f, temp.y - yPosProj)))) {
-					distanceMousePoint = sqrt(static_cast<double>(pow(2.f, temp.x - xPosProj) + pow(2.f, temp.y - yPosProj)));
-					closest = point._Ptr;
-				}
-			}
+			////cout << std:: endl << "Points: " << std::endl;
+			//for (auto point = (*rb->getMassPoints()).begin(); point != (*rb->getMassPoints()).end(); point++) {
+			//	//get the projection coordinates of a point
+			//	XMStoreFloat3(&temp, XMVector3Rotate(XMLoadFloat3(&point->position), XMLoadFloat4(&rb->getRotationQuaternion())));
+			//	temp = addVector(rb->getPosition(), temp);
+			//	XMStoreFloat3(&temp, XMVector3Transform(XMLoadFloat3(&temp), 
+			//		g_camera.GetProjMatrix() *
+			//		g_camera.GetViewMatrix()));
+			//	//cout << temp.x << "\t" << temp.y << "\t" << temp.z << std::endl;
+			//	if (distanceMousePoint > sqrt(static_cast<double>(pow(2.f, temp.x - xPosProj) + pow(2.f, temp.y - yPosProj)))) {
+			//		distanceMousePoint = sqrt(static_cast<double>(pow(2.f, temp.x - xPosProj) + pow(2.f, temp.y - yPosProj)));
+			//		closest = point._Ptr;
+			//	}
+			//}
 
-			closest->force = vfForce;
+			//closest->force = vfForce;
 			/*XMStoreFloat3(&temp, XMVector3Transform(XMLoadFloat3(&closest->position), 
 					g_camera.GetProjMatrix() *
 					g_camera.GetViewMatrix()));
@@ -1125,6 +1193,16 @@ void CALLBACK OnMouse( bool bLeftButtonDown, bool bRightButtonDown, bool bMiddle
 			cout << std:: endl << "Mouse [-1; 1]: " << "\t" << ((static_cast<float>(xPos)/g_windowWidth) * 2.f - 1.f) << "\t" << (((static_cast<double>(yPos)/g_windowHeight) * 2.f - 1.f) * -1.f) << std::endl;*/
 			}
 		break;
+		}
+	case 6:
+		{
+			if (bLeftButtonDown) {
+				//cout << std::endl << "case 6" << std::endl;
+				rigidBody* rbs[] = {rb1, rb2};
+				//cout << std::endl << sizeof(rbs) / sizeof(*rbs) << std::endl;
+				applyForceByMouseDrag(xPos, yPos, xPosSave, yPosSave, rbs, 2, 0.5f);
+			}
+			break;
 		}
 	default:
 		break;
@@ -1610,7 +1688,6 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			//XMStoreFloat3(&collisionNormal,simpletest.normalWorld); 
 			contact = Contact(collisionPoint,/*collisionNormal*/simpletest.normalWorld, rb1, rb2);
 			contact.calcRelativeVelocity();
-			
 		}
 
 		//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
@@ -1680,8 +1757,8 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 #ifdef RIGID_BODY_COLLISION
 	case 6:
 		if (g_bDrawRigidBodyCollision) {
-			std::cout << "drawing rb collision\n";
-			std::cout << rb1->getPosition().x << "," << rb1->getPosition().y << "," << rb1->getPosition().z << "\n";
+			/*std::cout << "drawing rb collision\n";
+			std::cout << rb1->getPosition().x << "," << rb1->getPosition().y << "," << rb1->getPosition().z << "\n";*/
 			DrawCollisionCubes(rb1);
 			DrawCollisionCubes(rb2);
 		}
