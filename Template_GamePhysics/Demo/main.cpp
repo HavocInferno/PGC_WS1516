@@ -1455,19 +1455,21 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		{
 			cout << "Rigid Body Simulation (Demo 1)!" << std::endl;
 			ResetRigidBodies();
-			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 			deltaTime = 2.0f;
 			g_bDrawRigidBodySimulation = true;
-			
-			/*for (auto massPoint = *rb->getMassPoints().begin(); massPoint != rb->getMassPoints().end(); massPoint++) {
-				if (massPoint->force.x != 0.f || massPoint->force.y != 0.f || massPoint->force.z != 0.f) {
-					forceStart = XMFLOAT3(rb->getPosition().x + massPoint->position.x, rb->getPosition().y + massPoint->position.y, rb->getPosition().z + massPoint->position.z);
-					forceEnd = XMFLOAT3(rb->getPosition().x + massPoint->position.x + massPoint->force.x, rb->getPosition().y + massPoint->position.y + massPoint->force.y, rb->getPosition().z + massPoint->position.z + massPoint->force.z);;
-				}
-			}*/
 
 			rb->integrateValues(deltaTime);
-			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+			
+			cout << "\nlinear velocity: " << std::endl;
+			cout << "rb_vel: " << rb->getVelocity().x << ", " << rb->getVelocity().y << ", " << rb->getVelocity().z << std::endl;
+			cout << "\nangular velocity: " << std::endl;
+			cout << "rb_angVel: " << rb->getAngularVelocity().x << ", " << rb->getAngularVelocity().y << ", " << rb->getAngularVelocity().z << std::endl;
+			
+			cout << "\nworld space velocity of (-0.3, -0.5, -0.25): " << std::endl;
+			MassPoint* tmpMP = new MassPoint();
+			*tmpMP = pointList->at(5);
+			cout << "wsvel: " << tmpMP->velocity.x << ", " << tmpMP->velocity.y << ", " << tmpMP->velocity.z << std::endl;
+
 			break;
 		}
 		case 5:
