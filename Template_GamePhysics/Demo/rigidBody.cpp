@@ -72,6 +72,8 @@ void rigidBody::computeInverInertTensAndAngVel()
 }
 
 void rigidBody::integrateValues(float timeStep) {
+	if(!isStatic)
+	{
 	XMFLOAT3 tmpFloat3 = torqueAccumulator = forceAccumulator = XMFLOAT3(0,0,0);
 	
 	//External forces
@@ -120,6 +122,14 @@ void rigidBody::integrateValues(float timeStep) {
 		//
 		//TODO: apply rotation to each point?
 	}
+	}
+}
+void rigidBody::addGravity(float timeStep, float gravity)
+{
+	if(!isStatic)
+	{
+		r_velocity = addVector(r_velocity, multiplyVector(XMFLOAT3(0,gravity,0),timeStep));
+	}
 }
 
 void rigidBody::setPosition(XMFLOAT3 newPos) {
@@ -129,6 +139,11 @@ void rigidBody::setPosition(XMFLOAT3 newPos) {
 		mp->worldPosition = addVector(centerOffset,mp->worldPosition);
 	}
 
+}
+
+void rigidBody::setStatic(bool val)
+{
+	isStatic = val;
 }
 
 void rigidBody::setLinearVelocity(XMFLOAT3 lV) {
@@ -178,6 +193,7 @@ rigidBody::rigidBody(void)
 }
 
 rigidBody::rigidBody(std::vector<MassPoint>* pointList, XMFLOAT3 vel, XMFLOAT3 rotation, XMFLOAT3 scale = XMFLOAT3(1.f, 1.f, 1.f)) {
+	isStatic = false;
 	this->scale = scale;
 	points = pointList;
 	r_velocity = vel;

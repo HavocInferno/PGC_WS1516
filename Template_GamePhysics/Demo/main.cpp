@@ -147,6 +147,8 @@ XMFLOAT3 forceEnd;
 bool g_bDrawRigidBodyCollision = true;
 std::vector<MassPoint>* pointList1, * pointList2;
 rigidBody* rb1, * rb2;
+std::vector<rigidBody>* rigidBodies; // for rb demo 4
+
 XMMATRIX mat1, mat2;
 CollisionInfo simpletest;
 Contact contact;
@@ -170,6 +172,8 @@ void InitRigidBox(std::vector<MassPoint>* listOfPoints, float width, float heigh
 
 void InitRigidBodies()
 {
+	rigidBody* rbTemp;
+	std::vector<MassPoint> * pointListTemp;
 	float w = 0.0f, h = 0.0f, d = 0.0f;
 	switch(g_iTestCase) {
 	case 4:
@@ -206,6 +210,39 @@ void InitRigidBodies()
 		std::cout << "init.ed rigid body collision\n";;
 		break;
 	case 7:
+		std::cout<<"init \n";;
+		w = 1.0f, h = 0.6f, d = 0.5f;
+		w /= 2, h /= 2, d /= 2;
+		cout<<"for ";
+		rigidBodies = new std::vector<rigidBody>;
+		for(int i = 0; i<5; i++) //init 5 rigidbodies
+		{
+			cout<<i;
+			pointListTemp = new std::vector<MassPoint>;
+			cout<<"a";
+			InitRigidBox(pointListTemp, w,h,d,2.f);
+			cout<<"b";
+			rbTemp = new rigidBody(pointListTemp, XMFLOAT3(.0f , -1.f, .0f), XMFLOAT3(.0f , .0f, 0.785398f), XMFLOAT3(d/2, h, d));
+			cout<<"c";
+
+			rbTemp->setPosition(XMFLOAT3(.0f+i,1.0f,.0f));
+			rigidBodies->push_back(*rbTemp);
+		}
+		for(int i = 0; i<5; i++) //init 5 rigidbodies
+		{
+			cout<<i;
+			pointListTemp = new std::vector<MassPoint>;
+			cout<<"a";
+			InitRigidBox(pointListTemp, w,h,d,2.f);
+			cout<<"b";
+			rbTemp = new rigidBody(pointListTemp, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(d, w, h));
+			cout<<"c";
+			rbTemp->setPosition(XMFLOAT3(.0f+i,.0f,.0f));
+			rigidBodies->push_back(*rbTemp);
+		}
+		//rb2->setPosition(XMFLOAT3(.0f,1.0f,.0f));
+		cout<<rigidBodies->size()<<"\n";
+		mat1 = mat2 = XMMATRIX(.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f);
 		break;
 	default:
 		break;
@@ -214,7 +251,8 @@ void InitRigidBodies()
 
 void DestroyRigidBodies()
 {
-	switch(g_iTestCase) {
+	int anus = 0;
+	switch(g_iPreTestCase) {
 	case 4:
 	case 5:
 		std::cout << "deleting rigid body shite (d1)\n";
@@ -233,6 +271,27 @@ void DestroyRigidBodies()
 		std::cout << "deleted rigid body shite\n";
 		break;
 	case 7:
+	//	delete(pointList1);
+	//	delete(rb1);
+		cout<<"for ";
+		delete(rigidBodies);
+/*
+		for(auto rb = rigidBodies.begin(); rb != rigidBodies.end();)
+			{
+				cout<<anus;
+				auto it = rb;
+				cout<<"a";
+				rb++;
+				cout<<"b";
+				rigidBody* rbPointer =  &((rigidBody)*it);
+				cout<<"c";
+				rigidBodies.erase(it);
+				cout<<"d";
+				//delete(rbPointer);
+				cout<<"e";
+				anus++;
+			}
+			*/
 		break;
 	default:
 		break;
@@ -1383,6 +1442,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 	// update current setup for each frame
 	SpringPoint* a;
 	Spring* b;
+	int anus =0, bnus=0;
 	switch (g_iTestCase)
 	{// handling different cases
 	case 0:
@@ -1616,6 +1676,59 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 		break;
 	case 7:
+		for(auto rb = rigidBodies->begin(); rb != rigidBodies->end();rb++)
+		{
+			rb->integrateValues(deltaTime);
+		}
+		rigidBody* first;
+		rigidBody* second;
+		anus =0;
+		for(auto one = rigidBodies->begin(); one != rigidBodies->end();one++)
+		{
+			first = &(*one);
+			bnus =anus;
+			for(auto two = one+1; two != rigidBodies->end();two++)
+			{
+				second = &(*two);
+
+					mat1 = getObj2WorldMat(first);
+					mat2 = getObj2WorldMat(second);
+					bnus++;
+				//	cout<<"Checking collisions between "<<anus<<" and "<<bnus<<"... \n";
+					simpletest = checkCollision(mat1, mat2);
+					if (!simpletest.isValid){ // Check if a corner of mat1 is in mat2
+						simpletest = checkCollision(mat2, mat1);
+						simpletest.normalWorld = -simpletest.normalWorld;// we compute the impulse to A
+					}
+					if (!simpletest.isValid)
+					{
+						//std::printf("No Collision\n");
+					}
+					else{
+						cout<<"Collision: "<<anus<<" + "<<bnus<<"\n";
+						std::cout << one->getPosition().x << "," << one->getPosition().y << "," << one->getPosition().z << "\n";
+						std::cout << one->getVelocity().x << "," << one->getVelocity().y << "," << one->getVelocity().z << "\n";
+
+						std::cout << two->getPosition().x << "," << two->getPosition().y << "," << two->getPosition().z << "\n";
+						std::printf("collision detected at normal: %f, %f, %f\n",XMVectorGetX(simpletest.normalWorld), XMVectorGetY(simpletest.normalWorld), XMVectorGetZ(simpletest.normalWorld));
+						std::printf("collision point : %f, %f, %f\n",XMVectorGetX(simpletest.collisionPointWorld), XMVectorGetY(simpletest.collisionPointWorld), XMVectorGetZ(simpletest.collisionPointWorld));
+						//angular velocities to linear velocity at the collision point
+
+						XMFLOAT3 collisionPoint;// ,collisionNormal;
+						XMStoreFloat3(&collisionPoint,simpletest.collisionPointWorld); 
+						//XMStoreFloat3(&collisionNormal,simpletest.normalWorld); 
+						contact = Contact(collisionPoint,/*collisionNormal*/simpletest.normalWorld, first, second);
+						contact.calcRelativeVelocity();
+						one->setLinearVelocity(first->getVelocity());
+						one->setAngularMomentum(first->getAngularVelocity());
+						std::cout << first->getVelocity().x << "," << first->getVelocity().y << "," << first->getVelocity().z << "\n";
+						std::cout << one->getVelocity().x << "," << one->getVelocity().y << "," << one->getVelocity().z << "\n";
+			
+					}
+
+			}
+			anus++;
+		}
 		break;
 	default:
 		break;
@@ -1680,14 +1793,18 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 #ifdef RIGID_BODY_COLLISION
 	case 6:
 		if (g_bDrawRigidBodyCollision) {
-			std::cout << "drawing rb collision\n";
-			std::cout << rb1->getPosition().x << "," << rb1->getPosition().y << "," << rb1->getPosition().z << "\n";
+		//	std::cout << "drawing rb collision\n";
+		//	std::cout << rb1->getPosition().x << "," << rb1->getPosition().y << "," << rb1->getPosition().z << "\n";
 			DrawCollisionCubes(rb1);
 			DrawCollisionCubes(rb2);
 		}
 		break;
 #endif
 	case 7:
+		for(auto rb = rigidBodies->begin(); rb != rigidBodies->end();rb++)
+		{
+			DrawCollisionCubes(&((rigidBody)*rb));
+		}
 		break;
 	default:
 		break;
