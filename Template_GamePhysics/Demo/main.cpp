@@ -1109,7 +1109,7 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
 	}
 }
 
-void applyForceByMouseDrag(int& xPos, int& yPos, int& xPosSave, int& yPosSave, rigidBody* rbs[], int rbsSize, float forceScale) {
+void applyForceByMouseDrag(int& xPos, int& yPos, int& xPosSave, int& yPosSave, rigidBody* rbs, int rbsSize, float forceScale) {
 	// Accumulate deltas in g_viMouseDelta
 			g_viMouseDelta.x += xPos - xPosSave;
 			g_viMouseDelta.y += yPos - yPosSave;
@@ -1141,15 +1141,17 @@ void applyForceByMouseDrag(int& xPos, int& yPos, int& xPosSave, int& yPosSave, r
 			float xPosProj = ((static_cast<float>(xPos)/g_windowWidth) * 2.f - 1.f);
 			float yPosProj = (((static_cast<float>(yPos)/g_windowHeight) * 2.f - 1.f) * -1.f);
 			float distanceMousePoint = D3D11_FLOAT32_MAX;
+			rigidBody* rbTemp;
 
 			for (int i = 0; i < rbsSize; i++) {
-				XMMATRIX scale    = XMMatrixScaling(rbs[i]->getScale().x, rbs[i]->getScale().y, rbs[i]->getScale().z);
-				XMMATRIX trans    = XMMatrixTranslation(rbs[i]->getPosition().x,rbs[i]->getPosition().y,rbs[i]->getPosition().z);
-				XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rbs[i]->getRotationQuaternion()));
+				rbTemp = rbs + i;
+				XMMATRIX scale    = XMMatrixScaling(rbTemp->getScale().x, rbTemp->getScale().y, rbTemp->getScale().z);
+				XMMATRIX trans    = XMMatrixTranslation(rbTemp->getPosition().x,rbTemp->getPosition().y,rbTemp->getPosition().z);
+				XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&rbTemp->getRotationQuaternion()));
 				XMMATRIX modelViewProjection = g_camera.GetProjMatrix() * g_camera.GetViewMatrix() * scale * /*rotation **/ trans;
 
 				//cout << std:: endl << "Points: " << std::endl;
-				for (auto point = (*rbs[i]->getMassPoints()).begin(); point != (*rbs[i]->getMassPoints()).end(); point++) {
+				for (auto point = (*rbTemp->getMassPoints()).begin(); point != (*rbTemp->getMassPoints()).end(); point++) {
 					//get the projection coordinates of a point
 					//XMStoreFloat3(&temp, XMVector3Rotate(XMLoadFloat3(&point->position), XMLoadFloat4(&rbs[i]->getRotationQuaternion())));
 					//temp = addVector(rbs[i]->getPosition(), temp);
@@ -1195,7 +1197,7 @@ void CALLBACK OnMouse( bool bLeftButtonDown, bool bRightButtonDown, bool bMiddle
 			//cout << std::endl << "case 5" << std::endl;
 			rigidBody* rbs[] = {rb};
 			//cout << std::endl << sizeof(rbs) / sizeof(*rbs) << std::endl;
-			applyForceByMouseDrag(xPos, yPos, xPosSave, yPosSave, rbs, 1, 0.1f);
+			applyForceByMouseDrag(xPos, yPos, xPosSave, yPosSave, *rbs, 1, 0.1f);
 			// Accumulate deltas in g_viMouseDelta
 			//g_viMouseDelta.x += xPos - xPosSave;
 			//g_viMouseDelta.y += yPos - yPosSave;
@@ -1260,15 +1262,16 @@ void CALLBACK OnMouse( bool bLeftButtonDown, bool bRightButtonDown, bool bMiddle
 		break;
 		}
 	case 6:
-		{
-			if (bLeftButtonDown) {
-				//cout << std::endl << "case 6" << std::endl;
-				rigidBody* rbs[] = {rb1, rb2};
-				//cout << std::endl << sizeof(rbs) / sizeof(*rbs) << std::endl;
-				applyForceByMouseDrag(xPos, yPos, xPosSave, yPosSave, rbs, 2, 0.5f);
-			}
-			break;
+		break;
+	case 7:
+	{
+		if (bLeftButtonDown) {
+			//cout << std::endl << "case 6" << std::endl;
+			//cout << std::endl << sizeof(rbs) / sizeof(*rbs) << std::endl;
+			applyForceByMouseDrag(xPos, yPos, xPosSave, yPosSave, rigidBodies->data(), rigidBodies->size(), 0.5f);
 		}
+		break;
+	}
 	default:
 		break;
 	}
