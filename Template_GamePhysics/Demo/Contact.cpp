@@ -40,8 +40,8 @@ void Contact::calculateImpulse() {
 	float numerator = -(1+c)*v_relative_dot;
 
 	XMVECTOR tempVec_a, tempVec_b, center_1, center_2;
-	center_1 = XMLoadFloat3(&body1->getPosition());
-	center_2 = XMLoadFloat3(&body2->getPosition());
+	center_1 = XMLoadFloat3(&(subVector(c_position,body1->getPosition())));
+	center_2 = XMLoadFloat3(&(subVector(c_position,body2->getPosition())));
 	tempVec_a = XMVector3Transform(XMVector3Cross(XMVector3Cross(center_1,c_normal),center_1),body1->getInertiaTensorInverse());
 	tempVec_b = XMVector3Transform(XMVector3Cross(XMVector3Cross(center_2,c_normal),center_2),body1->getInertiaTensorInverse());
 	tempVec_a = XMVector3Dot(tempVec_a+tempVec_b,c_normal);
