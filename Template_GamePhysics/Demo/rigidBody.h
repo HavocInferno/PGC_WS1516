@@ -13,7 +13,6 @@ class rigidBody
 {
 private:
 	float massInverse;
-	bool isStatic;
 	XMFLOAT3 r_position;
 	XMFLOAT3 r_velocity;
 	XMMATRIX inertiaTensorInverse;
@@ -31,6 +30,8 @@ private:
 
 	std::vector<MassPoint>* points;
 public:
+	bool isStatic;
+
 	void preCompute();
 	void computeInverInertTensAndAngVel();
 	void integrateValues(float timeStep);

@@ -68,11 +68,16 @@ void Contact::calculateImpulse() {
 	XMStoreFloat3(&tempf3, XMVector3Cross(center_2,c_normal));
 	newAngMom_2 = subVector(body2->getAngularMomentum(),tempf3);
 
-	body1->setLinearVelocity(newVelocity_1);
-	body1->setAngularMomentum(newAngMom_1);
-
-	body2->setLinearVelocity(newVelocity_2);
-	body2->setAngularMomentum(newAngMom_2);
+	if(!body1->isStatic)
+	{
+		body1->setLinearVelocity(newVelocity_1);
+		body1->setAngularMomentum(newAngMom_1);
+	}
+	if(!body2->isStatic)
+	{
+		body2->setLinearVelocity(newVelocity_2);
+		body2->setAngularMomentum(newAngMom_2);
+	}
 
 }
 	

@@ -148,6 +148,7 @@ bool g_bDrawRigidBodyCollision = true;
 std::vector<MassPoint>* pointList1, * pointList2;
 rigidBody* rb1, * rb2;
 std::vector<rigidBody>* rigidBodies; // for rb demo 4
+rigidBody* floorRB;
 
 XMMATRIX mat1, mat2;
 CollisionInfo simpletest;
@@ -237,10 +238,15 @@ void InitRigidBodies()
 			cout<<"b";
 			rbTemp = new rigidBody(pointListTemp, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(d, w, h));
 			cout<<"c";
-			rbTemp->setPosition(XMFLOAT3(.0f+i,.0f,.0f));
+			rbTemp->setPosition(XMFLOAT3(.0f,.0f+i,.0f));
 			rigidBodies->push_back(*rbTemp);
 		}
 		//rb2->setPosition(XMFLOAT3(.0f,1.0f,.0f));
+		pointListTemp = new std::vector<MassPoint>;
+		InitRigidBox(pointListTemp, 1,1,1,9999999.9f);
+		floorRB = rbTemp = new rigidBody(pointListTemp, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(500, 10, 500));
+		floorRB-> setPosition(XMFLOAT3(.0f,-6,0));
+		floorRB->setStatic(true);
 		cout<<rigidBodies->size()<<"\n";
 		mat1 = mat2 = XMMATRIX(.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f);
 		break;
@@ -1705,22 +1711,19 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 						//std::printf("No Collision\n");
 					}
 					else{
-						cout<<"Collision: "<<anus<<" + "<<bnus<<"\n";
+				/*		cout<<"Collision: "<<anus<<" + "<<bnus<<"\n";
 						std::cout << one->getPosition().x << "," << one->getPosition().y << "," << one->getPosition().z << "\n";
 						std::cout << one->getVelocity().x << "," << one->getVelocity().y << "," << one->getVelocity().z << "\n";
-
 						std::cout << two->getPosition().x << "," << two->getPosition().y << "," << two->getPosition().z << "\n";
 						std::printf("collision detected at normal: %f, %f, %f\n",XMVectorGetX(simpletest.normalWorld), XMVectorGetY(simpletest.normalWorld), XMVectorGetZ(simpletest.normalWorld));
 						std::printf("collision point : %f, %f, %f\n",XMVectorGetX(simpletest.collisionPointWorld), XMVectorGetY(simpletest.collisionPointWorld), XMVectorGetZ(simpletest.collisionPointWorld));
 						//angular velocities to linear velocity at the collision point
-
+						*/
 						XMFLOAT3 collisionPoint;// ,collisionNormal;
 						XMStoreFloat3(&collisionPoint,simpletest.collisionPointWorld); 
 						//XMStoreFloat3(&collisionNormal,simpletest.normalWorld); 
 						contact = Contact(collisionPoint,/*collisionNormal*/simpletest.normalWorld, first, second);
 						contact.calcRelativeVelocity();
-						one->setLinearVelocity(first->getVelocity());
-						one->setAngularMomentum(first->getAngularVelocity());
 						std::cout << first->getVelocity().x << "," << first->getVelocity().y << "," << first->getVelocity().z << "\n";
 						std::cout << one->getVelocity().x << "," << one->getVelocity().y << "," << one->getVelocity().z << "\n";
 			
@@ -1728,6 +1731,32 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 
 			}
 			anus++;
+		}
+		//collision with floor
+		second = floorRB;
+		for(auto one = rigidBodies->begin(); one != rigidBodies->end();one++)
+		{				
+			first = &*one;
+			mat1 = getObj2WorldMat(first);
+			mat2 = getObj2WorldMat(second);
+			bnus++;
+			simpletest = checkCollision(mat1, mat2);
+			if (!simpletest.isValid){ // Check if a corner of mat1 is in mat2
+				simpletest = checkCollision(mat2, mat1);
+				simpletest.normalWorld = -simpletest.normalWorld;// we compute the impulse to A
+			}
+			if (!simpletest.isValid)
+			{			
+				//std::printf("No Collision\n");
+			}
+			else
+			{
+				XMFLOAT3 collisionPoint;// ,collisionNormal;
+				XMStoreFloat3(&collisionPoint,simpletest.collisionPointWorld); 
+				//XMStoreFloat3(&collisionNormal,simpletest.normalWorld); 
+				contact = Contact(collisionPoint,/*collisionNormal*/simpletest.normalWorld, first, second);
+				contact.calcRelativeVelocity();
+			}
 		}
 		break;
 	default:
@@ -1805,6 +1834,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		{
 			DrawCollisionCubes(&((rigidBody)*rb));
 		}
+		DrawCube(floorRB);
 		break;
 	default:
 		break;
