@@ -1610,7 +1610,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			//XMStoreFloat3(&collisionNormal,simpletest.normalWorld); 
 			contact = Contact(collisionPoint,/*collisionNormal*/simpletest.normalWorld, rb1, rb2);
 			contact.calcRelativeVelocity();
-			contact.calculateImpulse();
+			
 		}
 
 		//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
