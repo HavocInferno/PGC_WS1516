@@ -36,6 +36,7 @@ public:
 	void computeInverInertTensAndAngVel();
 	void integrateValues(float timeStep);
 	void addGravity(float timeStep, float gravity);
+	void addDamping(float timeStep, float linear, float angular);
 
 	XMFLOAT3 getScale();
 	XMFLOAT3 getPosition();

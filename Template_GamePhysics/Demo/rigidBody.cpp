@@ -131,6 +131,11 @@ void rigidBody::addGravity(float timeStep, float gravity)
 		r_velocity = addVector(r_velocity, multiplyVector(XMFLOAT3(0,gravity,0),timeStep));
 	}
 }
+void rigidBody::addDamping(float timeStep, float linear, float angular)
+{
+	r_velocity = addVector(r_velocity,multiplyVector(r_velocity, -linear*timeStep));
+	angularVelocity = addVector(angularVelocity,multiplyVector(angularVelocity, -angular*timeStep));
+}
 
 void rigidBody::setPosition(XMFLOAT3 newPos) {
 	XMFLOAT3 centerOffset = subVector(newPos,r_position);
