@@ -140,6 +140,8 @@ std::vector<MassPoint>* pointList;
 rigidBody* rb;
 XMFLOAT3 forceStart;
 XMFLOAT3 forceEnd;
+float g_damping_linear = 0.3f;
+float g_damping_angular = 0.3f;
 
 #endif
 #ifdef RIGID_BODY_COLLISION
@@ -211,34 +213,24 @@ void InitRigidBodies()
 		std::cout << "init.ed rigid body collision\n";;
 		break;
 	case 7:
-		std::cout<<"init \n";;
 		w = 1.0f, h = 0.6f, d = 0.5f;
 		w /= 2, h /= 2, d /= 2;
-		cout<<"for ";
 		rigidBodies = new std::vector<rigidBody>;
 		for(int i = 0; i<5; i++) //init 5 rigidbodies
 		{
-			cout<<i;
 			pointListTemp = new std::vector<MassPoint>;
-			cout<<"a";
 			InitRigidBox(pointListTemp, w,h,d,2.f);
-			cout<<"b";
-			rbTemp = new rigidBody(pointListTemp, XMFLOAT3(.0f , -1.f, .0f), XMFLOAT3(.0f , .0f, 0.785398f), XMFLOAT3(d/2, h, d));
-			cout<<"c";
+			rbTemp = new rigidBody(pointListTemp, XMFLOAT3(i*0.5f , -1.f, 0.5 - i*0.2), XMFLOAT3(0.4f*i , 0.1*i, 0.785398f), XMFLOAT3(d/2, h, d));
 
-			rbTemp->setPosition(XMFLOAT3(.0f+i,1.0f,.0f));
+			rbTemp->setPosition(XMFLOAT3(-2+i*0.5f,1.0f+0.5*i,.0f));
 			rigidBodies->push_back(*rbTemp);
 		}
 		for(int i = 0; i<5; i++) //init 5 rigidbodies
 		{
-			cout<<i;
 			pointListTemp = new std::vector<MassPoint>;
-			cout<<"a";
 			InitRigidBox(pointListTemp, w,h,d,2.f);
-			cout<<"b";
-			rbTemp = new rigidBody(pointListTemp, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(d, w, h));
-			cout<<"c";
-			rbTemp->setPosition(XMFLOAT3(.0f,.0f+i,.0f));
+			rbTemp = new rigidBody(pointListTemp, XMFLOAT3(.0f , 2*i, .0f), XMFLOAT3(.01f*i , .0f, .0f), XMFLOAT3(d, w, h));
+			rbTemp->setPosition(XMFLOAT3(-2+0.75f*i,.0f,.0f));
 			rigidBodies->push_back(*rbTemp);
 		}
 		//rb2->setPosition(XMFLOAT3(.0f,1.0f,.0f));
@@ -247,7 +239,6 @@ void InitRigidBodies()
 		floorRB = rbTemp = new rigidBody(pointListTemp, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(500, 10, 500));
 		floorRB-> setPosition(XMFLOAT3(.0f,-6,0));
 		floorRB->setStatic(true);
-		cout<<rigidBodies->size()<<"\n";
 		mat1 = mat2 = XMMATRIX(.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f);
 		break;
 	default:
@@ -486,12 +477,26 @@ void ResetMassSprings(float deltaTime) {
 //simulates an explosion one meter under the ground
 void explode()
 {
-	SpringPoint* a;
+	if(g_iTestCase == 3)
+	{
+		SpringPoint* a;
 		for(auto point = points.begin(); point != points.end();point++)
 		{
-			a =  (((SpringPoint*)*point));
+			a =  (((SpringPoint*)*point)); 
 			//a->setVelocity(addVector(a->gp_velocity,invertVector(addVector(a->gp_position,XMFLOAT3(0,3,0)),g_explosionForce)));
 			a->setVelocity(addVector(a->gp_velocity,multiplyVector(normalizeVector(addVector(a->gp_position,XMFLOAT3(0,2,0))),g_explosionForce/vectorLength(a->gp_position))));
+		
+		}
+	}
+		if(g_iTestCase == 7)
+		{
+			rigidBody* b;
+			for(auto rb = rigidBodies->begin(); rb != rigidBodies->end();rb++)
+			{
+				b = &*rb;
+				//a->setVelocity(addVector(a->gp_velocity,invertVector(addVector(a->gp_position,XMFLOAT3(0,3,0)),g_explosionForce)));
+				b->setLinearVelocity(addVector(b->getVelocity(),multiplyVector(normalizeVector(addVector(b->getPosition(),XMFLOAT3(0,2,0))),g_explosionForce/vectorLength(b->getPosition()))));
+			}
 		}
 
 }
@@ -589,6 +594,15 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 #endif
 	case 7:
 		//RB Demo 4
+		TwAddVarRW(g_pTweakBar, "Use fixed timestep", TW_TYPE_BOOLCPP, &g_fixedTimestep, "");
+		TwAddVarRW(g_pTweakBar, "-> timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
+		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
+		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
+		TwAddButton(g_pTweakBar, "Explode!!", [](void *){explode(); }, nullptr, "");	
+		TwAddVarRW(g_pTweakBar, "-> Explosion Force", TW_TYPE_FLOAT, &g_explosionForce, "min=0.1 ma=10 step=0.1");
+		TwAddVarRW(g_pTweakBar, "Use damping", TW_TYPE_BOOLCPP, &g_useDamping, "");
+		TwAddVarRW(g_pTweakBar, "-> Linear Damping", TW_TYPE_FLOAT, &g_damping_linear, "min=0 ma=10 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> Angular Damping", TW_TYPE_FLOAT, &g_damping_angular, "min=0 ma=10 step=0.1");
 		break;
 	default:
 		break;
@@ -1458,19 +1472,21 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		{
 			cout << "Rigid Body Simulation (Demo 1)!" << std::endl;
 			ResetRigidBodies();
-			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 			deltaTime = 2.0f;
 			g_bDrawRigidBodySimulation = true;
-			
-			/*for (auto massPoint = *rb->getMassPoints().begin(); massPoint != rb->getMassPoints().end(); massPoint++) {
-				if (massPoint->force.x != 0.f || massPoint->force.y != 0.f || massPoint->force.z != 0.f) {
-					forceStart = XMFLOAT3(rb->getPosition().x + massPoint->position.x, rb->getPosition().y + massPoint->position.y, rb->getPosition().z + massPoint->position.z);
-					forceEnd = XMFLOAT3(rb->getPosition().x + massPoint->position.x + massPoint->force.x, rb->getPosition().y + massPoint->position.y + massPoint->force.y, rb->getPosition().z + massPoint->position.z + massPoint->force.z);;
-				}
-			}*/
 
 			rb->integrateValues(deltaTime);
-			//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
+			
+			cout << "\nlinear velocity: " << std::endl;
+			cout << "rb_vel: " << rb->getVelocity().x << ", " << rb->getVelocity().y << ", " << rb->getVelocity().z << std::endl;
+			cout << "\nangular velocity: " << std::endl;
+			cout << "rb_angVel: " << rb->getAngularVelocity().x << ", " << rb->getAngularVelocity().y << ", " << rb->getAngularVelocity().z << std::endl;
+			
+			cout << "\nworld space velocity of (-0.3, -0.5, -0.25): " << std::endl;
+			MassPoint* tmpMP = new MassPoint();
+			*tmpMP = pointList->at(5);
+			cout << "wsvel: " << tmpMP->velocity.x << ", " << tmpMP->velocity.y << ", " << tmpMP->velocity.z << std::endl;
+
 			break;
 		}
 		case 5:
@@ -1507,9 +1523,10 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		case 7:
 		{
 			cout << "Rigid Body Simulation (Demo 4)!" << std::endl;
-			ResetRigidBodies();
-			deltaTime = 0.005f;
+			
 			g_bDrawRigidBodySimulation = true;
+			ResetRigidBodies();
+			g_gravity = -1;
 			break;
 		}
 		default:
@@ -1529,7 +1546,6 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 	// update current setup for each frame
 	SpringPoint* a;
 	Spring* b;
-	int anus =0, bnus=0;
 	switch (g_iTestCase)
 	{// handling different cases
 	case 0:
@@ -1762,25 +1778,31 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		//cout << "rb_pos: " << rb->r_position.x << ", " << rb->r_position.y << ", " << rb->r_position.z << std::endl;
 		break;
 	case 7:
+		previousTime = currentTime;
+		currentTime = timeGetTime();
+		deltaTime = (currentTime-previousTime)/1000.0f;
+		if(g_fixedTimestep) {
+			deltaTime = g_manualTimestep;
+		}
 		for(auto rb = rigidBodies->begin(); rb != rigidBodies->end();rb++)
 		{
 			rb->integrateValues(deltaTime);
+			if(g_useGravity)
+				rb->addGravity(deltaTime, g_gravity);
+			if(g_useDamping)
+				rb->addDamping(deltaTime, g_damping_linear, g_damping_angular);
 		}
 		rigidBody* first;
 		rigidBody* second;
-		anus =0;
 		for(auto one = rigidBodies->begin(); one != rigidBodies->end();one++)
 		{
 			first = &(*one);
-			bnus =anus;
 			for(auto two = one+1; two != rigidBodies->end();two++)
 			{
 				second = &(*two);
 
 					mat1 = getObj2WorldMat(first);
 					mat2 = getObj2WorldMat(second);
-					bnus++;
-				//	cout<<"Checking collisions between "<<anus<<" and "<<bnus<<"... \n";
 					simpletest = checkCollision(mat1, mat2);
 					if (!simpletest.isValid){ // Check if a corner of mat1 is in mat2
 						simpletest = checkCollision(mat2, mat1);
@@ -1788,29 +1810,16 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 					}
 					if (!simpletest.isValid)
 					{
-						//std::printf("No Collision\n");
 					}
 					else{
-				/*		cout<<"Collision: "<<anus<<" + "<<bnus<<"\n";
-						std::cout << one->getPosition().x << "," << one->getPosition().y << "," << one->getPosition().z << "\n";
-						std::cout << one->getVelocity().x << "," << one->getVelocity().y << "," << one->getVelocity().z << "\n";
-						std::cout << two->getPosition().x << "," << two->getPosition().y << "," << two->getPosition().z << "\n";
-						std::printf("collision detected at normal: %f, %f, %f\n",XMVectorGetX(simpletest.normalWorld), XMVectorGetY(simpletest.normalWorld), XMVectorGetZ(simpletest.normalWorld));
-						std::printf("collision point : %f, %f, %f\n",XMVectorGetX(simpletest.collisionPointWorld), XMVectorGetY(simpletest.collisionPointWorld), XMVectorGetZ(simpletest.collisionPointWorld));
-						//angular velocities to linear velocity at the collision point
-						*/
 						XMFLOAT3 collisionPoint;// ,collisionNormal;
 						XMStoreFloat3(&collisionPoint,simpletest.collisionPointWorld); 
-						//XMStoreFloat3(&collisionNormal,simpletest.normalWorld); 
-						contact = Contact(collisionPoint,/*collisionNormal*/simpletest.normalWorld, first, second);
+						contact = Contact(collisionPoint,simpletest.normalWorld, first, second);
 						contact.calcRelativeVelocity();
-						std::cout << first->getVelocity().x << "," << first->getVelocity().y << "," << first->getVelocity().z << "\n";
-						std::cout << one->getVelocity().x << "," << one->getVelocity().y << "," << one->getVelocity().z << "\n";
 			
 					}
 
 			}
-			anus++;
 		}
 		//collision with floor
 		second = floorRB;
@@ -1819,7 +1828,6 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			first = &*one;
 			mat1 = getObj2WorldMat(first);
 			mat2 = getObj2WorldMat(second);
-			bnus++;
 			simpletest = checkCollision(mat1, mat2);
 			if (!simpletest.isValid){ // Check if a corner of mat1 is in mat2
 				simpletest = checkCollision(mat2, mat1);
@@ -1919,7 +1927,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		{
 			DrawCollisionCubes(&((rigidBody)*rb));
 		}
-		DrawCube(floorRB);
+	//	DrawCube(floorRB);
 		break;
 	default:
 		break;

@@ -34,7 +34,7 @@ void Contact::calcRelativeVelocity() {
 
 
 void Contact::calculateImpulse() {
-	float c = 1; //this should determine if the body is elastic or plastic.. for now i'll leave it as plastic!
+	float c = 0.5f; //this should determine if the body is elastic or plastic.. for now i'll leave it as plastic!
 
 	float ma = body1->getMassInverse(), mb = body2->getMassInverse();
 
