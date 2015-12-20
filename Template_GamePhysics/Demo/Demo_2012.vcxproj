@@ -209,9 +209,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Contact.cpp" />
+    <ClCompile Include="Fluid.cpp" />
+    <ClCompile Include="FluidSimulation.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MassPoint.cpp" />
+    <ClCompile Include="Particle.cpp" />
     <ClCompile Include="point.cpp" />
+    <ClCompile Include="PositionableUnit.cpp" />
     <ClCompile Include="rigidBody.cpp" />
     <ClCompile Include="spring.cpp" />
     <ClCompile Include="util\FFmpeg.cpp" />
@@ -221,7 +225,10 @@
     <ClInclude Include="..\..\..\..\..\Dropbox\Uni\Semester 5\PGC\collisionDetect.h" />
     <ClInclude Include="collisionDetect.h" />
     <ClInclude Include="Contact.h" />
+    <ClInclude Include="Fluid.h" />
+    <ClInclude Include="FluidSimulation.h" />
     <ClInclude Include="MassPoint.h" />
+    <ClInclude Include="Particle.h" />
     <ClInclude Include="point.h" />
     <ClInclude Include="rigidBody.h" />
     <ClInclude Include="spring.h" />

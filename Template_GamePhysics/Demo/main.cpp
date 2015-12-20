@@ -42,6 +42,8 @@ using std::cout;
 #define RIGID_BODY_SIMULATION
 #define RIGID_BODY_COLLISION
 
+#include "PositionableUnit.cpp"
+
 // Mass Spring includes
 #include "spring.h"
 #include "point.h"
@@ -53,6 +55,11 @@ using std::cout;
 #include "rigidBody.h"
 #include "collisionDetect.h"
 #include "Contact.h"
+
+//Fluid Simulation
+#include "Fluid.h"
+#include "FluidSimulation.h"
+#include "Particle.h"
 
 // DXUT camera
 // NOTE: CModelViewerCamera does not only manage the standard view transformation/camera position 
@@ -96,7 +103,8 @@ XMFLOAT3 g_vfRotate = XMFLOAT3(0, 0, 0);
 
 // TweakAntBar GUI variables
 
-int g_iTestCase = 6;
+//startup demo
+int g_iTestCase = 8;
 int g_iPreTestCase = -1;
 bool  g_bSimulateByStep = false;
 bool  g_bIsSpaceReleased = true;
@@ -156,6 +164,10 @@ XMMATRIX mat1, mat2;
 CollisionInfo simpletest;
 Contact contact;
 #endif
+
+//Fluid Simulation
+Fluid* fluid;
+FluidSimulation* fluidSim;
 
 void InitRigidBox(std::vector<MassPoint>* listOfPoints, float width, float height, float depth, float mass) {
 	width /= 2;
@@ -514,7 +526,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 
 	TwType TW_TYPE_INTEGRATOR = TwDefineEnumFromString("Integration Method", "Euler,Midpoint,LeapFrog");
 	TwType TW_TYPE_DEMOCASE = TwDefineEnumFromString("Demo Setup", "Demo 1/2/3,Demo 4");
-	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "MSS Demo 1,MSS Demo 2,MSS Demo 3,MSS Demo 4, RB Demo 1, RB Demo 2, RB Demo 3, RB Demo 4");
+	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "MSS Demo 1,MSS Demo 2,MSS Demo 3,MSS Demo 4, RB Demo 1, RB Demo 2, RB Demo 3, RB Demo 4, FlSim Demo");
 	TwAddVarRW(g_pTweakBar, "Test Scene", TW_TYPE_TESTCASE, &g_iTestCase, "");
 	// HINT: For buttons you can directly pass the callback function as a lambda expression.
 	TwAddButton(g_pTweakBar, "Reset Scene", [](void *){g_iPreTestCase = -1; }, nullptr, "");
@@ -787,6 +799,31 @@ void DrawPoint(ID3D11DeviceContext* pd3dImmediateContext, SpringPoint* point)
     g_pSphere->Draw(g_pEffectPositionNormal, g_pInputLayoutPositionNormal);
 }
 
+void DrawParticle(Particle& particle, float size)
+{
+	/*std::mt19937 eng;
+    std::uniform_real_distribution<float> randCol( 0.0f, 1.0f);
+
+	g_pEffectPositionNormal->SetEmissiveColor(Colors::Black);
+    g_pEffectPositionNormal->SetSpecularColor(0.4f * Colors::White);
+    g_pEffectPositionNormal->SetSpecularPower(100);
+	g_pEffectPositionNormal->SetDiffuseColor(0.6f * XMColorHSVToRGB(XMVectorSet(randCol(eng), 1, 1, 0)));*/
+
+	//set color
+	g_pEffectPositionNormal->SetDiffuseColor(TUM_BLUE_LIGHT);
+	g_pEffectPositionNormal->SetEmissiveColor(Colors::Black);
+	g_pEffectPositionNormal->SetSpecularColor(0.5f * Colors::White);
+    g_pEffectPositionNormal->SetSpecularPower(50);
+
+	//set position
+	XMMATRIX scale    = XMMatrixScaling(size, size, size);
+	XMMATRIX trans    = XMMatrixTranslation(particle.getPosition().x,particle.getPosition().y,particle.getPosition().z);
+    g_pEffectPositionNormal->SetWorld(scale * trans * g_camera.GetWorldMatrix());
+
+	//draw everything
+    g_pSphere->Draw(g_pEffectPositionNormal, g_pInputLayoutPositionNormal);
+}
+
 void DrawSpring(ID3D11DeviceContext* pd3dImmediateContext, Spring* spring)
 {
 	g_pEffectPositionColor->SetWorld(g_camera.GetWorldMatrix());
@@ -941,6 +978,9 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	//Init Rigid Body Simulation
 	InitRigidBodies();
 
+	//Init Fluid Simulation
+	fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(2, 0, 0), 7, .03f, 1.f, 200.f, .01f);
+
     // Create DirectXTK geometric primitives for later usage
 	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);
     g_pSphere = GeometricPrimitive::CreateGeoSphere(pd3dImmediateContext, 2.0f, 2, false);
@@ -1039,6 +1079,9 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     SAFE_DELETE (g_pPrimitiveBatchPositionNormalColor);
     SAFE_RELEASE(g_pInputLayoutPositionNormalColor);
     SAFE_DELETE (g_pEffectPositionNormalColor);
+
+	//Destroy Fluid Simulation
+	delete(fluid);
 
 	//Destroy Rigid Body Simulation
 	DestroyRigidBodies();
@@ -1529,6 +1572,10 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			g_gravity = -1;
 			break;
 		}
+		case 8:
+			delete(fluid);
+			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(2, 2, 2), 7, .03f, 1.f, 200.f, .01f);
+			break;
 		default:
 			cout << "Empty Test!\n";
 			break;
@@ -1847,6 +1894,9 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			}
 		}
 		break;
+	case 8:
+		FluidSimulation::integrateFluid(*fluid, .001f);
+		break;
 	default:
 		break;
 	}
@@ -1929,6 +1979,14 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		}
 	//	DrawCube(floorRB);
 		break;
+	case 8:
+		{
+			std::vector<Particle>* particles = fluid->getParticles();
+			for (auto particle = particles->begin(); particle != particles->end(); particle++) {
+				DrawParticle(static_cast<Particle>(*particle), fluid->getKernelSize() / 3);
+			}
+			break;
+		}
 	default:
 		break;
 	}

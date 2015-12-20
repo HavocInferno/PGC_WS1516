@@ -19,6 +19,16 @@
     <ClCompile Include="MassPoint.cpp">
       <Filter>rigidbody</Filter>
     </ClCompile>
+    <ClCompile Include="FluidSimulation.cpp">
+      <Filter>fluids</Filter>
+    </ClCompile>
+    <ClCompile Include="Fluid.cpp">
+      <Filter>fluids</Filter>
+    </ClCompile>
+    <ClCompile Include="Particle.cpp">
+      <Filter>fluids</Filter>
+    </ClCompile>
+    <ClCompile Include="PositionableUnit.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="util">
@@ -26,6 +36,9 @@
     </Filter>
     <Filter Include="rigidbody">
       <UniqueIdentifier>{bd34c153-7ab0-4609-8f99-9032ddaea009}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fluids">
+      <UniqueIdentifier>{ea586c6c-f8d3-4a1c-be63-194ffe2e0aca}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -52,6 +65,15 @@
     </ClInclude>
     <ClInclude Include="collisionDetect.h">
       <Filter>rigidbody</Filter>
+    </ClInclude>
+    <ClInclude Include="FluidSimulation.h">
+      <Filter>fluids</Filter>
+    </ClInclude>
+    <ClInclude Include="Fluid.h">
+      <Filter>fluids</Filter>
+    </ClInclude>
+    <ClInclude Include="Particle.h">
+      <Filter>fluids</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
