@@ -23,9 +23,9 @@ XMFLOAT3 FluidSimulation::kernelGradient(float& d, XMFLOAT3& x, XMFLOAT3& xi) {
 	XMStoreFloat3(&direction, XMVector3Normalize(XMVectorSubtract(XMLoadFloat3(&x), XMLoadFloat3(&xi))));
 
 	if (0.f <= q && q < 1.f)	{
-		kernel = (9 * ((q - 4.f /3) * q)) / (4 * pow(d, 4) * XM_PI);
+		kernel = (9 * ((q - 4.f /3) * q)) / (4 * pow(d, 3) * XM_PI);
 	} else if (1.f <= q && q < 2.f) {
-		kernel = (-3 * pow((2- q), 2)) / (4 * pow(d, 4) * XM_PI);
+		kernel = (-3 * pow((2- q), 2)) / (4 * pow(d, 3) * XM_PI);
 	} else if (q >= 2.f) {
 		kernel = 0.f;
 	}
@@ -67,9 +67,9 @@ void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep) {
 		for (auto p2 = particles->begin(); p2 != particles->end(); p2++) {
 			p1->gp_force = addVector(p1->gp_force, 
 				multiplyVector(kernelGradient(fluid.kernelSize, p1->gp_position, p2->gp_position), 
-					(p1->pressure + p2->pressure) * p2->gp_mass / p2->density));
+					(p1->pressure / pow(p1->density, 2.f) + p2->pressure / pow(p2->density, 2.f)) * p2->gp_mass));
 		}
-		p1->gp_force = multiplyVector(p1->gp_force, -.5f);
+		p1->gp_force = multiplyVector(p1->gp_force, -p1->gp_mass);
 
 		//4 find acceleration
 		p1->gp_acceleration = multiplyVector(p1->gp_force, 1/p1->gp_mass);
