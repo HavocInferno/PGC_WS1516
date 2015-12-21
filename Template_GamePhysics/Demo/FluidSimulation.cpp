@@ -3,30 +3,29 @@
 #include <iostream>
 
 float FluidSimulation::kernel(float& d, XMFLOAT3& x, XMFLOAT3& xi) {
-	float q = vectorLength(subVector(x, xi)) / d;
-
-	if (0 <= q < 1)	{
-		return 3 * (2 / 3 - q * q + q * q * q / 2) / 2 * pow(d, 3) * XM_PI;
-	} else if (1 <= q < 2) {
-		return 1 * (pow((2 - q), 3)) / 4 * pow(d, 3) * XM_PI;
-	} else if (q >= 2) {
+	float q = XMVectorGetX(XMVector3Length(XMVectorSubtract(XMLoadFloat3(&x), XMLoadFloat3(&xi)))) / d;
+	
+	if (0.f <= q && q < 1.f)	{
+		return 3 * (2.f / 3 - q * q + .5f * pow(q, 3.f) ) / 2 * pow(d, 3) * XM_PI;
+	} else if (1.f <= q && q < 2.f) {
+		return (pow((2 - q), 3)) / 4 * pow(d, 3.f) * XM_PI;
+	} else if (q >= 2.f) {
 		return 0.f;
 	}
 }
 
 XMFLOAT3 FluidSimulation::kernelGradient(float& d, XMFLOAT3& x, XMFLOAT3& xi) {
-	float distance = vectorLength(subVector(x, xi));
-	float q = distance / d;
+	float q = XMVectorGetX(XMVector3Length(XMVectorSubtract(XMLoadFloat3(&x), XMLoadFloat3(&xi)))) / d;
 	XMFLOAT3 direction;
 	float kernel;
 	
 	XMStoreFloat3(&direction, XMVector3Normalize(XMVectorSubtract(XMLoadFloat3(&x), XMLoadFloat3(&xi))));
 
-	if (0 <= q < 1)	{
-		kernel = 9 * ((q - 4/3) * q) / 4 * pow(d, 4) * XM_PI;
-	} else if (1 <= q < 2) {
-		kernel = 3 * pow(-(2- q), 2) / 4 * pow(d, 4) * XM_PI;
-	} else if (q >= 2) {
+	if (0.f <= q && q < 1.f)	{
+		kernel = 9 * ((q - 4.f /3) * q) / 4 * pow(d, 4) * XM_PI;
+	} else if (1.f <= q && q < 2.f) {
+		kernel = -3 * pow((2- q), 2) / 4 * pow(d, 4) * XM_PI;
+	} else if (q >= 2.f) {
 		kernel = 0.f;
 	}
 
@@ -36,6 +35,17 @@ XMFLOAT3 FluidSimulation::kernelGradient(float& d, XMFLOAT3& x, XMFLOAT3& xi) {
 void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep) {
 	//for each particle
 	std::vector<Particle>* particles = fluid.getParticles();
+
+	//DEBUG
+	for (auto p1 = particles->begin(); p1 != particles->end(); p1++) {
+		std::cout << "position: " << p1->position.x << "\t" << p1->position.y << "\t" << p1->position.z << "\t" <<  std::endl;
+		std::cout << "mass: " << p1->mass << std::endl;
+		std::cout << "density: " << p1->density << std::endl;
+		std::cout << "pressure: " << p1->pressure << std::endl;
+		std::cout << "pressureForce: " << p1->pressureForce.x << "\t" << p1->pressureForce.y << "\t" << p1->pressureForce.z << "\t" <<  std::endl;
+		std::cout << "velocity: " << p1->velocity.x << "\t" << p1->velocity.y << "\t" << p1->velocity.z << "\t" <<  std::endl;
+		std::cout << "acceleration: " << p1->acceleration.x << "\t" << p1->acceleration.y << "\t" << p1->acceleration.z << "\t" <<  std::endl << std::endl;
+	}
 
 	for (auto p1 = particles->begin(); p1 != particles->end(); p1++) {
 		//check the position

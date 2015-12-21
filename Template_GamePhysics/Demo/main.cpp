@@ -1572,7 +1572,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		}
 		case 8:
 			delete(fluid);
-			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(4, 4, 4), 7, .03f, 1.f, 200.f, .01f);
+			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(3, 3, 3), 7, .03f, 1.f, 200.f, .01f);
 			break;
 		default:
 			cout << "Empty Test!\n";
