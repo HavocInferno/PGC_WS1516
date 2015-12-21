@@ -43,7 +43,7 @@ void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep) {
 
 		//1 find density
 		for (auto p2 = particles->begin(); p2 != particles->end(); p2++) {
-			p1->density += p2->mass * kernel(fluid.kernelSize, p1->position, p2->position);
+			p1->density += p2->gp_mass * kernel(fluid.kernelSize, p1->gp_position, p2->gp_position);
 		}
 	
 		//2 find pressure from density aka equasion of state
@@ -54,16 +54,16 @@ void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep) {
 	for (auto p1 = particles->begin(); p1 != particles->end(); p1++) {
 		//1 find density
 		for (auto p2 = particles->begin(); p2 != particles->end(); p2++) {
-			p1->pressureForce = addVector(p1->pressureForce, multiplyVector(kernelGradient(fluid.kernelSize, p1->position, p2->position), (p1->pressure + p2->pressure) * p1->mass / p1->density));
+			p1->gp_force = addVector(p1->gp_force, multiplyVector(kernelGradient(fluid.kernelSize, p1->gp_position, p2->gp_position), (p1->pressure + p2->pressure) * p1->gp_mass / p1->density));
 		}
-		p1->pressureForce = multiplyVector(p1->pressureForce, -.5f);
+		p1->gp_force = multiplyVector(p1->gp_force, -.5f);
 
 		//4 find acceleration
-		p1->acceleration = multiplyVector(p1->pressureForce, 1/p1->mass);
+		p1->gp_acceleration = multiplyVector(p1->gp_force, 1/p1->gp_mass);
 
 		//5 integrate values
-		p1->position = addVector(p1->position, multiplyVector(p1->velocity, timeStep));
-		p1->velocity = addVector(p1->velocity, multiplyVector(p1->acceleration, timeStep));
+		p1->gp_position = addVector(p1->gp_position, multiplyVector(p1->gp_velocity, timeStep));
+		p1->gp_velocity = addVector(p1->gp_velocity, multiplyVector(p1->gp_acceleration, timeStep));
 	}
 }
 

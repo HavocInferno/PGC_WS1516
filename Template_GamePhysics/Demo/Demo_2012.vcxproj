@@ -215,7 +215,6 @@
     <ClCompile Include="MassPoint.cpp" />
     <ClCompile Include="Particle.cpp" />
     <ClCompile Include="point.cpp" />
-    <ClCompile Include="PositionableUnit.cpp" />
     <ClCompile Include="rigidBody.cpp" />
     <ClCompile Include="spring.cpp" />
     <ClCompile Include="util\FFmpeg.cpp" />

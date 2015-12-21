@@ -28,7 +28,6 @@
     <ClCompile Include="Particle.cpp">
       <Filter>fluids</Filter>
     </ClCompile>
-    <ClCompile Include="PositionableUnit.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="util">

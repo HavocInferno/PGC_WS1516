@@ -42,7 +42,7 @@ using std::cout;
 #define RIGID_BODY_SIMULATION
 #define RIGID_BODY_COLLISION
 
-#include "PositionableUnit.cpp"
+//#include "PositionableUnit.cpp"
 
 // Mass Spring includes
 #include "spring.h"
