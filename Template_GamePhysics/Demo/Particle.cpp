@@ -5,7 +5,7 @@ Particle::Particle(void)
 	initialize();
 }
 
-Particle::Particle(XMFLOAT3 position, float mass) 
+Particle::Particle(XMFLOAT3 position, float mass) : density(0.f), pressure(0.f)
 {
 	initialize();
 	gp_position = position;
