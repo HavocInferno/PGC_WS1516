@@ -28,6 +28,9 @@
     <ClCompile Include="Particle.cpp">
       <Filter>fluids</Filter>
     </ClCompile>
+    <ClCompile Include="Grid.cpp">
+      <Filter>fluids\grid</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="util">
@@ -38,6 +41,9 @@
     </Filter>
     <Filter Include="fluids">
       <UniqueIdentifier>{ea586c6c-f8d3-4a1c-be63-194ffe2e0aca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fluids\grid">
+      <UniqueIdentifier>{ac689fad-695c-4e37-abaf-fa8706844f0b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -73,6 +79,9 @@
     </ClInclude>
     <ClInclude Include="Particle.h">
       <Filter>fluids</Filter>
+    </ClInclude>
+    <ClInclude Include="Grid.h">
+      <Filter>fluids\grid</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

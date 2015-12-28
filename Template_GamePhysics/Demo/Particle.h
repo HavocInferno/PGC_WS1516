@@ -5,7 +5,7 @@
 
 using namespace DirectX;
 
-class Particle : SpringPoint
+class Particle : public SpringPoint
 {
 	friend class Fluid;
 	friend class FluidSimulation;

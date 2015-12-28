@@ -60,6 +60,7 @@ using std::cout;
 #include "Fluid.h"
 #include "FluidSimulation.h"
 #include "Particle.h"
+#include "Grid.h"
 
 // DXUT camera
 // NOTE: CModelViewerCamera does not only manage the standard view transformation/camera position 
@@ -168,6 +169,10 @@ Contact contact;
 //Fluid Simulation
 Fluid* fluid;
 FluidSimulation* fluidSim;
+//define the boundary for the clamping of particles
+XMVECTOR lowerBoxBoundary;
+XMVECTOR upperBoxBoundary;
+Grid* grid;
 
 void InitRigidBox(std::vector<MassPoint>* listOfPoints, float width, float height, float depth, float mass) {
 	width /= 2;
@@ -979,7 +984,9 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	InitRigidBodies();
 
 	//Init Fluid Simulation
-	fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(2, 0, 0), 7, .03f, 1.f, 200.f, .01f);
+	//fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(2, 0, 0), 7, .03f, .06f, 1.f, 200.f, .01f);
+	lowerBoxBoundary = XMLoadFloat3(&XMFLOAT3(-.5f, -.5f, -.5f));
+	upperBoxBoundary = XMLoadFloat3(&XMFLOAT3(.5f, .5f, .5f));
 
     // Create DirectXTK geometric primitives for later usage
 	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);
@@ -1573,9 +1580,14 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			break;
 		}
 		case 8:
+		{
+			cout << "Fluid Simulation!" << std::endl;
+			delete(grid);
 			delete(fluid);
-			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(4, 4, 4), 7, .03f, 1.f, 200.f, .01f);
+			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(4, 4, 4), 7, .03f, .03f, 1.f, 200.f, .01f);
+			grid = new Grid(.06f, 10, *fluid, lowerBoxBoundary, upperBoxBoundary);
 			break;
+		}
 		default:
 			cout << "Empty Test!\n";
 			break;
@@ -1895,7 +1907,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		}
 		break;
 	case 8:
-		FluidSimulation::integrateFluid(*fluid, .001f);
+		FluidSimulation::integrateFluid(*fluid, .001f, g_gravity, lowerBoxBoundary, upperBoxBoundary);
 		break;
 	default:
 		break;
@@ -1983,7 +1995,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		{
 			std::vector<Particle>* particles = fluid->getParticles();
 			for (auto particle = particles->begin(); particle != particles->end(); particle++) {
-				DrawParticle(static_cast<Particle>(*particle), fluid->getKernelSize() / 3);
+				DrawParticle(static_cast<Particle>(*particle), fluid->getKernelSize());
 			}
 			break;
 		}

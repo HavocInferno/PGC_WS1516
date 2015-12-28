@@ -33,7 +33,7 @@ XMFLOAT3 FluidSimulation::kernelGradient(float& d, XMFLOAT3& x, XMFLOAT3& xi) {
 	return multiplyVector(direction, kernel);
 }
 
-void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep) {
+void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep, float& gravity, XMVECTOR& lowerBoxBoundary, XMVECTOR& upperBoxBoundary) {
 	//for each particle
 	std::vector<Particle>* particles = fluid.getParticles();
 
@@ -49,9 +49,6 @@ void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep) {
 	}*/
 
 	for (auto p1 = particles->begin(); p1 != particles->end(); p1++) {
-		//check the position
-		//XMStoreFloat3(&p1->position, XMVectorClamp(XMLoadFloat3(&p1->position), XMLoadFloat3(&XMFLOAT3(-.5f, -.5f, -.5f)), XMLoadFloat3(&XMFLOAT3(.5f, .5f, -5f)))); 
-
 		//1 find density
 		for (auto p2 = particles->begin(); p2 != particles->end(); p2++) {
 			p1->density += p2->gp_mass * kernel(fluid.kernelSize, p1->gp_position, p2->gp_position);
@@ -62,14 +59,16 @@ void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep) {
 	}
 
 	//3 find f_pressure
+	//see SPH fluids in Computer Graphics paper: equasion (6) and Algorithm 1
 	for (auto p1 = particles->begin(); p1 != particles->end(); p1++) {
-		//1 find density
 		for (auto p2 = particles->begin(); p2 != particles->end(); p2++) {
 			p1->gp_force = addVector(p1->gp_force, 
 				multiplyVector(kernelGradient(fluid.kernelSize, p1->gp_position, p2->gp_position), 
 					(p1->pressure / pow(p1->density, 2.f) + p2->pressure / pow(p2->density, 2.f)) * p2->gp_mass));
 		}
 		p1->gp_force = multiplyVector(p1->gp_force, -p1->gp_mass);
+		//gravity
+		p1->gp_force = addVector(p1->gp_force, XMFLOAT3(0.f, gravity, 0.f));
 
 		//4 find acceleration
 		p1->gp_acceleration = multiplyVector(p1->gp_force, 1/p1->gp_mass);
@@ -77,7 +76,12 @@ void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep) {
 		//5 integrate values
 		p1->gp_position = addVector(p1->gp_position, multiplyVector(p1->gp_velocity, timeStep));
 		p1->gp_velocity = addVector(p1->gp_velocity, multiplyVector(p1->gp_acceleration, timeStep));
+
+		//check the position & clamp to the box
+		XMStoreFloat3(&p1->gp_position, XMVectorClamp(XMLoadFloat3(&p1->gp_position), lowerBoxBoundary, upperBoxBoundary)); 
 	}
+
+
 }
 
 //FluidSimulation::FluidSimulation()
