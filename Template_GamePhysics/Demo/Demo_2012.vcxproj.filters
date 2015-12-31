@@ -31,6 +31,9 @@
     <ClCompile Include="Grid.cpp">
       <Filter>fluids\grid</Filter>
     </ClCompile>
+    <ClCompile Include="GridBasedFluid.cpp">
+      <Filter>fluids</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="util">

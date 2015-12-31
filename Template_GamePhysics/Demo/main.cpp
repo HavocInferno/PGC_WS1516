@@ -58,6 +58,7 @@ using std::cout;
 
 //Fluid Simulation
 #include "Fluid.h"
+#include "GridBasedFluid.cpp"
 #include "FluidSimulation.h"
 #include "Particle.h"
 #include "Grid.h"
@@ -168,6 +169,7 @@ Contact contact;
 
 //Fluid Simulation
 Fluid* fluid;
+GridBasedFluid* gridBasedFluid;
 FluidSimulation* fluidSim;
 //define the boundary for the clamping of particles
 XMVECTOR lowerBoxBoundary;
@@ -531,7 +533,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 
 	TwType TW_TYPE_INTEGRATOR = TwDefineEnumFromString("Integration Method", "Euler,Midpoint,LeapFrog");
 	TwType TW_TYPE_DEMOCASE = TwDefineEnumFromString("Demo Setup", "Demo 1/2/3,Demo 4");
-	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "MSS Demo 1,MSS Demo 2,MSS Demo 3,MSS Demo 4, RB Demo 1, RB Demo 2, RB Demo 3, RB Demo 4, FlSim Demo");
+	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "MSS Demo 1,MSS Demo 2,MSS Demo 3,MSS Demo 4, RB Demo 1, RB Demo 2, RB Demo 3, RB Demo 4, FlSim Demo, FlSim Grid Demo");
 	TwAddVarRW(g_pTweakBar, "Test Scene", TW_TYPE_TESTCASE, &g_iTestCase, "");
 	// HINT: For buttons you can directly pass the callback function as a lambda expression.
 	TwAddButton(g_pTweakBar, "Reset Scene", [](void *){g_iPreTestCase = -1; }, nullptr, "");
@@ -1089,6 +1091,7 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
 
 	//Destroy Fluid Simulation
 	delete(fluid);
+	delete(gridBasedFluid);
 
 	//Destroy Rigid Body Simulation
 	DestroyRigidBodies();
@@ -1581,11 +1584,16 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		}
 		case 8:
 		{
-			cout << "Fluid Simulation!" << std::endl;
-			delete(grid);
+			cout << "Fluid Simulation: Naive!" << std::endl;
 			delete(fluid);
 			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(4, 4, 4), 7, .03f, .03f, 1.f, 200.f, .01f);
-			grid = new Grid(.06f, 10, *fluid, lowerBoxBoundary, upperBoxBoundary);
+			break;
+		}
+		case 9:
+		{
+			cout << "Fluid Simulation: Grid Based!" << std::endl;
+			delete(gridBasedFluid);
+			gridBasedFluid = new GridBasedFluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(4, 4, 4), 7, .03f, .03f, 1.f, 200.f, .01f, lowerBoxBoundary, upperBoxBoundary);
 			break;
 		}
 		default:
@@ -1910,6 +1918,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		FluidSimulation::integrateFluid(*fluid, .001f, g_gravity, lowerBoxBoundary, upperBoxBoundary);
 		break;
 	default:
+		FluidSimulation::integrateFluid(*gridBasedFluid, .001f, g_gravity, lowerBoxBoundary, upperBoxBoundary);
 		break;
 	}
 	
@@ -1993,9 +2002,17 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		break;
 	case 8:
 		{
-			std::vector<Particle>* particles = fluid->getParticles();
-			for (auto particle = particles->begin(); particle != particles->end(); particle++) {
-				DrawParticle(static_cast<Particle>(*particle), fluid->getKernelSize());
+			static std::vector<Particle*> particles = fluid->getParticles();
+			for (auto particle = particles.begin(); particle != particles.end(); particle++) {
+				DrawParticle(static_cast<Particle>(**particle._Ptr), fluid->getKernelSize());
+			}
+			break;
+		}
+	case 9:
+		{
+			static std::vector<Particle*> particles = gridBasedFluid->getParticles();
+			for (auto particle = particles.begin(); particle != particles.end(); particle++) {
+				DrawParticle(static_cast<Particle>(**particle._Ptr), gridBasedFluid->getKernelSize());
 			}
 			break;
 		}

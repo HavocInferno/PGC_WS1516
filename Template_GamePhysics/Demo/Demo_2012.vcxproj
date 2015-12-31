@@ -212,6 +212,7 @@
     <ClCompile Include="Fluid.cpp" />
     <ClCompile Include="FluidSimulation.cpp" />
     <ClCompile Include="Grid.cpp" />
+    <ClCompile Include="GridBasedFluid.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MassPoint.cpp" />
     <ClCompile Include="Particle.cpp" />

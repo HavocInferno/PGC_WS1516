@@ -5,14 +5,18 @@ float Fluid::getKernelSize() {
 	return kernelSize;
 }
 
-std::vector<Particle>* Fluid::getParticles() {
+std::vector<Particle*>& Fluid::getParticles() {
+	return particles;
+}
+
+std::vector<Particle*>& Fluid::getNeighbourParticles(Particle& particle) {
 	return particles;
 }
 
 Fluid::Fluid(XMFLOAT3 initialPostion, XMINT3 numParticles, int exp, float kernelSize, float positioningStep, float stiffness, float restDensity, float viscosity) : 
 	numParticles(numParticles), exp(exp), kernelSize(kernelSize), positioningStep(positioningStep), stiffness(stiffness), restDensity(restDensity), viscosity(viscosity)
 {
-	particles = new std::vector<Particle>();
+	//particles = new std::vector<Particle*>();
 	
 	XMFLOAT3 currParticlePos = initialPostion;
 	//position particles in as a box
@@ -25,7 +29,7 @@ Fluid::Fluid(XMFLOAT3 initialPostion, XMINT3 numParticles, int exp, float kernel
 			for (int k = 0; k < numParticles.z; k++) {
 				currParticlePos.z = initialPostion.z + k * positioningStep;
 				
-				particles->push_back(Particle(currParticlePos, .01f));
+				particles.push_back(new Particle(currParticlePos, .01f));
 			}
 		}
 	
@@ -36,6 +40,9 @@ Fluid::Fluid(XMFLOAT3 initialPostion, XMINT3 numParticles, int exp, float kernel
 
 Fluid::~Fluid(void)
 {
-	//TODO: check if frees up the memory correctly
-	delete(particles);
+	//TODO: destruct the particles
+	/*std::cout << "Fluid destructor's called" << std::endl;
+	for (auto particle = particles.begin(); particle != particles.end(); particle++) {
+		delete *particle._Ptr;
+	}*/
 }
