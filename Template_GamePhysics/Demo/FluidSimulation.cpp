@@ -80,7 +80,9 @@ void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep, float& gravit
 		(*p1._Ptr)->gp_velocity = addVector((*p1._Ptr)->gp_velocity, multiplyVector((*p1._Ptr)->gp_acceleration, timeStep));
 
 		//check the position & clamp to the box
-		XMStoreFloat3(&(*p1._Ptr)->gp_position, XMVectorClamp(XMLoadFloat3(&(*p1._Ptr)->gp_position), lowerBoxBoundary, upperBoxBoundary)); 
+		//XMStoreFloat3(&(*p1._Ptr)->gp_position, XMVectorClamp(XMLoadFloat3(&(*p1._Ptr)->gp_position), lowerBoxBoundary, upperBoxBoundary));
+		//(*p1._Ptr)->addDamping(timeStep);
+		(*p1._Ptr)->computeCollisionWithWalls(timeStep,fluid.getKernelSize(),1,1,1);
 	}
 
 

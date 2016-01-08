@@ -10,6 +10,7 @@ Particle::Particle(XMFLOAT3 position, float mass) : density(0.f), pressure(0.f)
 	initialize();
 	gp_position = position;
 	gp_mass = mass;
+	gp_bouncyness = 0.1;
 }
 
 
