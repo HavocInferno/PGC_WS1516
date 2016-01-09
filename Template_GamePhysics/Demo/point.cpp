@@ -71,7 +71,6 @@ void SpringPoint::addGravity(float gravity)
 void SpringPoint::addDamping(float deltaTime)
 {
 	gp_velocity = addVector(gp_velocity,multiplyVector(gp_velocity, -gp_damping*deltaTime));
-	//TODO: Time.deltaTime
 };
 void SpringPoint::IntegratePosition(float deltaTime)
 {

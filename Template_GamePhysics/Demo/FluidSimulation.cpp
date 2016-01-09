@@ -33,7 +33,7 @@ XMFLOAT3 FluidSimulation::kernelGradient(float& d, XMFLOAT3& x, XMFLOAT3& xi) {
 	return multiplyVector(direction, kernel);
 }
 
-void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep, float& gravity, XMVECTOR& lowerBoxBoundary, XMVECTOR& upperBoxBoundary) {
+void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep, float& gravity, XMVECTOR& lowerBoxBoundary, XMVECTOR& upperBoxBoundary, bool useGravity, bool useWalls, bool useDamping) {
 	//for each particle
 	std::vector<Particle*> particles = fluid.particles;
 
@@ -70,7 +70,8 @@ void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep, float& gravit
 		}
 		(*p1._Ptr)->gp_force = multiplyVector((*p1._Ptr)->gp_force, -(*p1._Ptr)->gp_mass);
 		//gravity
-		(*p1._Ptr)->gp_force = addVector((*p1._Ptr)->gp_force, XMFLOAT3(0.f, gravity, 0.f));
+		if(useGravity)
+			(*p1)->addGravity(gravity);
 
 		//4 find acceleration
 		(*p1._Ptr)->gp_acceleration = multiplyVector((*p1._Ptr)->gp_force, 1/(*p1._Ptr)->gp_mass);
@@ -80,9 +81,14 @@ void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep, float& gravit
 		(*p1._Ptr)->gp_velocity = addVector((*p1._Ptr)->gp_velocity, multiplyVector((*p1._Ptr)->gp_acceleration, timeStep));
 
 		//check the position & clamp to the box
-		//XMStoreFloat3(&(*p1._Ptr)->gp_position, XMVectorClamp(XMLoadFloat3(&(*p1._Ptr)->gp_position), lowerBoxBoundary, upperBoxBoundary));
-		//(*p1._Ptr)->addDamping(timeStep);
-		(*p1._Ptr)->computeCollisionWithWalls(timeStep,fluid.getKernelSize(),1,1,1);
+		if(useDamping)
+			(*p1)->addDamping(timeStep);
+		if(useWalls)
+		{
+			XMFLOAT3 pos;
+			XMStoreFloat3(&pos, upperBoxBoundary);
+			(*p1)->computeCollisionWithWalls(timeStep,fluid.getKernelSize(),pos.x,pos.z,pos.y);
+		}
 	}
 
 

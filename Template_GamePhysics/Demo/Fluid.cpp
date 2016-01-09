@@ -5,6 +5,11 @@ float Fluid::getKernelSize() {
 	return kernelSize;
 }
 
+void Fluid::setKernelSize(float newsize)
+{
+	kernelSize = newsize;
+}
+
 std::vector<Particle*>& Fluid::getParticles() {
 	return particles;
 }

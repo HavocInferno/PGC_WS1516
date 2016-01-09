@@ -13,7 +13,7 @@ public:
 		grid = new Grid(.06f, 10, *this, lowerBoxBoundary, upperBoxBoundary);
 	}
 
-	std::vector<Particle*>& getNeighbourParticles(Particle& particle) {
+	std::vector<Particle*>& getNeighbourParticles(Particle& particle) { //TODO: Make this something useful
 		return particles;
 	}
 

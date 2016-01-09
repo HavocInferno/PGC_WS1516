@@ -24,6 +24,7 @@ protected:
 	std::vector<Particle*> particles;
 public:
 	float getKernelSize();
+	void setKernelSize(float newsize);
 	//get all particles
 	std::vector<Particle*>& getParticles();
 	virtual std::vector<Particle*>& getNeighbourParticles(Particle& particle);

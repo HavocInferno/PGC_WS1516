@@ -175,6 +175,7 @@ FluidSimulation* fluidSim;
 XMVECTOR lowerBoxBoundary;
 XMVECTOR upperBoxBoundary;
 Grid* grid;
+float kernelsize = 0.03f;
 
 void InitRigidBox(std::vector<MassPoint>* listOfPoints, float width, float height, float depth, float mass) {
 	width /= 2;
@@ -622,6 +623,17 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "Use damping", TW_TYPE_BOOLCPP, &g_useDamping, "");
 		TwAddVarRW(g_pTweakBar, "-> Linear Damping", TW_TYPE_FLOAT, &g_damping_linear, "min=0 ma=10 step=0.1");
 		TwAddVarRW(g_pTweakBar, "-> Angular Damping", TW_TYPE_FLOAT, &g_damping_angular, "min=0 ma=10 step=0.1");
+		break;
+	case 8: //normal fluid
+
+		break;
+	case 9: //grid fluid
+		TwAddVarRW(g_pTweakBar, "Particle size", TW_TYPE_FLOAT, &kernelsize, "min=0.001 step=0.001");
+		TwAddButton(g_pTweakBar, "-> Apply", [](void *){gridBasedFluid->setKernelSize(kernelsize);}, nullptr, "");
+		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
+		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
+		TwAddVarRW(g_pTweakBar, "Collide with walls", TW_TYPE_BOOLCPP, &g_usingWalls, "");
+		TwAddVarRW(g_pTweakBar, "Use damping", TW_TYPE_BOOLCPP, &g_useDamping, "");
 		break;
 	default:
 		break;
@@ -1593,6 +1605,9 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		{
 			cout << "Fluid Simulation: Grid Based!" << std::endl;
 			delete(gridBasedFluid);
+			g_usingWalls = true;
+			g_useGravity = true;
+			g_useDamping = true;
 			gridBasedFluid = new GridBasedFluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(4, 4, 4), 7, .03f, .03f, 1.f, 200.f, .01f, lowerBoxBoundary, upperBoxBoundary);
 			break;
 		}
@@ -1915,10 +1930,13 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		}
 		break;
 	case 8:
-		FluidSimulation::integrateFluid(*fluid, .001f, g_gravity, lowerBoxBoundary, upperBoxBoundary);
+		FluidSimulation::integrateFluid(*fluid, .001f, g_gravity, lowerBoxBoundary, upperBoxBoundary, true, true, false);
 		break;
-	default:
-		FluidSimulation::integrateFluid(*gridBasedFluid, .001f, g_gravity, lowerBoxBoundary, upperBoxBoundary);
+	case 9:
+		FluidSimulation::integrateFluid(*gridBasedFluid, .001f, g_gravity, lowerBoxBoundary, upperBoxBoundary, g_useGravity, g_usingWalls, g_useDamping);
+		break;
+
+	default: 
 		break;
 	}
 	
@@ -2004,7 +2022,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		{
 			static std::vector<Particle*> particles = fluid->getParticles();
 			for (auto particle = particles.begin(); particle != particles.end(); particle++) {
-				DrawParticle(static_cast<Particle>(**particle._Ptr), fluid->getKernelSize());
+				DrawParticle(**particle, fluid->getKernelSize());
 			}
 			break;
 		}
@@ -2012,7 +2030,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		{
 			static std::vector<Particle*> particles = gridBasedFluid->getParticles();
 			for (auto particle = particles.begin(); particle != particles.end(); particle++) {
-				DrawParticle(static_cast<Particle>(**particle._Ptr), gridBasedFluid->getKernelSize());
+				DrawParticle(**particle, gridBasedFluid->getKernelSize());
 			}
 			break;
 		}
