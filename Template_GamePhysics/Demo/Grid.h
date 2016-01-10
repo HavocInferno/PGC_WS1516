@@ -4,6 +4,7 @@
 
 class Grid
 {
+	friend class GridBasedFluid;
 private:
 	float spacing;
 	int maxPerCell;
@@ -12,9 +13,15 @@ private:
 	unsigned short* numInCell;
 	XMVECTOR* lowerBoxBoundary;
 	XMVECTOR* upperBoxBoundary;
+	//num cells on X, Y, Z axes
+	XMVECTOR numCells;
 
 public:
 	inline XMVECTOR getCellIndicesForParticle(Particle& particle);
+	inline int getOneDimensionalIndex(XMVECTOR& indices);
+	inline int getOneDimensionalIndex(int i, int j, int k);
+	XMVECTOR getNumCells();
+
 
 	Grid(float spacing, int maxPerCell, Fluid& fluid, XMVECTOR& lowerBoxBoundary, XMVECTOR& upperBoxBoundary);
 	~Grid(void);

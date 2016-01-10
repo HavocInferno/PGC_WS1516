@@ -2,7 +2,19 @@
 #include <iostream>
 
 XMVECTOR Grid::getCellIndicesForParticle(Particle& particle) {
-	return XMVectorFloor((XMLoadFloat3(&particle.gp_position) - *lowerBoxBoundary) / spacing);
+	return XMVectorFloor((XMLoadFloat3(&particle.gp_position) - (*lowerBoxBoundary)) / spacing);
+}
+
+int Grid::getOneDimensionalIndex(XMVECTOR& indices) {
+	return getOneDimensionalIndex(XMVectorGetX(indices), XMVectorGetY(indices), XMVectorGetZ(indices));
+}
+
+int Grid::getOneDimensionalIndex(int i, int j, int k) {
+	return static_cast<int>(i * XMVectorGetX(numCells)  + j * XMVectorGetY(numCells) + k);
+}
+
+XMVECTOR Grid::getNumCells() {
+	return numCells;
 }
 
 Grid::Grid(float spacing, int maxPerCell, Fluid& fluid, XMVECTOR& lowerBoxBoundary, XMVECTOR& upperBoxBoundary) :
@@ -16,7 +28,7 @@ Grid::Grid(float spacing, int maxPerCell, Fluid& fluid, XMVECTOR& lowerBoxBounda
 	}
 
 	//num cells on X, Y, Z axes
-	XMVECTOR numCells = XMVectorCeiling(boundaryLength / this->spacing);
+	numCells = XMVectorCeiling(boundaryLength / this->spacing);
 	int intNumCells = static_cast<int>(XMVectorGetX(numCells) * XMVectorGetY(numCells) * XMVectorGetZ(numCells));
 	particles = new Particle*[ maxPerCell * intNumCells ];
 	numInCell = new unsigned short[intNumCells];
@@ -32,13 +44,16 @@ Grid::Grid(float spacing, int maxPerCell, Fluid& fluid, XMVECTOR& lowerBoxBounda
 	unsigned short currNumInCell;
 	for (auto particle = fluid.particles.begin(); particle != fluid.particles.end(); particle++) {
 		//locate the right cell
-		temp = getCellIndicesForParticle(**particle._Ptr);
-		currCellIndex = static_cast<int>(XMVectorGetX(temp) * XMVectorGetX(numCells)  + XMVectorGetY(temp) * XMVectorGetY(numCells) + XMVectorGetZ(temp));
+		temp = getCellIndicesForParticle(*particle._Ptr);
+		currCellIndex = getOneDimensionalIndex(temp);
+		std::cout << "initial currCellIndex: " << currCellIndex << std::endl;
+		std::cout << "position: " << particle->gp_position.x << " " << particle->gp_position.y << " " << particle->gp_position.z << std::endl; 
 		//plus one particle
 		//TODO: control the number of cells with maxPerCell value
 		currNumInCell = numInCell[currCellIndex]++;
-		particles[currCellIndex * maxPerCell + currNumInCell] = *particle._Ptr;
+		particles[currCellIndex * maxPerCell + currNumInCell] = particle._Ptr;
 	}
+	numInCell;
 }
 
 

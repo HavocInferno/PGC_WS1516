@@ -106,7 +106,7 @@ XMFLOAT3 g_vfRotate = XMFLOAT3(0, 0, 0);
 // TweakAntBar GUI variables
 
 //startup demo
-int g_iTestCase = 8;
+int g_iTestCase = 9;
 int g_iPreTestCase = -1;
 bool  g_bSimulateByStep = false;
 bool  g_bIsSpaceReleased = true;
@@ -1608,7 +1608,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			g_usingWalls = true;
 			g_useGravity = true;
 			g_useDamping = true;
-			gridBasedFluid = new GridBasedFluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(4, 4, 4), 7, .03f, .03f, 1.f, 200.f, .01f, lowerBoxBoundary, upperBoxBoundary);
+			gridBasedFluid = new GridBasedFluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(2, 2, 2), 7, .03f, .03f, 1.f, 200.f, .01f, lowerBoxBoundary, upperBoxBoundary);
 			break;
 		}
 		default:
@@ -2020,17 +2020,17 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		break;
 	case 8:
 		{
-			static std::vector<Particle*> particles = fluid->getParticles();
+			static std::vector<Particle> particles = fluid->getParticles();
 			for (auto particle = particles.begin(); particle != particles.end(); particle++) {
-				DrawParticle(**particle, fluid->getKernelSize());
+				DrawParticle(*particle, fluid->getKernelSize());
 			}
 			break;
 		}
 	case 9:
 		{
-			static std::vector<Particle*> particles = gridBasedFluid->getParticles();
+			static std::vector<Particle> particles = gridBasedFluid->getParticles();
 			for (auto particle = particles.begin(); particle != particles.end(); particle++) {
-				DrawParticle(**particle, gridBasedFluid->getKernelSize());
+				DrawParticle(*particle, gridBasedFluid->getKernelSize());
 			}
 			break;
 		}

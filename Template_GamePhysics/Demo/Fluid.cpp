@@ -10,12 +10,19 @@ void Fluid::setKernelSize(float newsize)
 	kernelSize = newsize;
 }
 
-std::vector<Particle*>& Fluid::getParticles() {
+std::vector<Particle>& Fluid::getParticles() {
 	return particles;
 }
 
-std::vector<Particle*>& Fluid::getNeighbourParticles(Particle& particle) {
-	return particles;
+std::vector<Particle*> Fluid::getNeighbourParticles(Particle& particle) {
+	std::vector<Particle*> neigbours;
+	for (auto particle = particles.begin(); particle != particles.end(); particle++) {
+		//std::cout << "particle: " << particle._Ptr << std::endl;
+		neigbours.push_back(particle._Ptr);
+		//std::cout << "neighbour: " << *(neigbours.end() - 1)._Ptr << std::endl;
+	}
+	//std::cout << "Fluid neighbours size: " << neigbours.size() << std::endl;
+	return neigbours;
 }
 
 Fluid::Fluid(XMFLOAT3 initialPostion, XMINT3 numParticles, int exp, float kernelSize, float positioningStep, float stiffness, float restDensity, float viscosity) : 
@@ -33,8 +40,8 @@ Fluid::Fluid(XMFLOAT3 initialPostion, XMINT3 numParticles, int exp, float kernel
 		
 			for (int k = 0; k < numParticles.z; k++) {
 				currParticlePos.z = initialPostion.z + k * positioningStep;
-				
-				particles.push_back(new Particle(currParticlePos, .01f));
+				particles.push_back(Particle(currParticlePos, .01f));
+				//std::cout << particles.end()._Ptr << std::endl;
 			}
 		}
 	
