@@ -81,6 +81,7 @@ void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep, float& gravit
 		p1->gp_acceleration = multiplyVector(p1->gp_force, 1/p1->gp_mass);
 
 		//5 integrate values
+		//std::cout << "&p1: " << p1._Ptr << std::endl;
 		p1->gp_velocity = addVector(p1->gp_velocity, multiplyVector(p1->gp_acceleration, timeStep));
 		p1->gp_position = addVector(p1->gp_position, multiplyVector(p1->gp_velocity, timeStep));
 

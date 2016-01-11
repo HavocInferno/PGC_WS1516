@@ -106,7 +106,7 @@ XMFLOAT3 g_vfRotate = XMFLOAT3(0, 0, 0);
 // TweakAntBar GUI variables
 
 //startup demo
-int g_iTestCase = 9;
+int g_iTestCase = 8;
 int g_iPreTestCase = -1;
 bool  g_bSimulateByStep = false;
 bool  g_bIsSpaceReleased = true;
@@ -2020,16 +2020,17 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		break;
 	case 8:
 		{
-			static std::vector<Particle> particles = fluid->getParticles();
-			for (auto particle = particles.begin(); particle != particles.end(); particle++) {
+			//static std::vector<Particle> particles = fluid->getParticles();
+			for (auto particle = fluid->getParticles().begin(); particle != fluid->getParticles().end(); particle++) {
+				//std::cout << "&particle: " << particle._Ptr << std::endl;
 				DrawParticle(*particle, fluid->getKernelSize());
 			}
 			break;
 		}
 	case 9:
 		{
-			static std::vector<Particle> particles = gridBasedFluid->getParticles();
-			for (auto particle = particles.begin(); particle != particles.end(); particle++) {
+			//static std::vector<Particle> particles = gridBasedFluid->getParticles();
+			for (auto particle = gridBasedFluid->getParticles().begin(); particle != gridBasedFluid->getParticles().end(); particle++) {
 				DrawParticle(*particle, gridBasedFluid->getKernelSize());
 			}
 			break;
