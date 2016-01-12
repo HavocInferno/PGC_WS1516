@@ -55,6 +55,7 @@ void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep, float& gravit
 		neighbours = fluid.getNeighbourParticles(*p1);
 		for (auto p2 = neighbours.begin(); p2 != neighbours.end(); p2++) {
 			//std::cout << "&p2: " << *p2._Ptr << std::endl;
+			//std::cout << "p2 position: " << (*p2._Ptr)->gp_position.x << " " << (*p2._Ptr)->gp_position.y << " " << (*p2._Ptr)->gp_position.z << std::endl;
 			p1->density += (*p2)->gp_mass * kernel(fluid.kernelSize, p1->gp_position, (*p2)->gp_position);
 		}
 		//std::cout << "--------" << std::endl;

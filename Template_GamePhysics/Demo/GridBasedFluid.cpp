@@ -20,25 +20,27 @@ public:
 		int iParticleIndex = XMVectorGetX(particleIndices);
 		int jParticleIndex = XMVectorGetY(particleIndices);
 		int kParticleIndex = XMVectorGetZ(particleIndices);
-		int counter = 0;
+		//int counter = 0;
 		for (int i = iParticleIndex - 1; i < iParticleIndex + 2; i++) {
 			for (int j = jParticleIndex - 1; j < jParticleIndex + 2; j++) {
 				for (int k = kParticleIndex - 1; k < kParticleIndex + 2; k++) {
 					//go through all particles in a cell
 					currCellIndex = grid->getOneDimensionalIndex(i, j, k);
-					std::cout << "indices: " << i << " " << j << " " << " " << k << std::endl;
-					std::cout << "currCellIndex: " << currCellIndex << std::endl;
-					std::cout << "numInCell: " << grid->numInCell[currCellIndex] << std::endl;
+					//std::cout << "indices: " << i << " " << j << " " << " " << k << std::endl;
+					//std::cout << "currCellIndex: " << currCellIndex << std::endl;
+					//std::cout << "numInCell: " << grid->numInCell[currCellIndex] << std::endl;
 					for (int c = 0; c < grid->numInCell[currCellIndex]; c++) {
-						neigbours.push_back(grid->particles[currCellIndex + c]);
-						counter++;
+						//std::cout << "grid particle: " << &grid->particles[currCellIndex + c] << std::endl;
+						neigbours.push_back(grid->particles[currCellIndex * grid->maxPerCell + c]);
+						//counter++;
 					}
+					//std::cout << "wtf" << std::endl;
 
 				}
 			}
 		}
-		std::cout << "counter: " << counter << std::endl;
-		std::cout << "GridBasedFluid neighbours size: " << neigbours.size() << std::endl;
+		/*std::cout << "counter: " << counter << std::endl;
+		std::cout << "GridBasedFluid neighbours size: " << neigbours.size() << std::endl;*/
 		return neigbours;
 	}
 

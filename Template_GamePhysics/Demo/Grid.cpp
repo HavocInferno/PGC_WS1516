@@ -10,7 +10,7 @@ int Grid::getOneDimensionalIndex(XMVECTOR& indices) {
 }
 
 int Grid::getOneDimensionalIndex(int i, int j, int k) {
-	return static_cast<int>(i * XMVectorGetX(numCells)  + j * XMVectorGetY(numCells) + k);
+	return static_cast<int>(i * XMVectorGetY(numCells) * XMVectorGetZ(numCells)  + j * XMVectorGetZ(numCells) + k);
 }
 
 XMVECTOR Grid::getNumCells() {
@@ -46,14 +46,15 @@ Grid::Grid(float spacing, int maxPerCell, Fluid& fluid, XMVECTOR& lowerBoxBounda
 		//locate the right cell
 		temp = getCellIndicesForParticle(*particle._Ptr);
 		currCellIndex = getOneDimensionalIndex(temp);
-		std::cout << "initial currCellIndex: " << currCellIndex << std::endl;
-		std::cout << "position: " << particle->gp_position.x << " " << particle->gp_position.y << " " << particle->gp_position.z << std::endl; 
+		//std::cout << "initial currCellIndex: " << currCellIndex << std::endl;
+		//std::cout << "position: " << particle->gp_position.x << " " << particle->gp_position.y << " " << particle->gp_position.z << std::endl; 
 		//plus one particle
 		//TODO: control the number of cells with maxPerCell value
 		currNumInCell = numInCell[currCellIndex]++;
 		particles[currCellIndex * maxPerCell + currNumInCell] = particle._Ptr;
+		//int temp = currCellIndex * maxPerCell + currNumInCell;
+		//void* debug = static_cast<void*>(particles[currCellIndex * maxPerCell + currNumInCell]);
 	}
-	numInCell;
 }
 
 

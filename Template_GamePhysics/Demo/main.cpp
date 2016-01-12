@@ -1598,7 +1598,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		{
 			cout << "Fluid Simulation: Naive!" << std::endl;
 			delete(fluid);
-			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(4, 4, 4), 7, .03f, .03f, 1.f, 200.f, .01f);
+			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(2, 2, 2), 7, .03f, .03f, 1.f, 200.f, .01f);
 			break;
 		}
 		case 9:
