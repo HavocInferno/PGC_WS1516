@@ -2022,7 +2022,6 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		{
 			//static std::vector<Particle> particles = fluid->getParticles();
 			for (auto particle = fluid->getParticles().begin(); particle != fluid->getParticles().end(); particle++) {
-				//std::cout << "&particle: " << particle._Ptr << std::endl;
 				DrawParticle(*particle, fluid->getKernelSize());
 			}
 			break;

@@ -20,10 +20,16 @@ public:
 		int iParticleIndex = XMVectorGetX(particleIndices);
 		int jParticleIndex = XMVectorGetY(particleIndices);
 		int kParticleIndex = XMVectorGetZ(particleIndices);
+		int iStart = iParticleIndex < 1 ? 0 : (iParticleIndex - 1);
+		int jStart = jParticleIndex < 1 ? 0 : (jParticleIndex - 1);
+		int kStart = kParticleIndex < 1 ? 0 : (kParticleIndex - 1);
+		int iEnd = iParticleIndex < (XMVectorGetX(grid->numCells) - 1) ? (iParticleIndex + 1) : (XMVectorGetX(grid->numCells) - 1);
+		int jEnd = jParticleIndex < (XMVectorGetY(grid->numCells) - 1) ? (jParticleIndex + 1) : (XMVectorGetY(grid->numCells) - 1);
+		int kEnd = kParticleIndex < (XMVectorGetZ(grid->numCells) - 1) ? (kParticleIndex + 1) : (XMVectorGetZ(grid->numCells) - 1);
 		//int counter = 0;
-		for (int i = iParticleIndex - 1; i < iParticleIndex + 2; i++) {
-			for (int j = jParticleIndex - 1; j < jParticleIndex + 2; j++) {
-				for (int k = kParticleIndex - 1; k < kParticleIndex + 2; k++) {
+		for (int i = iStart; i <= iEnd; i++) {
+			for (int j = jStart; j <= jEnd; j++) {
+				for (int k = kStart; k <= kEnd; k++) {
 					//go through all particles in a cell
 					currCellIndex = grid->getOneDimensionalIndex(i, j, k);
 					//std::cout << "indices: " << i << " " << j << " " << " " << k << std::endl;
