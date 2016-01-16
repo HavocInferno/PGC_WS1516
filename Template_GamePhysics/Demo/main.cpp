@@ -62,6 +62,7 @@ using std::cout;
 #include "FluidSimulation.h"
 #include "Particle.h"
 #include "Grid.h"
+#include <chrono>
 
 // DXUT camera
 // NOTE: CModelViewerCamera does not only manage the standard view transformation/camera position 
@@ -168,6 +169,9 @@ Contact contact;
 #endif
 
 //Fluid Simulation
+bool g_Benchmark = false;
+auto bench_begin = std::chrono::high_resolution_clock::now();
+auto bench_end = std::chrono::high_resolution_clock::now();
 Fluid* fluid;
 GridBasedFluid* gridBasedFluid;
 FluidSimulation* fluidSim;
@@ -632,7 +636,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "-> Angular Damping", TW_TYPE_FLOAT, &g_damping_angular, "min=0 max=10 step=0.1");
 		break;
 	case 8: //normal fluid
-
+		TwAddVarRW(g_pTweakBar, "Frametime Benchmark only", TW_TYPE_BOOLCPP, &g_Benchmark, "");
 		break;
 	case 9: //grid fluid
 		TwAddVarRW(g_pTweakBar, "Particle size", TW_TYPE_FLOAT, &kernelsize, "min=0.001 step=0.001");
@@ -653,7 +657,8 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "-> X  ", TW_TYPE_FLOAT, &(fluidData.lowerx), "min=-10 max=0.2 step=0.1");
 		TwAddVarRW(g_pTweakBar, "-> Y  ", TW_TYPE_FLOAT, &(fluidData.lowery), "min=-10 max=0.2 step=0.1");
 		TwAddVarRW(g_pTweakBar, "-> Z  ", TW_TYPE_FLOAT, &(fluidData.lowerz), "min=-10 max=0.2 step=0.1");
-
+		TwAddButton(g_pTweakBar, "Other", NULL, NULL, "");
+		TwAddVarRW(g_pTweakBar, "Frametime Benchmark only", TW_TYPE_BOOLCPP, &g_Benchmark, "");
 		break;
 	default:
 		break;
@@ -1624,6 +1629,8 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			lowerBoxBoundary = XMLoadFloat3(&XMFLOAT3(-.5f, -.5f, -.5f));
 			upperBoxBoundary = XMLoadFloat3(&XMFLOAT3(.5f, .5f, .5f));
 			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(3, 3, 3), 7, .03f, .03f, 1.f, 200.f, .01f);
+			g_Benchmark = false;
+			currentTime = timeGetTime();
 			break;
 		}
 		case 9:
@@ -1636,6 +1643,8 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			lowerBoxBoundary = XMLoadFloat3(&XMFLOAT3(fluidData.lowerx, fluidData.lowery,fluidData.lowerz));
 			upperBoxBoundary = XMLoadFloat3(&XMFLOAT3(fluidData.upperx, fluidData.uppery, fluidData.upperz));
 			gridBasedFluid = new GridBasedFluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(fluidData.numx, fluidData.numy, fluidData.numz), 7, .03f, .03f, 1.f, 200.f, .01f, lowerBoxBoundary, upperBoxBoundary);
+			g_Benchmark = false;
+			currentTime = timeGetTime();
 			break;
 		}
 		default:
@@ -1957,12 +1966,37 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		}
 		break;
 	case 8:
+		if(g_Benchmark) {
+			//previousTime = timeGetTime();
+			bench_begin = std::chrono::high_resolution_clock::now();
+		}
 		FluidSimulation::integrateFluid(*fluid, .001f, g_gravity, lowerBoxBoundary, upperBoxBoundary, true, true, false);
+		if(g_Benchmark) {
+			//print [current time - saved time]
+			//save new current time
+			//currentTime = timeGetTime();
+			//std::cout << "\n(Naive Fluid) Frametime: " << currentTime-previousTime << "ms\n";
+
+			bench_end = std::chrono::high_resolution_clock::now();
+			std::cout << "\n(Naive Fluid) Frametime: " << std::chrono::duration_cast<std::chrono::microseconds>(bench_end-bench_begin).count()/1000.0f << "ms" << std::endl;
+		}
 		break;
 	case 9:
+		if(g_Benchmark) {
+			//previousTime = timeGetTime();
+			bench_begin = std::chrono::high_resolution_clock::now();
+		}
 		FluidSimulation::integrateFluid(*gridBasedFluid, .001f, g_gravity, lowerBoxBoundary, upperBoxBoundary, g_useGravity, g_usingWalls, g_useDamping);
-		break;
+		if(g_Benchmark) {
+			//print [current time - saved time]
+			//save new current time
+			//currentTime = timeGetTime();
+			//std::cout << "\n(Grid Fluid) Frametime: " << currentTime-previousTime << "ms\n";
 
+			bench_end = std::chrono::high_resolution_clock::now();
+			std::cout << "\n(Grid Fluid) Frametime: " << std::chrono::duration_cast<std::chrono::microseconds>(bench_end-bench_begin).count()/1000.0f << "ms" << std::endl;
+		}
+		break;
 	default: 
 		break;
 	}
@@ -2047,17 +2081,21 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		break;
 	case 8:
 		{
-			//static std::vector<Particle> particles = fluid->getParticles();
-			for (auto particle = fluid->getParticles().begin(); particle != fluid->getParticles().end(); particle++) {
-				DrawParticle(*particle, fluid->getKernelSize());
+			if(!g_Benchmark) {
+				//static std::vector<Particle> particles = fluid->getParticles();
+				for (auto particle = fluid->getParticles().begin(); particle != fluid->getParticles().end(); particle++) {
+					DrawParticle(*particle, fluid->getKernelSize());
+				}
 			}
 			break;
 		}
 	case 9:
 		{
-			//static std::vector<Particle> particles = gridBasedFluid->getParticles();
-			for (auto particle = gridBasedFluid->getParticles().begin(); particle != gridBasedFluid->getParticles().end(); particle++) {
-				DrawParticle(*particle, gridBasedFluid->getKernelSize());
+			if(!g_Benchmark) {
+				//static std::vector<Particle> particles = gridBasedFluid->getParticles();
+				for (auto particle = gridBasedFluid->getParticles().begin(); particle != gridBasedFluid->getParticles().end(); particle++) {
+					DrawParticle(*particle, gridBasedFluid->getKernelSize());
+				}
 			}
 			break;
 		}
