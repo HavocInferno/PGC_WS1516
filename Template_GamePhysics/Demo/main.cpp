@@ -174,6 +174,13 @@ FluidSimulation* fluidSim;
 //define the boundary for the clamping of particles
 XMVECTOR lowerBoxBoundary;
 XMVECTOR upperBoxBoundary;
+struct FluidData
+{
+	float lowerx, lowery,lowerz;
+	float upperx, uppery, upperz;
+	int numx, numy, numz;
+	float posx, posy, posz;
+} fluidData;
 Grid* grid;
 float kernelsize = 0.03f;
 
@@ -580,7 +587,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "Use fixed timestep", TW_TYPE_BOOLCPP, &g_fixedTimestep, "");
 		TwAddVarRW(g_pTweakBar, "-> timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
 		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
-		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 max=20 step=0.1");
 		//TwAddVarRW(g_pTweakBar, "Collide with walls:", TW_TYPE_BOOLCPP, &g_usingWalls, "");
 		//TwAddVarRW(g_pTweakBar, "-> X-Wall Positions", TW_TYPE_FLOAT, &g_xWall, "min=0.5 ma=10 step=0.1");
 		//TwAddVarRW(g_pTweakBar, "-> Z-Wall Positions", TW_TYPE_FLOAT, &g_zWall, "min=0.5 ma=10 step=0.1");
@@ -617,12 +624,12 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "Use fixed timestep", TW_TYPE_BOOLCPP, &g_fixedTimestep, "");
 		TwAddVarRW(g_pTweakBar, "-> timestep (ms)", TW_TYPE_FLOAT, &g_manualTimestep, "min=0.001 step=0.001");
 		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
-		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 max=20 step=0.1");
 		TwAddButton(g_pTweakBar, "Explode!!", [](void *){explode(); }, nullptr, "");	
-		TwAddVarRW(g_pTweakBar, "-> Explosion Force", TW_TYPE_FLOAT, &g_explosionForce, "min=0.1 ma=10 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> Explosion Force", TW_TYPE_FLOAT, &g_explosionForce, "min=0.1 max=10 step=0.1");
 		TwAddVarRW(g_pTweakBar, "Use damping", TW_TYPE_BOOLCPP, &g_useDamping, "");
 		TwAddVarRW(g_pTweakBar, "-> Linear Damping", TW_TYPE_FLOAT, &g_damping_linear, "min=0 ma=10 step=0.1");
-		TwAddVarRW(g_pTweakBar, "-> Angular Damping", TW_TYPE_FLOAT, &g_damping_angular, "min=0 ma=10 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> Angular Damping", TW_TYPE_FLOAT, &g_damping_angular, "min=0 max=10 step=0.1");
 		break;
 	case 8: //normal fluid
 
@@ -631,9 +638,22 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "Particle size", TW_TYPE_FLOAT, &kernelsize, "min=0.001 step=0.001");
 		TwAddButton(g_pTweakBar, "-> Apply", [](void *){gridBasedFluid->setKernelSize(kernelsize);}, nullptr, "");
 		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
-		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 ma=20 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 max=20 step=0.1");
 		TwAddVarRW(g_pTweakBar, "Collide with walls", TW_TYPE_BOOLCPP, &g_usingWalls, "");
 		TwAddVarRW(g_pTweakBar, "Use damping", TW_TYPE_BOOLCPP, &g_useDamping, "");
+		TwAddButton(g_pTweakBar, "Number of Particles", NULL, NULL, "");
+		TwAddVarRW(g_pTweakBar, "-> X", TW_TYPE_INT32, &(fluidData.numx), "min=1 max=100");
+		TwAddVarRW(g_pTweakBar, "-> Y", TW_TYPE_INT32, &(fluidData.numy),"min=1 max=100");
+		TwAddVarRW(g_pTweakBar, "-> Z", TW_TYPE_INT32, &(fluidData.numz), "min=1 max=100");
+		TwAddButton(g_pTweakBar, "Upper Bounds", NULL, NULL, "");
+		TwAddVarRW(g_pTweakBar, "-> X ", TW_TYPE_FLOAT, &(fluidData.upperx), "min=0.2 max=10 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> Y ", TW_TYPE_FLOAT, &(fluidData.uppery), "min=0.2 max=10 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> Z ", TW_TYPE_FLOAT, &(fluidData.upperz), "min=0.2 max=10 step=0.1");
+		TwAddButton(g_pTweakBar, "Lower Bounds", NULL, NULL, "");
+		TwAddVarRW(g_pTweakBar, "-> X  ", TW_TYPE_FLOAT, &(fluidData.lowerx), "min=-10 max=0.2 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> Y  ", TW_TYPE_FLOAT, &(fluidData.lowery), "min=-10 max=0.2 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> Z  ", TW_TYPE_FLOAT, &(fluidData.lowerz), "min=-10 max=0.2 step=0.1");
+
 		break;
 	default:
 		break;
@@ -1001,6 +1021,9 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	//fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(2, 0, 0), 7, .03f, .06f, 1.f, 200.f, .01f);
 	lowerBoxBoundary = XMLoadFloat3(&XMFLOAT3(-.5f, -.5f, -.5f));
 	upperBoxBoundary = XMLoadFloat3(&XMFLOAT3(.5f, .5f, .5f));
+	fluidData.lowerx = fluidData.lowery = fluidData.lowerz = -.5f;
+	fluidData.upperx = fluidData.uppery = fluidData.upperz = .5f;
+	fluidData.numx = fluidData.numy = fluidData.numz = 3;
 
     // Create DirectXTK geometric primitives for later usage
 	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);
@@ -1598,7 +1621,9 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		{
 			cout << "Fluid Simulation: Naive!" << std::endl;
 			delete(fluid);
-			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(2, 2, 2), 7, .03f, .03f, 1.f, 200.f, .01f);
+			lowerBoxBoundary = XMLoadFloat3(&XMFLOAT3(-.5f, -.5f, -.5f));
+			upperBoxBoundary = XMLoadFloat3(&XMFLOAT3(.5f, .5f, .5f));
+			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(3, 3, 3), 7, .03f, .03f, 1.f, 200.f, .01f);
 			break;
 		}
 		case 9:
@@ -1607,8 +1632,10 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			delete(gridBasedFluid);
 			g_usingWalls = true;
 			g_useGravity = true;
-			g_useDamping = true;
-			gridBasedFluid = new GridBasedFluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(2, 2, 2), 7, .03f, .03f, 1.f, 200.f, .01f, lowerBoxBoundary, upperBoxBoundary);
+			g_useDamping = false;
+			lowerBoxBoundary = XMLoadFloat3(&XMFLOAT3(fluidData.lowerx, fluidData.lowery,fluidData.lowerz));
+			upperBoxBoundary = XMLoadFloat3(&XMFLOAT3(fluidData.upperx, fluidData.uppery, fluidData.upperz));
+			gridBasedFluid = new GridBasedFluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(fluidData.numx, fluidData.numy, fluidData.numz), 7, .03f, .03f, 1.f, 200.f, .01f, lowerBoxBoundary, upperBoxBoundary);
 			break;
 		}
 		default:
