@@ -187,6 +187,8 @@ struct FluidData
 } fluidData;
 Grid* grid;
 float kernelsize = 0.03f;
+float frametimeNative = 0;
+float frametimeGrid= 0;
 
 void InitRigidBox(std::vector<MassPoint>* listOfPoints, float width, float height, float depth, float mass) {
 	width /= 2;
@@ -303,23 +305,7 @@ void DestroyRigidBodies()
 	//	delete(rb1);
 		cout<<"for ";
 		delete(rigidBodies);
-/*
-		for(auto rb = rigidBodies.begin(); rb != rigidBodies.end();)
-			{
-				cout<<anus;
-				auto it = rb;
-				cout<<"a";
-				rb++;
-				cout<<"b";
-				rigidBody* rbPointer =  &((rigidBody)*it);
-				cout<<"c";
-				rigidBodies.erase(it);
-				cout<<"d";
-				//delete(rbPointer);
-				cout<<"e";
-				anus++;
-			}
-			*/
+
 		break;
 	default:
 		break;
@@ -636,11 +622,16 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "-> Angular Damping", TW_TYPE_FLOAT, &g_damping_angular, "min=0 max=10 step=0.1");
 		break;
 	case 8: //normal fluid
+		TwAddButton(g_pTweakBar, "Number of Particles", NULL, NULL, "");
+		TwAddVarRW(g_pTweakBar, "-> X", TW_TYPE_INT32, &(fluidData.numx), "min=1 max=100");
+		TwAddVarRW(g_pTweakBar, "-> Y", TW_TYPE_INT32, &(fluidData.numy),"min=1 max=100");
+		TwAddVarRW(g_pTweakBar, "-> Z", TW_TYPE_INT32, &(fluidData.numz), "min=1 max=100");
 		TwAddVarRW(g_pTweakBar, "Frametime Benchmark only", TW_TYPE_BOOLCPP, &g_Benchmark, "");
+		TwAddVarRO(g_pTweakBar, "Last Frametime (Native):", TW_TYPE_FLOAT, &frametimeNative, "");
+		TwAddVarRO(g_pTweakBar, "Last Frametime (Grid):", TW_TYPE_FLOAT, &frametimeGrid, "");
 		break;
 	case 9: //grid fluid
 		TwAddVarRW(g_pTweakBar, "Particle size", TW_TYPE_FLOAT, &kernelsize, "min=0.001 step=0.001");
-		TwAddButton(g_pTweakBar, "-> Apply", [](void *){gridBasedFluid->setKernelSize(kernelsize);}, nullptr, "");
 		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
 		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 max=20 step=0.1");
 		TwAddVarRW(g_pTweakBar, "Collide with walls", TW_TYPE_BOOLCPP, &g_usingWalls, "");
@@ -658,7 +649,9 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "-> Y  ", TW_TYPE_FLOAT, &(fluidData.lowery), "min=-10 max=0.2 step=0.1");
 		TwAddVarRW(g_pTweakBar, "-> Z  ", TW_TYPE_FLOAT, &(fluidData.lowerz), "min=-10 max=0.2 step=0.1");
 		TwAddButton(g_pTweakBar, "Other", NULL, NULL, "");
-		TwAddVarRW(g_pTweakBar, "Frametime Benchmark only", TW_TYPE_BOOLCPP, &g_Benchmark, "");
+		TwAddVarRW(g_pTweakBar, "Frametime Benchmark only", TW_TYPE_BOOLCPP, &g_Benchmark, "");		
+		TwAddVarRO(g_pTweakBar, "Last Frametime (Native):", TW_TYPE_FLOAT, &frametimeNative, "");
+		TwAddVarRO(g_pTweakBar, "Last Frametime (Grid):", TW_TYPE_FLOAT, &frametimeGrid, "");
 		break;
 	default:
 		break;
@@ -1628,7 +1621,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			delete(fluid);
 			lowerBoxBoundary = XMLoadFloat3(&XMFLOAT3(-.5f, -.5f, -.5f));
 			upperBoxBoundary = XMLoadFloat3(&XMFLOAT3(.5f, .5f, .5f));
-			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(3, 3, 3), 7, .03f, .03f, 1.f, 200.f, .01f);
+			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(fluidData.numx, fluidData.numy, fluidData.numz), 7, .03f, .03f, 1.f, 200.f, .01f);
 			g_Benchmark = false;
 			currentTime = timeGetTime();
 			break;
@@ -1978,7 +1971,8 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			//std::cout << "\n(Naive Fluid) Frametime: " << currentTime-previousTime << "ms\n";
 
 			bench_end = std::chrono::high_resolution_clock::now();
-			std::cout << "\n(Naive Fluid) Frametime: " << std::chrono::duration_cast<std::chrono::microseconds>(bench_end-bench_begin).count()/1000.0f << "ms" << std::endl;
+			//std::cout << "\n(Naive Fluid) Frametime: " << std::chrono::duration_cast<std::chrono::microseconds>(bench_end-bench_begin).count()/1000.0f << "ms" << std::endl;
+			frametimeNative = std::chrono::duration_cast<std::chrono::microseconds>(bench_end-bench_begin).count()/1000.0f;
 		}
 		break;
 	case 9:
@@ -1994,7 +1988,8 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			//std::cout << "\n(Grid Fluid) Frametime: " << currentTime-previousTime << "ms\n";
 
 			bench_end = std::chrono::high_resolution_clock::now();
-			std::cout << "\n(Grid Fluid) Frametime: " << std::chrono::duration_cast<std::chrono::microseconds>(bench_end-bench_begin).count()/1000.0f << "ms" << std::endl;
+			//std::cout << "\n(Grid Fluid) Frametime: " << std::chrono::duration_cast<std::chrono::microseconds>(bench_end-bench_begin).count()/1000.0f << "ms" << std::endl;
+			frametimeGrid = std::chrono::duration_cast<std::chrono::microseconds>(bench_end-bench_begin).count()/1000.0f;
 		}
 		break;
 	default: 
