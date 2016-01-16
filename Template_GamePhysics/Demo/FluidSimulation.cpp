@@ -52,6 +52,7 @@ void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep, float& gravit
 	for (auto p1 = fluid.particles.begin(); p1 != fluid.particles.end(); p1++) {
 		//std::cout << "&p1: " << p1._Ptr << std::endl;
 		//1 find density
+		fluid.recomputeGrid();
 		neighbours = fluid.getNeighbourParticles(*p1);
 		for (auto p2 = neighbours.begin(); p2 != neighbours.end(); p2++) {
 			//std::cout << "&p2: " << *p2._Ptr << std::endl;
@@ -91,9 +92,7 @@ void FluidSimulation::integrateFluid(Fluid& fluid, float timeStep, float& gravit
 			p1->addDamping(timeStep);
 		if(useWalls)
 		{
-			XMFLOAT3 pos;
-			XMStoreFloat3(&pos, upperBoxBoundary);
-			p1->computeCollisionWithWalls(timeStep,fluid.getKernelSize(),pos.x,pos.z,pos.y);
+			p1->computeCollisionWithBox(timeStep,fluid.getKernelSize(),upperBoxBoundary, lowerBoxBoundary);
 		}
 	}
 

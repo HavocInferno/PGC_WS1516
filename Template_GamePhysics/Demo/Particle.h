@@ -19,5 +19,6 @@ public:
 	Particle(XMFLOAT3 position, float mass);
 	~Particle(void);
 	XMFLOAT3 getPosition();
+	void computeCollisionWithBox(float deltaTime, float sphereSize,XMVECTOR upper, XMVECTOR lower);
 };
 

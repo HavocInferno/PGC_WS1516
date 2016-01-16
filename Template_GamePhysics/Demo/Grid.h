@@ -21,6 +21,7 @@ public:
 	inline int getOneDimensionalIndex(XMVECTOR& indices);
 	inline int getOneDimensionalIndex(int i, int j, int k);
 	XMVECTOR getNumCells();
+	void recompute(Fluid& fluid);
 
 
 	Grid(float spacing, int maxPerCell, Fluid& fluid, XMVECTOR& lowerBoxBoundary, XMVECTOR& upperBoxBoundary);

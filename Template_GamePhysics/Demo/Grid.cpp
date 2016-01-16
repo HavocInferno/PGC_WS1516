@@ -63,3 +63,31 @@ Grid::~Grid(void)
 	delete [] particles;
 	delete [] numInCell;
 }
+
+void Grid::recompute(Fluid& fluid)
+{
+	int intNumCells = static_cast<int>(XMVectorGetX(numCells) * XMVectorGetY(numCells) * XMVectorGetZ(numCells));
+	for (int i = 0; i < intNumCells; i++) {
+		numInCell[i] = 0;
+	}
+
+	//fill grid with particles
+	//TODO: check if faster with XMFLOATs
+	XMVECTOR temp;
+	int currCellIndex;
+	//current number of particles in a given cell
+	unsigned short currNumInCell;
+	for (auto particle = fluid.particles.begin(); particle != fluid.particles.end(); particle++) {
+		//locate the right cell
+		temp = getCellIndicesForParticle(*particle._Ptr);
+		currCellIndex = getOneDimensionalIndex(temp);
+		//std::cout << "initial currCellIndex: " << currCellIndex << std::endl;
+		//std::cout << "position: " << particle->gp_position.x << " " << particle->gp_position.y << " " << particle->gp_position.z << std::endl; 
+		//plus one particle
+		//TODO: control the number of cells with maxPerCell value
+		currNumInCell = numInCell[currCellIndex]++;
+		particles[currCellIndex * maxPerCell + currNumInCell] = particle._Ptr;
+		//int temp = currCellIndex * maxPerCell + currNumInCell;
+		//void* debug = static_cast<void*>(particles[currCellIndex * maxPerCell + currNumInCell]);
+	}
+}

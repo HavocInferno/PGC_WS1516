@@ -58,3 +58,8 @@ Fluid::~Fluid(void)
 		delete *particle._Ptr;
 	}*/
 }
+
+void Fluid::recomputeGrid()
+{
+	return;
+}

@@ -13,6 +13,11 @@ public:
 		grid = new Grid(.06f, 10, *this, lowerBoxBoundary, upperBoxBoundary);
 	}
 
+	void recomputeGrid()
+	{
+		grid->recompute(*this);
+	}
+
 	std::vector<Particle*> getNeighbourParticles(Particle& particle) { //TODO: Make this something useful
 		std::vector<Particle*> neigbours;
 		XMVECTOR particleIndices = grid->getCellIndicesForParticle(particle);
