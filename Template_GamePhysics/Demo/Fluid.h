@@ -30,7 +30,7 @@ public:
 	virtual std::vector<Particle*> getNeighbourParticles(Particle& particle);
 	virtual void recomputeGrid();
 
-	Fluid(XMFLOAT3 initialPostion, XMINT3 numParticles, int exp, float kernelSize, float positioningStep, float stiffness, float restDensity, float viscosity);
+	Fluid(XMFLOAT3 initialPostion, XMINT3 numParticles, int exp, float kernelSize, float positioningStep, float stiffness, float restDensity, float viscosity, bool random);
 	virtual ~Fluid(void);
 };
 

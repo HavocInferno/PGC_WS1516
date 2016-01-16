@@ -7,8 +7,8 @@ class GridBasedFluid : public Fluid {
 	Grid* grid;
 
 public:
-	GridBasedFluid(XMFLOAT3 initialPostion, XMINT3 numParticles, int exp, float kernelSize, float positioningStep, float stiffness, float restDensity, float viscosity, XMVECTOR& lowerBoxBoundary, XMVECTOR& upperBoxBoundary) :
-		Fluid(initialPostion, numParticles, exp, kernelSize, positioningStep, stiffness, restDensity, viscosity)
+	GridBasedFluid(XMFLOAT3 initialPostion, XMINT3 numParticles, int exp, float kernelSize, float positioningStep, float stiffness, float restDensity, float viscosity, XMVECTOR& lowerBoxBoundary, XMVECTOR& upperBoxBoundary, bool random) :
+		Fluid(initialPostion, numParticles, exp, kernelSize, positioningStep, stiffness, restDensity, viscosity, random)
 	{
 		grid = new Grid(.06f, 10, *this, lowerBoxBoundary, upperBoxBoundary);
 	}

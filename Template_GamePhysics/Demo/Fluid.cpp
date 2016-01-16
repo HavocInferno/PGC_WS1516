@@ -1,5 +1,7 @@
 #include "Fluid.h"
 #include <iostream>
+#include <ctime>
+#include "vectorOperations.h"
 
 float Fluid::getKernelSize() {
 	return kernelSize;
@@ -25,11 +27,13 @@ std::vector<Particle*> Fluid::getNeighbourParticles(Particle& particle) {
 	return neigbours;
 }
 
-Fluid::Fluid(XMFLOAT3 initialPostion, XMINT3 numParticles, int exp, float kernelSize, float positioningStep, float stiffness, float restDensity, float viscosity) : 
+Fluid::Fluid(XMFLOAT3 initialPostion, XMINT3 numParticles, int exp, float kernelSize, float positioningStep, float stiffness, float restDensity, float viscosity, bool random) : 
 	numParticles(numParticles), exp(exp), kernelSize(kernelSize), positioningStep(positioningStep), stiffness(stiffness), restDensity(restDensity), viscosity(viscosity)
 {
 	//particles = new std::vector<Particle*>();
-	
+	if(random)
+		srand(time(0));
+	XMFLOAT3 currRandOffset = XMFLOAT3(0,0,0);
 	XMFLOAT3 currParticlePos = initialPostion;
 	//position particles in as a box
 	for (int i = 0; i < numParticles.x; i++) {
@@ -40,7 +44,9 @@ Fluid::Fluid(XMFLOAT3 initialPostion, XMINT3 numParticles, int exp, float kernel
 		
 			for (int k = 0; k < numParticles.z; k++) {
 				currParticlePos.z = initialPostion.z + k * positioningStep;
-				particles.push_back(Particle(currParticlePos, .01f));
+				if(random)
+					currRandOffset = XMFLOAT3( (((float)rand()/(RAND_MAX))-.5f)*(kernelSize/50),(((float)rand()/(RAND_MAX))-.5f)*(kernelSize/50) ,(((float)rand()/(RAND_MAX))-.5f)*(kernelSize/50));
+				particles.push_back(Particle(addVector(currParticlePos,currRandOffset), .01f));
 				//std::cout << particles.end()._Ptr << std::endl;
 			}
 		}

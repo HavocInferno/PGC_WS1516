@@ -184,6 +184,7 @@ struct FluidData
 	float upperx, uppery, upperz;
 	int numx, numy, numz;
 	float posx, posy, posz;
+	bool rand;
 } fluidData;
 Grid* grid;
 float kernelsize = 0.03f;
@@ -632,6 +633,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		break;
 	case 9: //grid fluid
 		TwAddVarRW(g_pTweakBar, "Particle size", TW_TYPE_FLOAT, &kernelsize, "min=0.001 step=0.001");
+		TwAddVarRW(g_pTweakBar, "Particle Spawn Randomization", TW_TYPE_BOOLCPP, &(fluidData.rand), "");
 		TwAddVarRW(g_pTweakBar, "Use gravity", TW_TYPE_BOOLCPP, &g_useGravity, "");
 		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 max=20 step=0.1");
 		TwAddVarRW(g_pTweakBar, "Collide with walls", TW_TYPE_BOOLCPP, &g_usingWalls, "");
@@ -1022,6 +1024,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	fluidData.lowerx = fluidData.lowery = fluidData.lowerz = -.5f;
 	fluidData.upperx = fluidData.uppery = fluidData.upperz = .5f;
 	fluidData.numx = fluidData.numy = fluidData.numz = 3;
+	fluidData.rand = true;
 
     // Create DirectXTK geometric primitives for later usage
 	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);
@@ -1621,7 +1624,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			delete(fluid);
 			lowerBoxBoundary = XMLoadFloat3(&XMFLOAT3(-.5f, -.5f, -.5f));
 			upperBoxBoundary = XMLoadFloat3(&XMFLOAT3(.5f, .5f, .5f));
-			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(fluidData.numx, fluidData.numy, fluidData.numz), 7, .03f, .03f, 1.f, 200.f, .01f);
+			fluid = new Fluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(fluidData.numx, fluidData.numy, fluidData.numz), 7, .03f, .03f, 1.f, 200.f, .01f, false);
 			g_Benchmark = false;
 			currentTime = timeGetTime();
 			break;
@@ -1635,7 +1638,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			g_useDamping = false;
 			lowerBoxBoundary = XMLoadFloat3(&XMFLOAT3(fluidData.lowerx, fluidData.lowery,fluidData.lowerz));
 			upperBoxBoundary = XMLoadFloat3(&XMFLOAT3(fluidData.upperx, fluidData.uppery, fluidData.upperz));
-			gridBasedFluid = new GridBasedFluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(fluidData.numx, fluidData.numy, fluidData.numz), 7, .03f, .03f, 1.f, 200.f, .01f, lowerBoxBoundary, upperBoxBoundary);
+			gridBasedFluid = new GridBasedFluid(XMFLOAT3(0.f, .0f, 0.f), XMINT3(fluidData.numx, fluidData.numy, fluidData.numz), 7, .03f, .03f, 1.f, 200.f, .01f, lowerBoxBoundary, upperBoxBoundary, fluidData.rand);
 			g_Benchmark = false;
 			currentTime = timeGetTime();
 			break;
