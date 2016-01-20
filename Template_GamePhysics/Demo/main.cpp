@@ -41,6 +41,7 @@ using std::cout;
 #define MASS_SPRING_SYSTEM
 #define RIGID_BODY_SIMULATION
 #define RIGID_BODY_COLLISION
+#define EX4_MS_CLOTH_AND_RB
 
 //#include "PositionableUnit.cpp"
 
@@ -107,7 +108,7 @@ XMFLOAT3 g_vfRotate = XMFLOAT3(0, 0, 0);
 // TweakAntBar GUI variables
 
 //startup demo
-int g_iTestCase = 8;
+int g_iTestCase = 10;
 int g_iPreTestCase = -1;
 bool  g_bSimulateByStep = false;
 bool  g_bIsSpaceReleased = true;
@@ -123,7 +124,7 @@ bool g_bDrawMassSpringSystem = true;
 XMVECTORF32 TUM_BLUE = {0, 0.396, 0.741,1};
 XMVECTORF32 TUM_BLUE_LIGHT = {.259, .522, .957,1};
 int g_integrationMethod = 0, g_preIntegrationMethod = 0;
-int g_demoCase = 0, g_preDemoCase = 0;
+int g_demoCase = 2, g_preDemoCase = 2;
 float groundFriction, groundBouncyness;
 float g_xWall =1.0f, g_zWall=1.0f, g_ceiling=1.0f;
 bool g_usingWalls = false;
@@ -167,6 +168,30 @@ XMMATRIX mat1, mat2;
 CollisionInfo simpletest;
 Contact contact;
 #endif
+#ifdef EX4_MS_CLOTH_AND_RB
+//COPIED FROM MASS SPRING SYSTEM IFDEF.. slightly changed though
+//g_bDrawMassSpringSystem = true;
+//int g_integrationMethod = 0, g_preIntegrationMethod = 0;
+//int g_demoCase = 2, g_preDemoCase = 0;
+//float groundFriction, groundBouncyness;
+//float g_xWall =1.0f, g_zWall=1.0f, g_ceiling=1.0f;
+//bool g_usingWalls = false;
+//float g_explosionForce =1;
+
+//bool g_firstStep = true;
+
+//COPIED FROM RIGID BODY COLLIISON IFDEF
+/*bool g_bDrawRigidBodyCollision = true;
+std::vector<MassPoint>* pointList1;//, * pointList2;
+rigidBody* rb1, * rb2;
+std::vector<rigidBody>* rigidBodies; // for rb demo 4
+rigidBody* floorRB;
+
+XMMATRIX mat1, mat2;
+CollisionInfo simpletest;
+Contact contact;*/
+#endif
+
 
 //Fluid Simulation
 bool g_Benchmark = false;
@@ -322,6 +347,84 @@ void ResetRigidBodies()
 // Mass Spring variable
 std::list<Spring> springs;
 std::list<SpringPoint*> points;
+
+//EX4
+void InitEx4MSAndRB(int cloth_width, int cloth_height, XMFLOAT3 startPos, XMFLOAT3 offset ){
+	//Create all points and springs in the grid, 
+	std::vector<SpringPoint*> springPointVec;
+	for(int row = 0, i = 0; row < cloth_height ; row++) {
+		for(int column = 0 ; column < cloth_width ; column++, i++) {
+			SpringPoint* s_point;
+			s_point = new SpringPoint(XMFLOAT3(startPos.x+offset.x*column, startPos.y+offset.y*row, startPos.z+offset.z*row));
+			//s_point->setMass(0.1f);
+			//s_point->setDamping(1.0f);
+			points.push_back(s_point);
+			springPointVec.push_back(s_point);
+
+			//1 step horizontal springs. Sets spring from previous point to current
+			if(column > 0) {
+				Spring spring;
+				spring.setPoint(1,springPointVec[i-1]);
+				spring.setPoint(2,s_point);		
+				spring.computeCurrentLength();
+				spring.setEquilibriumLength(offset.x);
+				spring.setStiffness(10.0f);
+				springs.push_back(spring);
+				//2 step horizontal springs
+				if(column > 1) {
+					spring.setPoint(1,springPointVec[i-2]);
+					spring.setPoint(2,s_point);	
+					spring.computeCurrentLength();
+					spring.setEquilibriumLength(2*offset.x);
+					spring.setStiffness(10.0f);
+					springs.push_back(spring);
+				}
+			}
+			//1 step vertical springs
+			if(row > 0) {
+				Spring spring;
+				spring.setPoint(1,springPointVec[i-cloth_width]);
+				spring.setPoint(2,s_point);		
+				spring.computeCurrentLength();
+				spring.setEquilibriumLength(offset.y);
+				spring.setStiffness(10.0f);
+				springs.push_back(spring);
+				//1 step diagonal springs (/)
+				if(column != cloth_width-1) {
+					//Spring spring1;
+					spring.setPoint(1,springPointVec[i-cloth_width+1]);
+					spring.setPoint(2,s_point);		
+					spring.computeCurrentLength();
+					spring.setEquilibriumLength(sqrt(pow(offset.x,2)+pow(offset.y,2)));
+					spring.setStiffness(10.0f);
+					springs.push_back(spring);
+				}
+				//1 step diagonal springs (\)
+				if(column != 0) {
+					//Spring spring1;
+					spring.setPoint(1,springPointVec[i-cloth_width-1]);
+					spring.setPoint(2,s_point);		
+					spring.computeCurrentLength();
+					spring.setEquilibriumLength(sqrt(pow(offset.x,2)+pow(offset.y,2)));
+					spring.setStiffness(10.0f);
+					springs.push_back(spring);
+				}
+				//two steps vertical springs
+				if(row > 1) {
+					spring.setPoint(1,springPointVec[i-2*cloth_width]);
+					spring.setPoint(2,s_point);		
+					spring.computeCurrentLength();					
+					spring.setEquilibriumLength(2*offset.y);
+					spring.setStiffness(10.0f);
+					springs.push_back(spring);
+				}
+			}			
+		}
+	}
+	springPointVec[0]->setStatic(true);
+	springPointVec[cloth_width-1]->setStatic(true);
+}
+
 void InitMassSprings()
 {
 	if(g_demoCase == 0) {
@@ -435,6 +538,11 @@ void InitMassSprings()
 			g_springs[i+5].setPoint(2, g_points[i+6+1]);
 			springs.push_back(g_springs[i+5]);
 		}*/
+	}
+	else if (g_demoCase ==2) {
+		std::cout << "Ex4 Mass Spring setup" << std::endl;
+		InitEx4MSAndRB(9,9,XMFLOAT3(-1.f,1.2f,0),XMFLOAT3(2.0f/9,-2.0f/9,-0.001));
+
 	}
 }
 
@@ -654,6 +762,9 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "Frametime Benchmark only", TW_TYPE_BOOLCPP, &g_Benchmark, "");		
 		TwAddVarRO(g_pTweakBar, "Last Frametime (Native):", TW_TYPE_FLOAT, &frametimeNative, "");
 		TwAddVarRO(g_pTweakBar, "Last Frametime (Grid):", TW_TYPE_FLOAT, &frametimeGrid, "");
+		break;
+	case 10:
+		std::cout << "EX4 MASS SPRING CLOTH AND RIGID BODY" << std::endl;
 		break;
 	default:
 		break;
@@ -964,6 +1075,8 @@ void DrawCollisionCubes(rigidBody* rb1) {
 }
 
 #endif
+#ifdef EX4_MS_CLOTH_AND_RB
+#endif
 // ============================================================
 // DXUT Callbacks
 // ============================================================
@@ -1025,6 +1138,11 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 	fluidData.upperx = fluidData.uppery = fluidData.upperz = .5f;
 	fluidData.numx = fluidData.numy = fluidData.numz = 3;
 	fluidData.rand = true;
+
+	// TODO
+	//Init EX4 Mass Spring Cloth and Rigid Body
+	//InitEx4MSAndRB(9,9,XMFLOAT3(-1,2.25f,0),XMFLOAT3(2/9,-2/9,-0.05));
+	//THIS IS CURRENTLY IN InitMassSpring();
 
     // Create DirectXTK geometric primitives for later usage
 	g_pCube = GeometricPrimitive::CreateCube(pd3dImmediateContext, 1.0f, false);
@@ -1643,6 +1761,16 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			currentTime = timeGetTime();
 			break;
 		}
+		case 10:
+		{
+			
+			std::cout << "EX4 COMBO - MassSpring & Rigid Body" << std::endl;
+			g_fSphereSize = 0.05f;
+			g_useGravity = true;
+			deltaTime = 0.005f;
+			ResetMassSprings(0.005f);
+			break;
+		}
 		default:
 			cout << "Empty Test!\n";
 			break;
@@ -1995,6 +2123,34 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			frametimeGrid = std::chrono::duration_cast<std::chrono::microseconds>(bench_end-bench_begin).count()/1000.0f;
 		}
 		break;
+	case 10:
+		std::cout << "Ex4 combo" << std::endl ;
+		for(auto spring = springs.begin(); spring != springs.end();spring++)
+			{
+				b= &(((Spring)*spring));
+				b->computeElasticForces();
+			}
+			for(auto point = points.begin(); point != points.end();point++)
+			{	
+				a =  (((SpringPoint*)*point));
+				a->gp_posTemp = a->IntegratePositionTmp(deltaTime/2.0f);
+				a->computeAcceleration();
+				a->gp_velTemp = a->IntegrateVelocityTmp(deltaTime/2.0f);
+				a->IntegratePosition(deltaTime, a->gp_velTemp);
+				a->resetForces();
+			}
+			for(auto spring = springs.begin(); spring != springs.end();spring++)
+			{
+				b= &(((Spring)*spring));
+				b->computeElasticForcesTmp();
+			}
+			for(auto point = points.begin(); point != points.end();point++)
+			{
+				a =  (((SpringPoint*)*point));
+				a->IntegrateVelocity(deltaTime);
+				a->resetForces();
+			}
+		break;	
 	default: 
 		break;
 	}
@@ -2097,6 +2253,11 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 			}
 			break;
 		}
+	// EX 4 - COMBINED
+	case 10:
+		std::cout << "Ex4 comobmomomombo " << std::endl;
+		if (g_bDrawMassSpringSystem) DrawMassSpringSystem(pd3dImmediateContext);
+		break;
 	default:
 		break;
 	}

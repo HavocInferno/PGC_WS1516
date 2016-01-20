@@ -50,6 +50,9 @@ void Spring::setStiffness(float newstiff) {
 void Spring::setLength(float newlen) {
 	gs_currentLength = newlen;
 };
+void Spring::setEquilibriumLength(float newlen){
+	gs_initialLength = newlen;
+}
 void Spring::computeCurrentLength()
 {
 	gs_currentLength = vectorLength(subVector(gs_point1->gp_position,gs_point2->gp_position));

@@ -28,6 +28,7 @@ public:
 
 	void setStiffness(float newstiff);
 	void setLength(float newlen);
+	void setEquilibriumLength(float newlen);
 	void computeCurrentLength();
 
 	void printSpring();
