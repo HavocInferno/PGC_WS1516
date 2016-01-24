@@ -23,13 +23,19 @@ public:
 	void initialize();
 	void computeElasticForces();
 	void computeElasticForcesTmp();
+	void computeDampingForces();
+	void computeDampingForcesTmp();
+	void computeCurrentLength();
+	void computeCurrentLengthTmp();
 
 	void setPoint(int pointIndex, SpringPoint* point);
 
 	void setStiffness(float newstiff);
 	void setLength(float newlen);
-	void setEquilibriumLength(float newlen);
-	void computeCurrentLength();
+	void setRestLength(float newlen);
+	void setDamping(float d);
+
+	float getCurrentLength();
 
 	void printSpring();
 };

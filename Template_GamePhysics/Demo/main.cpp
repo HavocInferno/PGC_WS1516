@@ -349,14 +349,18 @@ std::list<Spring> springs;
 std::list<SpringPoint*> points;
 
 //EX4
+bool cloth_horizontal = false; 
+float springDamping, springStiffness;
 void InitEx4MSAndRB(int cloth_width, int cloth_height, XMFLOAT3 startPos, XMFLOAT3 offset ){
 	//Create all points and springs in the grid, 
 	std::vector<SpringPoint*> springPointVec;
+	springStiffness = 0.5f, springDamping = 0.03f;
+	float twoOrtho = 0.5, oneDiag = 0.709, twoDiag = 0.35;
 	for(int row = 0, i = 0; row < cloth_height ; row++) {
 		for(int column = 0 ; column < cloth_width ; column++, i++) {
 			SpringPoint* s_point;
 			s_point = new SpringPoint(XMFLOAT3(startPos.x+offset.x*column, startPos.y+offset.y*row, startPos.z+offset.z*row));
-			//s_point->setMass(0.1f);
+			s_point->setMass(0.01f);
 			//s_point->setDamping(1.0f);
 			points.push_back(s_point);
 			springPointVec.push_back(s_point);
@@ -365,18 +369,20 @@ void InitEx4MSAndRB(int cloth_width, int cloth_height, XMFLOAT3 startPos, XMFLOA
 			if(column > 0) {
 				Spring spring;
 				spring.setPoint(1,springPointVec[i-1]);
-				spring.setPoint(2,s_point);		
+				spring.setPoint(2,s_point);	
+				spring.setDamping(springDamping);
 				spring.computeCurrentLength();
-				spring.setEquilibriumLength(offset.x);
-				spring.setStiffness(10.0f);
+				spring.setRestLength(spring.getCurrentLength());
+				spring.setStiffness(springStiffness);
 				springs.push_back(spring);
 				//2 step horizontal springs
 				if(column > 1) {
 					spring.setPoint(1,springPointVec[i-2]);
 					spring.setPoint(2,s_point);	
+					spring.setDamping(springDamping);
 					spring.computeCurrentLength();
-					spring.setEquilibriumLength(2*offset.x);
-					spring.setStiffness(10.0f);
+					spring.setRestLength(spring.getCurrentLength());
+					spring.setStiffness(springStiffness*twoOrtho);
 					springs.push_back(spring);
 				}
 			}
@@ -385,18 +391,20 @@ void InitEx4MSAndRB(int cloth_width, int cloth_height, XMFLOAT3 startPos, XMFLOA
 				Spring spring;
 				spring.setPoint(1,springPointVec[i-cloth_width]);
 				spring.setPoint(2,s_point);		
+				spring.setDamping(springDamping);
 				spring.computeCurrentLength();
-				spring.setEquilibriumLength(offset.y);
-				spring.setStiffness(10.0f);
+				spring.setRestLength(spring.getCurrentLength());
+				spring.setStiffness(springStiffness);
 				springs.push_back(spring);
 				//1 step diagonal springs (/)
 				if(column != cloth_width-1) {
 					//Spring spring1;
 					spring.setPoint(1,springPointVec[i-cloth_width+1]);
 					spring.setPoint(2,s_point);		
+					spring.setDamping(springDamping);
 					spring.computeCurrentLength();
-					spring.setEquilibriumLength(sqrt(pow(offset.x,2)+pow(offset.y,2)));
-					spring.setStiffness(10.0f);
+					spring.setRestLength(spring.getCurrentLength());
+					spring.setStiffness(springStiffness*oneDiag);
 					springs.push_back(spring);
 				}
 				//1 step diagonal springs (\)
@@ -404,25 +412,56 @@ void InitEx4MSAndRB(int cloth_width, int cloth_height, XMFLOAT3 startPos, XMFLOA
 					//Spring spring1;
 					spring.setPoint(1,springPointVec[i-cloth_width-1]);
 					spring.setPoint(2,s_point);		
+					spring.setDamping(springDamping);
 					spring.computeCurrentLength();
-					spring.setEquilibriumLength(sqrt(pow(offset.x,2)+pow(offset.y,2)));
-					spring.setStiffness(10.0f);
+					spring.setRestLength(spring.getCurrentLength());
+					spring.setStiffness(springStiffness*oneDiag);
 					springs.push_back(spring);
 				}
 				//two steps vertical springs
 				if(row > 1) {
 					spring.setPoint(1,springPointVec[i-2*cloth_width]);
 					spring.setPoint(2,s_point);		
+					spring.setDamping(springDamping);
 					spring.computeCurrentLength();					
-					spring.setEquilibriumLength(2*offset.y);
-					spring.setStiffness(10.0f);
+					spring.setRestLength(spring.getCurrentLength());
+					spring.setStiffness(springStiffness*twoOrtho);
 					springs.push_back(spring);
+					//two step diagonal (\)
+					if(column > 1) {
+						spring.setPoint(1,springPointVec[i-2*cloth_width-2]);
+						spring.setPoint(2,s_point);		
+						spring.setDamping(springDamping);
+						spring.computeCurrentLength();
+						spring.setRestLength(spring.getCurrentLength());
+						spring.setStiffness(springStiffness*twoDiag);
+						springs.push_back(spring);
+					}
+					//Two step diagonal (/)
+					if(column < cloth_width - 2) {
+						spring.setPoint(1,springPointVec[i-2*cloth_width+2]);
+						spring.setPoint(2,s_point);		
+						spring.setDamping(springDamping);
+						spring.computeCurrentLength();
+						spring.setRestLength(spring.getCurrentLength());
+						spring.setStiffness(springStiffness*twoOrtho);
+						springs.push_back(spring);
+					}
 				}
 			}			
 		}
 	}
-	springPointVec[0]->setStatic(true);
-	springPointVec[cloth_width-1]->setStatic(true);
+	if(cloth_horizontal) {
+		for(int i = 0 ; i < cloth_height*cloth_width ; i++) 
+			if(i < cloth_width || i > (cloth_height-1)*(cloth_width)-1 || i%cloth_width == 0 || (i-cloth_width+1) % cloth_width == 0)
+				springPointVec[i]->setStatic(true);
+	}
+	else {
+		springPointVec[0]->setStatic(true);
+		springPointVec[cloth_width-1]->setStatic(true);
+		//springPointVec[cloth_width*cloth_height-1]->setStatic(true);
+		//springPointVec[cloth_width*(cloth_height-1)]->setStatic(true);
+	}
 }
 
 void InitMassSprings()
@@ -541,8 +580,11 @@ void InitMassSprings()
 	}
 	else if (g_demoCase ==2) {
 		std::cout << "Ex4 Mass Spring setup" << std::endl;
-		InitEx4MSAndRB(9,9,XMFLOAT3(-1.f,1.2f,0),XMFLOAT3(2.0f/9,-2.0f/9,-0.001));
-
+		float x = 5, y = 5;
+		if(!cloth_horizontal)
+			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,2.f,0),XMFLOAT3(2.0f/x,-2.0f/y,-0.001));
+		else
+			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,0.5f,-1),XMFLOAT3(2.0f/x,0,-2.0f/y));
 	}
 }
 
@@ -640,7 +682,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 
 	TwType TW_TYPE_INTEGRATOR = TwDefineEnumFromString("Integration Method", "Euler,Midpoint,LeapFrog");
 	TwType TW_TYPE_DEMOCASE = TwDefineEnumFromString("Demo Setup", "Demo 1/2/3,Demo 4");
-	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "MSS Demo 1,MSS Demo 2,MSS Demo 3,MSS Demo 4, RB Demo 1, RB Demo 2, RB Demo 3, RB Demo 4, FlSim Demo, FlSim Grid Demo");
+	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Test Scene", "MSS Demo 1,MSS Demo 2,MSS Demo 3,MSS Demo 4, RB Demo 1, RB Demo 2, RB Demo 3, RB Demo 4, FlSim Demo, FlSim Grid Demo,Ex4 SpringDamper+RigidBodies");
 	TwAddVarRW(g_pTweakBar, "Test Scene", TW_TYPE_TESTCASE, &g_iTestCase, "");
 	// HINT: For buttons you can directly pass the callback function as a lambda expression.
 	TwAddButton(g_pTweakBar, "Reset Scene", [](void *){g_iPreTestCase = -1; }, nullptr, "");
@@ -764,7 +806,9 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRO(g_pTweakBar, "Last Frametime (Grid):", TW_TYPE_FLOAT, &frametimeGrid, "");
 		break;
 	case 10:
-		std::cout << "EX4 MASS SPRING CLOTH AND RIGID BODY" << std::endl;
+		//std::cout << "EX4 MASS SPRING CLOTH AND RIGID BODY" << std::endl;
+		TwAddVarRW(g_pTweakBar, "Spring Stiffness Coeff.:", TW_TYPE_FLOAT, &springStiffness,"");
+		TwAddVarRW(g_pTweakBar, "Spring Damping Coeff.:", TW_TYPE_FLOAT, &springDamping,"");
 		break;
 	default:
 		break;
@@ -1764,11 +1808,14 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		case 10:
 		{
 			
-			std::cout << "EX4 COMBO - MassSpring & Rigid Body" << std::endl;
+			//std::cout << "EX4 COMBO - MassSpring & Rigid Body" << std::endl;
 			g_fSphereSize = 0.05f;
-			g_useGravity = true;
-			deltaTime = 0.005f;
-			ResetMassSprings(0.005f);
+			g_gravity = -9.81f;
+			currentTime = timeGetTime();
+			g_bDrawMassSpringSystem = true;
+			//here we might want to reset the points/springs
+			ResetMassSprings(deltaTime);
+			break;
 			break;
 		}
 		default:
@@ -2124,32 +2171,97 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		}
 		break;
 	case 10:
-		std::cout << "Ex4 combo" << std::endl ;
+		//std::cout << "Ex4 combo" << std::endl ;
+		
+		previousTime = currentTime;
+		currentTime = timeGetTime();
+		deltaTime = (currentTime-previousTime)/1000.0f;
+		/*
+		//EULER
+		for(auto point = points.begin(); point != points.end();point++)
+		{
+			a =  ((SpringPoint*)*point);
+			a->resetForces();
+			a->addGravity(g_gravity);
+		}
+		for(auto spring = springs.begin(); spring != springs.end(); spring++)
+		{
+			b= &((Spring)*spring);
+			b->computeElasticForces();
+			b->computeDampingForces();
+		}
+		for(auto point = points.begin(); point != points.end();point++)
+		{
+			a =  ((SpringPoint*)*point);
+			//a->addGravity(g_gravity);
+			a->IntegratePosition(deltaTime);
+			a->computeAcceleration();
+			a->IntegrateVelocity(deltaTime);
+			//a->resetForces();
+		}	
+		*/
+			
+		//MIDPOINT
 		for(auto spring = springs.begin(); spring != springs.end();spring++)
-			{
-				b= &(((Spring)*spring));
-				b->computeElasticForces();
-			}
-			for(auto point = points.begin(); point != points.end();point++)
-			{	
-				a =  (((SpringPoint*)*point));
-				a->gp_posTemp = a->IntegratePositionTmp(deltaTime/2.0f);
-				a->computeAcceleration();
-				a->gp_velTemp = a->IntegrateVelocityTmp(deltaTime/2.0f);
-				a->IntegratePosition(deltaTime, a->gp_velTemp);
-				a->resetForces();
-			}
-			for(auto spring = springs.begin(); spring != springs.end();spring++)
-			{
-				b= &(((Spring)*spring));
-				b->computeElasticForcesTmp();
-			}
-			for(auto point = points.begin(); point != points.end();point++)
-			{
-				a =  (((SpringPoint*)*point));
-				a->IntegrateVelocity(deltaTime);
-				a->resetForces();
-			}
+		{
+			b= &(((Spring)*spring));
+			b->computeElasticForces();
+			b->computeDampingForces();
+		}
+		for(auto point = points.begin(); point != points.end();point++)
+		{	
+			a =  (((SpringPoint*)*point));
+			a->addGravity(g_gravity);
+			a->gp_posTemp = a->IntegratePositionTmp(deltaTime/2.0f);
+			a->computeAcceleration();
+			a->gp_velTemp = a->IntegrateVelocityTmp(deltaTime/2.0f);
+			//a->addDamping(deltaTime);
+			a->IntegratePosition(deltaTime, a->gp_velTemp);
+			a->resetForces();
+		}
+		for(auto spring = springs.begin(); spring != springs.end();spring++)
+		{
+			b= &(((Spring)*spring));
+			b->computeElasticForcesTmp();
+			b->computeDampingForcesTmp();
+		}
+		for(auto point = points.begin(); point != points.end();point++)
+		{
+			a =  (((SpringPoint*)*point));
+			a->IntegrateVelocity(deltaTime);
+			a->resetForces();	
+			/*			
+			if(g_usingWalls)
+				a->computeCollisionWithWalls(deltaTime,g_fSphereSize,g_xWall,g_zWall,g_ceiling);
+			else*/
+				a->computeCollision(deltaTime, g_fSphereSize);
+				
+		}
+
+		/*
+		//Some modified midpoint test!
+		for(auto point = points.begin(); point != points.end();point++)
+		{	
+			a =  (((SpringPoint*)*point));
+			a->resetForces();
+			a->gp_posTemp = a->IntegratePositionTmp(deltaTime/2.0f);
+		}
+		for(auto spring = springs.begin(); spring != springs.end();spring++)
+		{
+			b= &(((Spring)*spring));
+			b->computeElasticForcesTmp();
+			b->computeDampingForcesTmp();
+		}
+		for(auto point = points.begin(); point != points.end();point++)
+		{	
+			a->addGravity(g_gravity);
+			a->computeAcceleration();
+			a->gp_velTemp = a->IntegrateVelocityTmp(deltaTime/2.0f);
+			a->IntegratePosition(deltaTime, a->gp_velTemp);
+			a->IntegrateVelocity(deltaTime);
+			//a->resetForces();
+		}
+		*/
 		break;	
 	default: 
 		break;
@@ -2255,7 +2367,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		}
 	// EX 4 - COMBINED
 	case 10:
-		std::cout << "Ex4 comobmomomombo " << std::endl;
+		//std::cout << "Ex4 comobmomomombo " << std::endl;
 		if (g_bDrawMassSpringSystem) DrawMassSpringSystem(pd3dImmediateContext);
 		break;
 	default:

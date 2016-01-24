@@ -80,12 +80,12 @@ void SpringPoint::IntegratePosition(float deltaTime)
 void SpringPoint::IntegratePosition(float deltaTime, XMFLOAT3 vel)
 {
 	if(!gp_isStatic)
-	setPosition(addVector(gp_position,multiplyVector(vel,deltaTime)));
+		setPosition(addVector(gp_position,multiplyVector(vel,deltaTime)));
 };
 XMFLOAT3 SpringPoint::IntegratePositionTmp(float deltaTime)
 {
 	if(!gp_isStatic)
-	return addVector(gp_position,multiplyVector(gp_velocity,deltaTime));
+		return addVector(gp_position,multiplyVector(gp_velocity,deltaTime));
 };
 void SpringPoint::IntegrateVelocity(float deltaTime)
 {
@@ -97,7 +97,10 @@ XMFLOAT3 SpringPoint::IntegrateVelocityTmp(float deltaTime)
 };
 void SpringPoint::computeAcceleration()
 {
-	gp_acceleration = multiplyVector(gp_force, 1/gp_mass);
+	if(!gp_isStatic)
+		gp_acceleration = multiplyVector(gp_force, 1/gp_mass);
+	else 
+		gp_acceleration = XMFLOAT3(0,0,0);
 };
 void SpringPoint::resetForces()
 {
@@ -199,3 +202,8 @@ void SpringPoint::computeCollisionWithWalls(float deltaTime, float sphereSize, f
 		}
 	}
 }
+
+XMFLOAT3 SpringPoint::getVelocity()
+{
+	return gp_velocity;
+};

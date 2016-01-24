@@ -30,6 +30,9 @@ static XMMATRIX multiplyVectorTranspose(XMFLOAT3 vec, XMFLOAT3 vecT)
 {
 	return XMMATRIX(vec.x*vecT.x,vec.x*vecT.y,vec.x*vecT.z,0.0f,vec.y*vecT.x,vec.y*vecT.y,vec.y*vecT.z,0.0f,vec.z*vecT.x,vec.z*vecT.y,vec.z*vecT.z,0.0f,0.0f,0.0f,0.0f,1.0f);
 }
-
+static float dotProduct(XMFLOAT3 vector1,XMFLOAT3 vector2)
+{
+	return vector1.x * vector2.x + vector1.y * vector2.y + vector1.z * vector2.z;
+}
 	
 #endif
