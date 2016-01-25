@@ -300,6 +300,20 @@ void InitRigidBodies()
 		floorRB->setStatic(true);
 		mat1 = mat2 = XMMATRIX(.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f,.0f);
 		break;
+	case 10:	
+		pointList = new std::vector<MassPoint>;
+		w = 1.0f, h = 0.6f, d = 0.5f;
+		InitRigidBox(pointList, w,h,d,2.f);
+		for(auto mp = pointList->begin(); mp != pointList->end(); mp++) {
+			//if (mp->position.x == 0.5f && mp->position.x == -0.3f && mp->position.x ==0.25f) {
+				mp->SetForce(XMFLOAT3(1.f,1.f,0.f));
+				break;
+			//}
+		}
+
+		rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(w, h, d));
+
+		break;
 	default:
 		break;
 	}
@@ -307,7 +321,6 @@ void InitRigidBodies()
 
 void DestroyRigidBodies()
 {
-	int anus = 0;
 	switch(g_iPreTestCase) {
 	case 4:
 	case 5:
@@ -331,7 +344,10 @@ void DestroyRigidBodies()
 	//	delete(rb1);
 		cout<<"for ";
 		delete(rigidBodies);
-
+		break;
+	case 10:
+		delete(pointList);
+		delete(rb);
 		break;
 	default:
 		break;
@@ -1813,7 +1829,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		}
 		case 10:
 		{
-			
+			g_demoCase ==2;
 			//std::cout << "EX4 COMBO - MassSpring & Rigid Body" << std::endl;
 			g_fSphereSize = 0.05f;
 			g_gravity = -9.81f;
@@ -1821,6 +1837,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			g_bDrawMassSpringSystem = true;
 			//here we might want to reset the points/springs
 			ResetMassSprings(deltaTime);
+			ResetRigidBodies();
 			break;
 			break;
 		}
@@ -1841,6 +1858,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 	// update current setup for each frame
 	SpringPoint* a;
 	Spring* b;
+	XMMATRIX g2a;
 	switch (g_iTestCase)
 	{// handling different cases
 	case 0:
@@ -2183,32 +2201,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		currentTime = timeGetTime();
 		deltaTime = (currentTime-previousTime)/1000.0f;
 		deltaTime = 0.005;
-		/*
-		//EULER
-		for(auto point = points.begin(); point != points.end();point++)
-		{
-			a =  ((SpringPoint*)*point);
-			a->resetForces();
-			a->addGravity(g_gravity);
-		}
-		for(auto spring = springs.begin(); spring != springs.end(); spring++)
-		{
-			b= &((Spring)*spring);
-			b->computeElasticForces();
-			b->computeDampingForces();
-		}
-		for(auto point = points.begin(); point != points.end();point++)
-		{
-			a =  ((SpringPoint*)*point);
-			//a->addGravity(g_gravity);
-			a->IntegratePosition(deltaTime);
-			a->computeAcceleration();
-			a->IntegrateVelocity(deltaTime);
-			//a->resetForces();
-		}	
-		*/
-			
-		//MIDPOINT
+
 		for(auto spring = springs.begin(); spring != springs.end();spring++)
 		{
 			b= &(((Spring)*spring));
@@ -2245,31 +2238,28 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 				a->addDamping(deltaTime);
 				
 		}
+		//integrate rb
+		rb->integrateValues(deltaTime);
 
-		/*
-		//Some modified midpoint test!
+		g2a = getObj2WorldMat(rb);
 		for(auto point = points.begin(); point != points.end();point++)
-		{	
-			a =  (((SpringPoint*)*point));
-			a->resetForces();
-			a->gp_posTemp = a->IntegratePositionTmp(deltaTime/2.0f);
-		}
-		for(auto spring = springs.begin(); spring != springs.end();spring++)
 		{
-			b= &(((Spring)*spring));
-			b->computeElasticForcesTmp();
-			b->computeDampingForcesTmp();
+			simpletest = gayTest(g2a,(*point));
+			if (simpletest.isValid)
+				{
+					XMFLOAT3 collisionPoint;// ,collisionNormal;
+					XMStoreFloat3(&collisionPoint,simpletest.collisionPointWorld);
+					cout<<"collega";
+					/**
+					contact = Contact(collisionPoint,simpletest.normalWorld, first, second);
+					contact.calcRelativeVelocity();
+			        **/
+					}
 		}
-		for(auto point = points.begin(); point != points.end();point++)
-		{	
-			a->addGravity(g_gravity);
-			a->computeAcceleration();
-			a->gp_velTemp = a->IntegrateVelocityTmp(deltaTime/2.0f);
-			a->IntegratePosition(deltaTime, a->gp_velTemp);
-			a->IntegrateVelocity(deltaTime);
-			//a->resetForces();
-		}
-		*/
+
+
+
+
 		break;	
 	default: 
 		break;
@@ -2377,6 +2367,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 	case 10:
 		//std::cout << "Ex4 comobmomomombo " << std::endl;
 		if (g_bDrawMassSpringSystem) DrawMassSpringSystem(pd3dImmediateContext);
+		DrawCube(rb);
 		break;
 	default:
 		break;
