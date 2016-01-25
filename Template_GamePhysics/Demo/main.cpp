@@ -353,15 +353,17 @@ bool cloth_horizontal = false;
 float springDamping, springStiffness;
 void InitEx4MSAndRB(int cloth_width, int cloth_height, XMFLOAT3 startPos, XMFLOAT3 offset ){
 	//Create all points and springs in the grid, 
+	float weight = 1.f / (cloth_height*cloth_width);
 	std::vector<SpringPoint*> springPointVec;
-	springStiffness = 3.0f, springDamping = 0.1f;
+	springStiffness = 2.0f, springDamping = 0.1f;
 	float twoOrtho = 0.5, oneDiag = 0.709, twoDiag = 0.35;
 	for(int row = 0, i = 0; row < cloth_height ; row++) {
 		for(int column = 0 ; column < cloth_width ; column++, i++) {
 			SpringPoint* s_point;
 			s_point = new SpringPoint(XMFLOAT3(startPos.x+offset.x*column, startPos.y+offset.y*row, startPos.z+offset.z*row));
-			s_point->setMass(0.01f);
-			//s_point->setDamping(1.0f);
+			s_point->setMass(weight);
+			s_point->setDamping(1.f);
+			s_point->gp_bouncyness = 0.1f;
 			points.push_back(s_point);
 			springPointVec.push_back(s_point);
 
@@ -586,7 +588,7 @@ void InitMassSprings()
 		std::cout << "Ex4 Mass Spring setup" << std::endl;
 		float x = 16, y = 16;
 		if(!cloth_horizontal)
-			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,2.f,0),XMFLOAT3(2.0f/x,-2.0f/y,-0.001));
+			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,2.f,0),XMFLOAT3(2.0f/x,0.001,-2.0f/y));
 		else
 			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,0.5f,-1),XMFLOAT3(2.0f/x,0,-2.0f/y));
 	}
@@ -2180,6 +2182,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		previousTime = currentTime;
 		currentTime = timeGetTime();
 		deltaTime = (currentTime-previousTime)/1000.0f;
+		deltaTime = 0.005;
 		/*
 		//EULER
 		for(auto point = points.begin(); point != points.end();point++)
@@ -2239,6 +2242,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 				a->computeCollisionWithWalls(deltaTime,g_fSphereSize,g_xWall,g_zWall,g_ceiling);
 			else*/
 				a->computeCollision(deltaTime, g_fSphereSize);
+				a->addDamping(deltaTime);
 				
 		}
 
