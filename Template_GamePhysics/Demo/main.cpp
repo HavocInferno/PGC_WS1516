@@ -354,7 +354,7 @@ float springDamping, springStiffness;
 void InitEx4MSAndRB(int cloth_width, int cloth_height, XMFLOAT3 startPos, XMFLOAT3 offset ){
 	//Create all points and springs in the grid, 
 	std::vector<SpringPoint*> springPointVec;
-	springStiffness = 0.5f, springDamping = 0.03f;
+	springStiffness = 3.0f, springDamping = 0.1f;
 	float twoOrtho = 0.5, oneDiag = 0.709, twoDiag = 0.35;
 	for(int row = 0, i = 0; row < cloth_height ; row++) {
 		for(int column = 0 ; column < cloth_width ; column++, i++) {
@@ -457,8 +457,12 @@ void InitEx4MSAndRB(int cloth_width, int cloth_height, XMFLOAT3 startPos, XMFLOA
 				springPointVec[i]->setStatic(true);
 	}
 	else {
-		springPointVec[0]->setStatic(true);
-		springPointVec[cloth_width-1]->setStatic(true);
+		for(int i = 0; i < cloth_width; i++) {
+			springPointVec[i]->setStatic(true);
+		}
+		//springPointVec[0]->setStatic(true);
+		//springPointVec[cloth_width-1]->setStatic(true);
+		
 		//springPointVec[cloth_width*cloth_height-1]->setStatic(true);
 		//springPointVec[cloth_width*(cloth_height-1)]->setStatic(true);
 	}
@@ -580,7 +584,7 @@ void InitMassSprings()
 	}
 	else if (g_demoCase ==2) {
 		std::cout << "Ex4 Mass Spring setup" << std::endl;
-		float x = 5, y = 5;
+		float x = 16, y = 16;
 		if(!cloth_horizontal)
 			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,2.f,0),XMFLOAT3(2.0f/x,-2.0f/y,-0.001));
 		else

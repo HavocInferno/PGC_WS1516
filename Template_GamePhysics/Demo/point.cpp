@@ -75,7 +75,7 @@ void SpringPoint::addDamping(float deltaTime)
 void SpringPoint::IntegratePosition(float deltaTime)
 {
 	if(!gp_isStatic)
-	setPosition(addVector(gp_position,multiplyVector(gp_velocity,deltaTime)));
+		setPosition(addVector(gp_position,multiplyVector(gp_velocity,deltaTime)));
 };
 void SpringPoint::IntegratePosition(float deltaTime, XMFLOAT3 vel)
 {
@@ -86,6 +86,8 @@ XMFLOAT3 SpringPoint::IntegratePositionTmp(float deltaTime)
 {
 	if(!gp_isStatic)
 		return addVector(gp_position,multiplyVector(gp_velocity,deltaTime));
+	else
+		return gp_position;
 };
 void SpringPoint::IntegrateVelocity(float deltaTime)
 {
