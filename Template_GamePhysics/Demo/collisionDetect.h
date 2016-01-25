@@ -129,3 +129,52 @@ else{
 // collision detected at normal: -1.000000, 0.000000, 0.000000
 // collision point : 0.000405, -0.000000, 0.000000
 */
+inline CollisionInfo gayTest(const XMMATRIX &obj2World_RB, SpringPoint* point) {
+
+	// the transfer matrix from the world space to object space of A:
+	const XMMATRIX world2Obj_RB = XMMatrixInverse(nullptr, obj2World_RB);	
+	// the transfer matrix from the object space of B to the object space of A:
+	XMVECTOR pointInRB =   XMVector3Transform( XMLoadFloat3(&point->gp_position),world2Obj_RB) ;
+	XMFLOAT3 penus;
+	XMStoreFloat3(&penus, pointInRB);
+	// store the position of B's centre in the object space of A
+	// store all the edges of B in obj space of A
+
+	// return data structure, initialized as no collision
+	CollisionInfo info;
+	info.isValid = false;
+	info.collisionPointWorld = XMVectorZero();
+	info.normalWorld = XMVectorZero();
+	
+	// check every corners of body B
+		if (XMVector3InBounds(pointInRB, XMVectorSet(0.5f, 0.5f, 0.5f, 0.0f))){
+			//collision! find the closest face in A
+			int   normalIndex = 0;      
+			float mindis      = FLT_MAX;
+			float disSign     = 1.0;
+			
+			for (int j = 0; j < 3; ++j){
+				float curpos = XMVectorGetByIndex(pointInRB, j);
+				float curdis = 0.5f - abs(curpos);
+				
+				if( curdis < mindis ) {
+					normalIndex = j;
+					mindis      = curdis;
+					disSign     = (curpos >= 0.0f) ? -1.0f : 1.0f;
+				}
+			}
+			// assert(normalIndex != -1);
+			info.isValid = true;
+			// transform collision points from object space into world space
+			info.collisionPointWorld = XMVector3Transform(pointInRB, obj2World_RB);
+			// the direction of the collision is opposite to the normal of the collision 
+			// face on A (the one nearest to the corner(B))
+			info.normalWorld = XMVector3Normalize( XMVector3TransformNormal
+				( XMVectorSetByIndex(XMVectorZero(), disSign, normalIndex), obj2World_RB ) );
+			
+			return info;
+		}
+	
+	// no collision
+	return info; 
+}
