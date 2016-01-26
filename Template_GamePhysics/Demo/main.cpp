@@ -169,6 +169,13 @@ CollisionInfo simpletest;
 Contact contact;
 #endif
 #ifdef EX4_MS_CLOTH_AND_RB
+std::vector<CollPoint>* collPoints;
+int collWithRB = 0;
+
+struct CollPoint {
+	SpringPoint* point;
+	CollisionInfo* info;
+};
 //COPIED FROM MASS SPRING SYSTEM IFDEF.. slightly changed though
 //g_bDrawMassSpringSystem = true;
 //int g_integrationMethod = 0, g_preIntegrationMethod = 0;
@@ -2202,6 +2209,8 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		deltaTime = (currentTime-previousTime)/1000.0f;
 		deltaTime = 0.005;
 
+		collWithRB = 0;
+
 		for(auto spring = springs.begin(); spring != springs.end();spring++)
 		{
 			b= &(((Spring)*spring));
@@ -2245,8 +2254,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		for(auto point = points.begin(); point != points.end();point++)
 		{
 			simpletest = gayTest(g2a,(*point));
-			if (simpletest.isValid)
-				{
+			if (simpletest.isValid) {
 					XMFLOAT3 collisionPoint;// ,collisionNormal;
 					XMStoreFloat3(&collisionPoint,simpletest.collisionPointWorld);
 					cout<<"collega";
@@ -2254,11 +2262,21 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 					contact = Contact(collisionPoint,simpletest.normalWorld, first, second);
 					contact.calcRelativeVelocity();
 			        **/
-					}
+
+					//this should technically give us a list of (point, collisionInfo) and the total count of collisions with the rigid body.
+					//technically we could expand this so #collisions for each face is tracked, but for now, this has to do.
+					CollPoint* cp = new CollPoint();
+					cp->point = *point;
+					cp->info = &simpletest;
+					collPoints->push_back(cp);
+					collWithRB++;
+			}
 		}
 
-
-
+		//here we should iterate over the collPoints list and for each collision point, 
+		//	apply the rigidbody's impulse * 1/collWithRB to the point, 
+		//	as well as apply the point's impulse to the RB. (what is the impulse for each though? relative velocity mirrored at the normal and damped by some retention value?)
+		//TODO
 
 		break;	
 	default: 
