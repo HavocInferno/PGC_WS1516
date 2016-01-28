@@ -323,7 +323,7 @@ void InitRigidBodies()
 
 		rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(w, h, d));
 		if(cloth_horizontal)
-			rb->setPosition(XMFLOAT3(0.0f,2.7f,-1.0f));
+			rb->setPosition(XMFLOAT3(-0.f,1.2f,-2.f));
 
 		break;
 	default:
@@ -378,12 +378,12 @@ std::list<SpringPoint*> points;
 
 //EX4
 
-float springDamping, springStiffness;
+float springDamping, springStiffness = 2.f;
 void InitEx4MSAndRB(int cloth_width, int cloth_height, XMFLOAT3 startPos, XMFLOAT3 offset ){
 	//Create all points and springs in the grid, 
 	float weight = 1.f / (cloth_height*cloth_width);
 	std::vector<SpringPoint*> springPointVec;
-	springStiffness = 2.0f, springDamping = 0.1f;
+	springDamping = 0.1f;
 	float twoOrtho = 0.5, oneDiag = 0.709, twoDiag = 0.35;
 	for(int row = 0, i = 0; row < cloth_height ; row++) {
 		for(int column = 0 ; column < cloth_width ; column++, i++) {
@@ -615,10 +615,10 @@ void InitMassSprings()
 	else if (g_demoCase ==2) {
 		std::cout << "Ex4 Mass Spring setup" << std::endl;
 		float x = 16, y = 16;
-		//if(!cloth_horizontal)
+		if(!cloth_horizontal)
 			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,2.f,0),XMFLOAT3(2.0f/x,0.001,-2.0f/y));
-		//else
-			//InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,0.5f,-1),XMFLOAT3(2.0f/x,0,-2.0f/y));
+		else
+			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,0.5f,-1),XMFLOAT3(2.0f/x,0,-2.0f/y));
 	}
 }
 
@@ -843,6 +843,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		//std::cout << "EX4 MASS SPRING CLOTH AND RIGID BODY" << std::endl;
 		TwAddVarRW(g_pTweakBar, "Spring Stiffness Coeff.:", TW_TYPE_FLOAT, &springStiffness,"");
 		TwAddVarRW(g_pTweakBar, "Spring Damping Coeff.:", TW_TYPE_FLOAT, &springDamping,"");
+		TwAddVarRW(g_pTweakBar, "Horizontal Cloth", TW_TYPE_BOOLCPP, &cloth_horizontal,"");
 		break;
 	default:
 		break;
@@ -2214,7 +2215,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		previousTime = currentTime;
 		currentTime = timeGetTime();
 		deltaTime = (currentTime-previousTime)/1000.0f;
-		deltaTime = 0.005;
+			deltaTime = 0.005;
 
 		collWithRB = 0;
 
@@ -2291,7 +2292,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		//	as well as apply the point's impulse to the RB. (what is the impulse for each though? relative velocity mirrored at the normal and damped by some retention value?)
 		//TODO
 		
-		std::cout << collPoints->size() << std::endl;
+	//	std::cout << collPoints->size() << std::endl;
 		for(auto cp = collPoints->begin(); cp != collPoints->end(); cp++) {
 			XMFLOAT3 zeroVec = XMFLOAT3(0,0,0);
 			float v_relative_dot;
@@ -2359,7 +2360,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 				}
 			}
 			else { //sliding
-				std::cout << "vadym ist dick" << std::endl;
+				//std::cout << "vadym ist dick" << std::endl;
 			}
 		}
 
