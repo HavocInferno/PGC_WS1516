@@ -169,13 +169,14 @@ CollisionInfo simpletest;
 Contact contact;
 #endif
 #ifdef EX4_MS_CLOTH_AND_RB
-std::vector<CollPoint>* collPoints;
 int collWithRB = 0;
 
 struct CollPoint {
 	SpringPoint* point;
 	CollisionInfo* info;
 };
+
+std::vector<CollPoint>* collPoints;
 //COPIED FROM MASS SPRING SYSTEM IFDEF.. slightly changed though
 //g_bDrawMassSpringSystem = true;
 //int g_integrationMethod = 0, g_preIntegrationMethod = 0;
@@ -222,6 +223,8 @@ Grid* grid;
 float kernelsize = 0.03f;
 float frametimeNative = 0;
 float frametimeGrid= 0;
+
+bool cloth_horizontal = false; 
 
 void InitRigidBox(std::vector<MassPoint>* listOfPoints, float width, float height, float depth, float mass) {
 	width /= 2;
@@ -319,6 +322,8 @@ void InitRigidBodies()
 		}
 
 		rb = new rigidBody(pointList, XMFLOAT3(.0f , .0f, .0f), XMFLOAT3(.0f , .0f, 1.5708f), XMFLOAT3(w, h, d));
+		if(cloth_horizontal)
+			rb->setPosition(XMFLOAT3(0.0f,2.7f,-1.0f));
 
 		break;
 	default:
@@ -372,7 +377,7 @@ std::list<Spring> springs;
 std::list<SpringPoint*> points;
 
 //EX4
-bool cloth_horizontal = false; 
+
 float springDamping, springStiffness;
 void InitEx4MSAndRB(int cloth_width, int cloth_height, XMFLOAT3 startPos, XMFLOAT3 offset ){
 	//Create all points and springs in the grid, 
@@ -610,10 +615,10 @@ void InitMassSprings()
 	else if (g_demoCase ==2) {
 		std::cout << "Ex4 Mass Spring setup" << std::endl;
 		float x = 16, y = 16;
-		if(!cloth_horizontal)
+		//if(!cloth_horizontal)
 			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,2.f,0),XMFLOAT3(2.0f/x,0.001,-2.0f/y));
-		else
-			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,0.5f,-1),XMFLOAT3(2.0f/x,0,-2.0f/y));
+		//else
+			//InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,0.5f,-1),XMFLOAT3(2.0f/x,0,-2.0f/y));
 	}
 }
 
@@ -1008,10 +1013,10 @@ void DrawTriangle(ID3D11DeviceContext* pd3dImmediateContext)
 void DrawPoint(ID3D11DeviceContext* pd3dImmediateContext, SpringPoint* point)
 {
 	//set color
-	g_pEffectPositionNormal->SetDiffuseColor(TUM_BLUE_LIGHT);
-	g_pEffectPositionNormal->SetEmissiveColor(Colors::Black);
-	g_pEffectPositionNormal->SetSpecularColor(0.5f * Colors::White);
-    g_pEffectPositionNormal->SetSpecularPower(50);
+	g_pEffectPositionNormal->SetDiffuseColor(Colors::OrangeRed);
+	//g_pEffectPositionNormal->SetEmissiveColor(Colors::Black);
+	//g_pEffectPositionNormal->SetSpecularColor(0.5f * Colors::White);
+    //g_pEffectPositionNormal->SetSpecularPower(50);
 
 	//set position
 	XMMATRIX scale    = XMMatrixScaling(g_fSphereSize, g_fSphereSize, g_fSphereSize);
@@ -1071,12 +1076,14 @@ void DrawMassSpringSystem(ID3D11DeviceContext* pd3dImmediateContext)
 	{
 		DrawPoint(pd3dImmediateContext, ((SpringPoint*)*point));
 	}	
+	/*
 	int i =0;
 	for(auto spring = springs.begin(); spring != springs.end();spring++)
 	{
 		DrawSpring(pd3dImmediateContext, &((Spring)*spring));
 		i++;
 	}
+	*/
 }
 
 
@@ -2225,7 +2232,9 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			a->computeAcceleration();
 			a->gp_velTemp = a->IntegrateVelocityTmp(deltaTime/2.0f);
 			//a->addDamping(deltaTime);
+			a->gp_posTemp = a->gp_posTemp; //store the previous pos
 			a->IntegratePosition(deltaTime, a->gp_velTemp);
+			
 			a->resetForces();
 		}
 		for(auto spring = springs.begin(); spring != springs.end();spring++)
@@ -2249,15 +2258,19 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		}
 		//integrate rb
 		rb->integrateValues(deltaTime);
+		if(cloth_horizontal)
+			rb->addGravity(deltaTime, g_gravity);
+		//rb->addDamping(deltaTime, g_damping_linear, g_damping_angular);
 
 		g2a = getObj2WorldMat(rb);
+		collPoints = new std::vector<CollPoint>();
 		for(auto point = points.begin(); point != points.end();point++)
 		{
 			simpletest = gayTest(g2a,(*point));
 			if (simpletest.isValid) {
 					XMFLOAT3 collisionPoint;// ,collisionNormal;
 					XMStoreFloat3(&collisionPoint,simpletest.collisionPointWorld);
-					cout<<"collega";
+					//cout<<"collega";
 					/**
 					contact = Contact(collisionPoint,simpletest.normalWorld, first, second);
 					contact.calcRelativeVelocity();
@@ -2268,7 +2281,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 					CollPoint* cp = new CollPoint();
 					cp->point = *point;
 					cp->info = &simpletest;
-					collPoints->push_back(cp);
+					collPoints->push_back(*cp);
 					collWithRB++;
 			}
 		}
@@ -2277,6 +2290,78 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		//	apply the rigidbody's impulse * 1/collWithRB to the point, 
 		//	as well as apply the point's impulse to the RB. (what is the impulse for each though? relative velocity mirrored at the normal and damped by some retention value?)
 		//TODO
+		
+		std::cout << collPoints->size() << std::endl;
+		for(auto cp = collPoints->begin(); cp != collPoints->end(); cp++) {
+			XMFLOAT3 zeroVec = XMFLOAT3(0,0,0);
+			float v_relative_dot;
+
+			XMFLOAT3 cross;
+			XMFLOAT3 collisionPoint;
+			XMStoreFloat3(&collisionPoint,cp->info->collisionPointWorld);
+			XMStoreFloat3(&cross, XMVector3Cross(XMLoadFloat3(&rb->getAngularVelocity()), XMLoadFloat3(&subVector(collisionPoint,rb->getPosition()))));
+			XMFLOAT3 v1 = addVector(rb->getVelocity(), cross);
+			XMFLOAT3 v2 = cp->point->getVelocity();
+			//v_relative_dot;
+			v1 = subVector(v1,v2);
+			cp->info->normalWorld = XMVector3Normalize(XMLoadFloat3( &subVector( cp->point->gp_position,cp->point->gp_posTemp)));
+			XMStoreFloat(&v_relative_dot, XMVector3Dot(cp->info->normalWorld,XMLoadFloat3(&v1)));
+
+			if(v_relative_dot > 0 ) { //separating
+			
+			}
+			else if ( v_relative_dot < 0) { //colliding
+				//std::cout << "Colliding" << std::endl;
+				//calculateImpulse();
+				float c = 0.5f; //this should determine if the body is elastic or plastic.. for now i'll leave it as plastic!
+
+				float ma = rb->getMassInverse(), mb = 1/cp->point->gp_mass;
+
+				float numerator = -(1+c)*v_relative_dot;
+
+				XMVECTOR tempVec_a, tempVec_b, center_1, center_2;
+				center_1 = XMLoadFloat3(&(subVector(collisionPoint,rb->getPosition())));
+				center_2 = XMLoadFloat3(&(subVector(collisionPoint,cp->point->gp_position)));
+				tempVec_a = XMVector3Transform(XMVector3Cross(XMVector3Cross(center_1,cp->info->normalWorld),center_1),rb->getInertiaTensorInverse());
+				tempVec_b = XMVector3Transform(XMVector3Cross(XMVector3Cross(center_2,cp->info->normalWorld),center_2),rb->getInertiaTensorInverse());
+				tempVec_a = XMVector3Dot(tempVec_a+tempVec_b,cp->info->normalWorld);
+
+				float temp;
+				XMStoreFloat(&temp, tempVec_a);
+				float denominator = ma + mb + temp;
+
+				float impulse = numerator / denominator;
+
+				XMFLOAT3 newVelocity_1, newVelocity_2, newAngMom_1, newAngMom_2,tempf3;
+				cp->info->normalWorld *= impulse; //scale the normal with the impulse
+	
+				XMStoreFloat3(&tempf3, cp->info->normalWorld*ma);
+				newVelocity_1 = addVector(rb->getAngularVelocity(),tempf3);
+
+				XMStoreFloat3(&tempf3, cp->info->normalWorld*mb);
+				newVelocity_2 = subVector(zeroVec,tempf3);
+
+				XMStoreFloat3(&tempf3, XMVector3Cross(center_1,cp->info->normalWorld));
+				newAngMom_1 = addVector(rb->getAngularMomentum(),tempf3);
+
+				XMStoreFloat3(&tempf3, XMVector3Cross(center_2,cp->info->normalWorld));
+				newAngMom_2 = subVector(zeroVec,tempf3);
+
+				if(!rb->isStatic)
+				{
+					rb->setLinearVelocity(newVelocity_1);
+					rb->setAngularMomentum(newAngMom_1);
+				}
+				if(!cp->point->gp_isStatic)
+				{
+					cp->point->setVelocity(newVelocity_2);
+					//body2->setAngularMomentum(newAngMom_2);
+				}
+			}
+			else { //sliding
+				std::cout << "vadym ist dick" << std::endl;
+			}
+		}
 
 		break;	
 	default: 
