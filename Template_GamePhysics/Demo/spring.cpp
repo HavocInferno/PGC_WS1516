@@ -136,3 +136,10 @@ float Spring::getCurrentLength()
 {
 	return gs_currentLength;
 }
+
+bool Spring::checkRipe(float ripe)
+{
+	float penis =  (gs_currentLength/gs_initialLength);
+//	std::cout<<"Ripe:"<<ripe<<" force:"<<(gs_stiffness*(gs_currentLength-gs_initialLength))<<"\n";
+	return (ripe <= (gs_currentLengthTmp/gs_initialLength));
+}

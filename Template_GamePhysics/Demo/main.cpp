@@ -175,6 +175,7 @@ struct CollPoint {
 	SpringPoint* point;
 	CollisionInfo* info;
 };
+float ripeforce = 4;
 
 std::vector<CollPoint>* collPoints;
 //COPIED FROM MASS SPRING SYSTEM IFDEF.. slightly changed though
@@ -845,6 +846,8 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		TwAddVarRW(g_pTweakBar, "Spring Stiffness Coeff.:", TW_TYPE_FLOAT, &springStiffness,"");
 		TwAddVarRW(g_pTweakBar, "Spring Damping Coeff.:", TW_TYPE_FLOAT, &springDamping,"");
 		TwAddVarRW(g_pTweakBar, "Horizontal Cloth", TW_TYPE_BOOLCPP, &cloth_horizontal,"");
+		TwAddVarRW(g_pTweakBar, "Ripe:", TW_TYPE_FLOAT, &ripeforce,"min=0.5 max=10 step=0.1");
+		TwAddVarRW(g_pTweakBar, "-> gravity constant", TW_TYPE_FLOAT, &g_gravity, "min=-20 max=20 step=0.1");
 		break;
 	default:
 		break;
@@ -2262,11 +2265,18 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 			
 			a->resetForces();
 		}
-		for(auto spring = springs.begin(); spring != springs.end();spring++)
+		for(auto spring = springs.begin(); spring != springs.end();)
 		{
 			b= &(((Spring)*spring));
 			b->computeElasticForcesTmp();
 			b->computeDampingForcesTmp();
+
+			auto it = spring;
+			spring++;
+			if(spring->checkRipe(ripeforce))
+			{
+				springs.erase(it);
+			}
 		}
 		for(auto point = points.begin(); point != points.end();point++)
 		{

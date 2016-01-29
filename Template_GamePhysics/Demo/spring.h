@@ -34,6 +34,7 @@ public:
 	void setLength(float newlen);
 	void setRestLength(float newlen);
 	void setDamping(float d);
+	bool checkRipe(float ripe);
 
 	float getCurrentLength();
 
