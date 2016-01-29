@@ -170,7 +170,7 @@ Contact contact;
 #endif
 #ifdef EX4_MS_CLOTH_AND_RB
 int collWithRB = 0;
-
+bool ex4_fixed = true;
 struct CollPoint {
 	SpringPoint* point;
 	CollisionInfo* info;
@@ -500,7 +500,15 @@ void InitEx4MSAndRB(int cloth_width, int cloth_height, XMFLOAT3 startPos, XMFLOA
 
 void InitMassSprings()
 {
-	if(g_demoCase == 0) {
+	if (g_iTestCase ==10) {
+		std::cout << "Ex4 Mass Spring setup" << std::endl;
+		float x = 16, y = 16;
+		if(!cloth_horizontal)
+			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,2.f,0),XMFLOAT3(2.0f/x,0.001,-2.0f/y));
+		else
+			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,0.5f,-1),XMFLOAT3(2.0f/x,0,-2.0f/y));
+	}
+	else if(g_demoCase == 0) {
 		Spring g_spring1, g_spring2;
 		SpringPoint* g_point1,* g_point2,* g_point3;
 
@@ -611,14 +619,6 @@ void InitMassSprings()
 			g_springs[i+5].setPoint(2, g_points[i+6+1]);
 			springs.push_back(g_springs[i+5]);
 		}*/
-	}
-	else if (g_demoCase ==2) {
-		std::cout << "Ex4 Mass Spring setup" << std::endl;
-		float x = 16, y = 16;
-		if(!cloth_horizontal)
-			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,2.f,0),XMFLOAT3(2.0f/x,0.001,-2.0f/y));
-		else
-			InitEx4MSAndRB(x,y,XMFLOAT3(-1.f,0.5f,-1),XMFLOAT3(2.0f/x,0,-2.0f/y));
 	}
 }
 
@@ -841,6 +841,7 @@ void InitTweakBar(ID3D11Device* pd3dDevice)
 		break;
 	case 10:
 		//std::cout << "EX4 MASS SPRING CLOTH AND RIGID BODY" << std::endl;
+		TwAddVarRW(g_pTweakBar, "Use fixed timestep", TW_TYPE_BOOLCPP, &ex4_fixed, "");
 		TwAddVarRW(g_pTweakBar, "Spring Stiffness Coeff.:", TW_TYPE_FLOAT, &springStiffness,"");
 		TwAddVarRW(g_pTweakBar, "Spring Damping Coeff.:", TW_TYPE_FLOAT, &springDamping,"");
 		TwAddVarRW(g_pTweakBar, "Horizontal Cloth", TW_TYPE_BOOLCPP, &cloth_horizontal,"");
@@ -1014,13 +1015,22 @@ void DrawTriangle(ID3D11DeviceContext* pd3dImmediateContext)
 void DrawPoint(ID3D11DeviceContext* pd3dImmediateContext, SpringPoint* point)
 {
 	//set color
-	g_pEffectPositionNormal->SetDiffuseColor(Colors::OrangeRed);
+	XMMATRIX scale;
+	if(g_iTestCase == 10)
+	{
+		  scale = XMMatrixScaling(0.01, 0.01, 0.01);
+		g_pEffectPositionNormal->SetDiffuseColor(Colors::OrangeRed);
+	}
+	else
+	{
+		g_pEffectPositionNormal->SetDiffuseColor(TUM_BLUE);
+		scale    = XMMatrixScaling(g_fSphereSize, g_fSphereSize, g_fSphereSize);
+	}
 	//g_pEffectPositionNormal->SetEmissiveColor(Colors::Black);
 	//g_pEffectPositionNormal->SetSpecularColor(0.5f * Colors::White);
     //g_pEffectPositionNormal->SetSpecularPower(50);
 
 	//set position
-	XMMATRIX scale    = XMMatrixScaling(g_fSphereSize, g_fSphereSize, g_fSphereSize);
 	XMMATRIX trans    = XMMatrixTranslation(point->gp_position.x,point->gp_position.y,point->gp_position.z);
     g_pEffectPositionNormal->SetWorld(scale * trans * g_camera.GetWorldMatrix());
 
@@ -1062,11 +1072,20 @@ void DrawSpring(ID3D11DeviceContext* pd3dImmediateContext, Spring* spring)
 
     // Draw
     g_pPrimitiveBatchPositionColor->Begin();
-    
-	g_pPrimitiveBatchPositionColor->DrawLine(
-		VertexPositionColor(XMVectorSet(spring->gs_point1->gp_position.x,spring->gs_point1->gp_position.y,spring->gs_point1->gp_position.z, 1),TUM_BLUE),
-		VertexPositionColor(XMVectorSet(spring->gs_point2->gp_position.x,spring->gs_point2->gp_position.y,spring->gs_point2->gp_position.z, 1), Colors::White)
-    );
+	if(g_iTestCase != 10)
+	{
+		g_pPrimitiveBatchPositionColor->DrawLine(
+			VertexPositionColor(XMVectorSet(spring->gs_point1->gp_position.x,spring->gs_point1->gp_position.y,spring->gs_point1->gp_position.z, 1),TUM_BLUE),
+			VertexPositionColor(XMVectorSet(spring->gs_point2->gp_position.x,spring->gs_point2->gp_position.y,spring->gs_point2->gp_position.z, 1), Colors::White)
+		);
+	}
+	else
+	{
+			g_pPrimitiveBatchPositionColor->DrawLine(
+				VertexPositionColor(XMVectorSet(spring->gs_point1->gp_position.x,spring->gs_point1->gp_position.y,spring->gs_point1->gp_position.z, 1),Colors::OrangeRed),
+				VertexPositionColor(XMVectorSet(spring->gs_point2->gp_position.x,spring->gs_point2->gp_position.y,spring->gs_point2->gp_position.z, 1), Colors::Orange)
+		);
+	}
     
 	g_pPrimitiveBatchPositionColor->End();
 }
@@ -1077,14 +1096,14 @@ void DrawMassSpringSystem(ID3D11DeviceContext* pd3dImmediateContext)
 	{
 		DrawPoint(pd3dImmediateContext, ((SpringPoint*)*point));
 	}	
-	/*
-	int i =0;
-	for(auto spring = springs.begin(); spring != springs.end();spring++)
-	{
-		DrawSpring(pd3dImmediateContext, &((Spring)*spring));
-		i++;
-	}
-	*/
+
+		int i =0;
+		for(auto spring = springs.begin(); spring != springs.end();spring++)
+		{
+			DrawSpring(pd3dImmediateContext, &((Spring)*spring));
+			i++;
+		}
+	
 }
 
 
@@ -1094,10 +1113,14 @@ void DrawMassSpringSystem(ID3D11DeviceContext* pd3dImmediateContext)
 
 void DrawCube(rigidBody* rb) {
 	//set color
+	if(g_iTestCase != 10)
 	g_pEffectPositionNormal->SetDiffuseColor(TUM_BLUE_LIGHT);
+	else
+		g_pEffectPositionNormal->SetDiffuseColor(Colors::Red);
+
 	g_pEffectPositionNormal->SetEmissiveColor(Colors::Black);
-	g_pEffectPositionNormal->SetSpecularColor(0.5f * Colors::White);
-    g_pEffectPositionNormal->SetSpecularPower(50);
+	g_pEffectPositionNormal->SetSpecularColor(Colors::White);
+    g_pEffectPositionNormal->SetSpecularPower(100);
 
 	/* //FROM TEAPOT:
 	XMMATRIX scale    = XMMatrixScaling(0.5f, 0.5f, 0.5f);    
@@ -2215,6 +2238,7 @@ void CALLBACK OnFrameMove(double dTime, float fElapsedTime, void* pUserContext)
 		previousTime = currentTime;
 		currentTime = timeGetTime();
 		deltaTime = (currentTime-previousTime)/1000.0f;
+		if(ex4_fixed)
 			deltaTime = 0.005;
 
 		collWithRB = 0;
